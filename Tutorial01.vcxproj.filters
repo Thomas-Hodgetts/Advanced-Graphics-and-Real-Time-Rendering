@@ -25,7 +25,7 @@
       <Filter>Objects\Object Component\Transform</Filter>
     </ClCompile>
     <ClCompile Include="Vector3D.cpp">
-      <Filter>Vector3D</Filter>
+      <Filter>Vector\Vector3D</Filter>
     </ClCompile>
     <ClCompile Include="Camera.cpp">
       <Filter>Camera</Filter>
@@ -38,6 +38,24 @@
     </ClCompile>
     <ClCompile Include="OBJLoader.cpp">
       <Filter>Loader\OBJ</Filter>
+    </ClCompile>
+    <ClCompile Include="PhysicalObject.cpp">
+      <Filter>Objects\Physical Object</Filter>
+    </ClCompile>
+    <ClCompile Include="GameObject.cpp">
+      <Filter>Objects\Game Object</Filter>
+    </ClCompile>
+    <ClCompile Include="ParticleModel.cpp">
+      <Filter>Objects\Object Component\Particle Model</Filter>
+    </ClCompile>
+    <ClCompile Include="RigidBody.cpp">
+      <Filter>Objects\Object Component\Rigidbody</Filter>
+    </ClCompile>
+    <ClCompile Include="Vector2.cpp">
+      <Filter>Vector\Vector2</Filter>
+    </ClCompile>
+    <ClCompile Include="Apperance.cpp">
+      <Filter>Objects\Object Component\Apperance</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -62,7 +80,7 @@
       <Filter>Objects\Object Component\Transform</Filter>
     </ClInclude>
     <ClInclude Include="Vector3D.h">
-      <Filter>Vector3D</Filter>
+      <Filter>Vector\Vector3D</Filter>
     </ClInclude>
     <ClInclude Include="Camera.h">
       <Filter>Camera</Filter>
@@ -78,6 +96,25 @@
     </ClInclude>
     <ClInclude Include="ThreadVector.h">
       <Filter>ThreadVector</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysicalObject.h">
+      <Filter>Objects\Physical Object</Filter>
+    </ClInclude>
+    <ClInclude Include="GameObject.h">
+      <Filter>Objects\Game Object</Filter>
+    </ClInclude>
+    <ClInclude Include="Apperance.h">
+      <Filter>Objects\Object Component\Apperance</Filter>
+    </ClInclude>
+    <ClInclude Include="ParticleModel.h">
+      <Filter>Objects\Object Component\Particle Model</Filter>
+    </ClInclude>
+    <ClInclude Include="RigidBody.h">
+      <Filter>Objects\Object Component\Rigidbody</Filter>
+    </ClInclude>
+    <ClInclude Include="Quaternion.h" />
+    <ClInclude Include="Vector2.h">
+      <Filter>Vector\Vector2</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -108,9 +145,6 @@
     <Filter Include="Objects\Object Component\Transform">
       <UniqueIdentifier>{a8c77a6b-e673-4f36-933b-d778e8563827}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Vector3D">
-      <UniqueIdentifier>{6080790a-c3cc-43de-90e9-1ddae8b1922c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Debug">
       <UniqueIdentifier>{0a8085ee-9045-4f46-9d0d-4688f0f83433}</UniqueIdentifier>
     </Filter>
@@ -122,6 +156,30 @@
     </Filter>
     <Filter Include="ThreadVector">
       <UniqueIdentifier>{ad0b5506-512e-49c9-a25c-094d35b0eed1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Vector">
+      <UniqueIdentifier>{90ec7bfe-3b60-4e38-87aa-dc35a0a56110}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Vector\Vector3D">
+      <UniqueIdentifier>{6080790a-c3cc-43de-90e9-1ddae8b1922c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Vector\Vector2">
+      <UniqueIdentifier>{18c6d442-53b4-41bd-b8aa-b84c2b412914}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Objects\Game Object">
+      <UniqueIdentifier>{98915446-ae00-421a-88c9-822b0900b67d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Objects\Object Component\Apperance">
+      <UniqueIdentifier>{1a2551b7-a8d2-481c-a174-0c7e366490d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Objects\Object Component\Particle Model">
+      <UniqueIdentifier>{f6ee7f49-c866-44e5-91dd-547a7abf9da9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Objects\Object Component\Rigidbody">
+      <UniqueIdentifier>{ce3b7b9d-15ce-49bb-9eec-01f3fd862f49}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Vertex">
+      <UniqueIdentifier>{a951e828-e61f-4795-9e78-7b44ab5c1e13}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

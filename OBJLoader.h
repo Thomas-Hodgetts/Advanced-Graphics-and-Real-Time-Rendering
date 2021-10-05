@@ -1,7 +1,4 @@
 #pragma once
-#include <windows.h>
-#include <d3d11_1.h>
-#include <directxmath.h>
 #include <fstream>		//For loading in an external file
 #include <vector>		//For storing the XMFLOAT3/2 variables
 #include <map>			//For fast searching when re-creating the index buffer

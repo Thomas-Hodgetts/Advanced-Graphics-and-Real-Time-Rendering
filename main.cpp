@@ -1,11 +1,5 @@
 #include "stdafx.h"
 
-struct Vertex {
-	Vertex(float x, float y, float z, float u, float v) : pos(x, y, z), texCoord(u, v) {}
-	XMFLOAT3 pos;
-	XMFLOAT2 texCoord;
-};
-
 int WINAPI WinMain(HINSTANCE hInstance,    //Main windows function
 	HINSTANCE hPrevInstance,
 	LPSTR lpCmdLine,
@@ -543,6 +537,8 @@ bool InitD3D()
 		return false;
 	}
 
+	m_Manager = new SystemManager();
+
 	// Create vertex buffer
 
 	// a quad
@@ -716,6 +712,25 @@ bool InitD3D()
 
 	// transition the vertex buffer data from copy destination state to vertex buffer state
 	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(indexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
+	
+
+	std::vector<Vertex> verts;
+	std::vector<DWORD> indies;
+
+	for (const Vertex &v : vList)
+	{
+		verts.push_back(v);
+	}
+
+	for (const DWORD& v : iList)
+	{
+		indies.push_back(v);
+	}
+
+	CreateObjectStruct COS(device, commandList,"Obj1" ,ObjectType::GameObj, verts, indies);
+
+	m_Manager->BuildObject(COS);
+
 
 	// Create the depth/stencil buffer
 

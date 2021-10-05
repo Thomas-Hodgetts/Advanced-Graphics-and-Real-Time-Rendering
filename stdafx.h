@@ -14,6 +14,7 @@
 #include <wincodec.h>
 
 #include "SystemManager.h"
+#include "Structures.h"
 
 // this will only call release if an object exists (prevents exceptions calling release on non existant objects)
 #define SAFE_RELEASE(p) { if ( (p) ) { (p)->Release(); (p) = 0; } }
@@ -24,14 +25,14 @@ using namespace DirectX; // we will be using the directxmath library
 HWND hwnd = NULL;
 
 // name of the window (not the title)
-LPCTSTR WindowName = L"BzTutsApp";
+LPCTSTR WindowName = L"Cirno Fumo Rotate";
 
 // title of the window
-LPCTSTR WindowTitle = L"Bz Window";
+LPCTSTR WindowTitle = L"Cirno Window";
 
 // width and height of the window
-int Width = 800;
-int Height = 600;
+int Width = 1920;
+int Height = 1080;
 
 // is window full screen?
 bool FullScreen = false;
