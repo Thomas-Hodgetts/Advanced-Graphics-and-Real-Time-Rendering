@@ -1,0 +1,127 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <FxCompile Include="PixelShader.hlsl" />
+    <FxCompile Include="VertexShader.hlsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="ImaginaryObject.cpp">
+      <Filter>Objects\Imaginary Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="Flotilla.cpp">
+      <Filter>Flotilla</Filter>
+    </ClCompile>
+    <ClCompile Include="Object.cpp">
+      <Filter>Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="Loader.cpp">
+      <Filter>Loader</Filter>
+    </ClCompile>
+    <ClCompile Include="SystemManager.cpp">
+      <Filter>System Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="Transform.cpp">
+      <Filter>Objects\Object Component\Transform</Filter>
+    </ClCompile>
+    <ClCompile Include="Vector3D.cpp">
+      <Filter>Vector3D</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="Debug.cpp">
+      <Filter>Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="DDSTextureLoader.cpp">
+      <Filter>Loader\DDS</Filter>
+    </ClCompile>
+    <ClCompile Include="OBJLoader.cpp">
+      <Filter>Loader\OBJ</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="ImaginaryObject.h">
+      <Filter>Objects\Imaginary Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Flotilla.h">
+      <Filter>Flotilla</Filter>
+    </ClInclude>
+    <ClInclude Include="Object.h">
+      <Filter>Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Loader.h">
+      <Filter>Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="SystemManager.h">
+      <Filter>System Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="Structures.h" />
+    <ClInclude Include="Transform.h">
+      <Filter>Objects\Object Component\Transform</Filter>
+    </ClInclude>
+    <ClInclude Include="Vector3D.h">
+      <Filter>Vector3D</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="Debug.h">
+      <Filter>Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="DDSTextureLoader.h">
+      <Filter>Loader\DDS</Filter>
+    </ClInclude>
+    <ClInclude Include="OBJLoader.h">
+      <Filter>Loader\OBJ</Filter>
+    </ClInclude>
+    <ClInclude Include="ThreadVector.h">
+      <Filter>ThreadVector</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Camera">
+      <UniqueIdentifier>{f46bb2ab-7986-485d-ba78-83bf7cea6d6b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Objects">
+      <UniqueIdentifier>{1a7738e6-54b6-4e39-b491-8d97e8206853}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Objects\Imaginary Objects">
+      <UniqueIdentifier>{d7271aca-65ef-4820-8da0-9ffcfb628af8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Objects\Physical Object">
+      <UniqueIdentifier>{4bb86350-211b-4eb0-bb92-ab0fb76a72a5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Flotilla">
+      <UniqueIdentifier>{fc0aa855-8e07-4a82-a8de-f95d08ac6797}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Loader">
+      <UniqueIdentifier>{00b491d3-2789-48a6-8eb6-a364daf2efbc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="System Manager">
+      <UniqueIdentifier>{a2382365-1cee-4042-ad20-d1a21b28063b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Objects\Object Component">
+      <UniqueIdentifier>{326ddb7f-e775-4c23-a9a6-0fedfea4bccb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Objects\Object Component\Transform">
+      <UniqueIdentifier>{a8c77a6b-e673-4f36-933b-d778e8563827}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Vector3D">
+      <UniqueIdentifier>{6080790a-c3cc-43de-90e9-1ddae8b1922c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Debug">
+      <UniqueIdentifier>{0a8085ee-9045-4f46-9d0d-4688f0f83433}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Loader\OBJ">
+      <UniqueIdentifier>{425362c7-7b51-4b7f-bfbe-c9e7102a9a74}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Loader\DDS">
+      <UniqueIdentifier>{5f502090-8c42-41a1-ab3a-659ddf99612b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThreadVector">
+      <UniqueIdentifier>{ad0b5506-512e-49c9-a25c-094d35b0eed1}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
