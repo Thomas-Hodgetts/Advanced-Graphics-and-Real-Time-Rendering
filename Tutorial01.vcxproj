@@ -160,6 +160,7 @@
     <ClCompile Include="Debug.cpp" />
     <ClCompile Include="Flotilla.cpp" />
     <ClCompile Include="GameObject.cpp" />
+    <ClCompile Include="GameObjectClass.cpp" />
     <ClCompile Include="ImaginaryObject.cpp" />
     <ClCompile Include="Loader.cpp" />
     <ClCompile Include="main.cpp" />
@@ -180,6 +181,7 @@
     <ClInclude Include="Debug.h" />
     <ClInclude Include="Flotilla.h" />
     <ClInclude Include="GameObject.h" />
+    <ClInclude Include="GameObjectClass.h" />
     <ClInclude Include="ImaginaryObject.h" />
     <ClInclude Include="Loader.h" />
     <ClInclude Include="Object.h" />

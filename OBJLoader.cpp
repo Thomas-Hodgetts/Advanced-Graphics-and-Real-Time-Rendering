@@ -176,7 +176,7 @@ MeshData OBJLoader::Load(char* filename, ID3D11Device* _pd3dDevice, bool invertT
 			{
 				expandedVertices.push_back(verts[vertIndices[i]]);
 				expandedTexCoords.push_back(texCoords[textureIndices[i]]);
-				expandedNormals.push_back(normals[normalIndices[i]]);
+				expandedNormals.push_back(XMFLOAT3(1,1,1));
 			}
 
 			//Now to (finally) form the final vertex, texture coord, normal list and single index buffer using the above expanded vectors
@@ -203,26 +203,6 @@ MeshData OBJLoader::Load(char* filename, ID3D11Device* _pd3dDevice, bool invertT
 				finalVerts[i].TexC = meshTexCoords[i];
 			}
 
-			//Put data into vertex and index buffers, then pass the relevant data to the MeshData object.
-			//The rest of the code will hopefully look familiar to you, as it's similar to whats in your InitVertexBuffer and InitIndexBuffer methods
-			ID3D11Buffer* vertexBuffer;
-
-			D3D11_BUFFER_DESC bd;
-			ZeroMemory(&bd, sizeof(bd));
-			bd.Usage = D3D11_USAGE_DEFAULT;
-			bd.ByteWidth = sizeof(SimpleVertex) * meshVertices.size();
-			bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-			bd.CPUAccessFlags = 0;
-
-			D3D11_SUBRESOURCE_DATA InitData;
-			ZeroMemory(&InitData, sizeof(InitData));
-			InitData.pSysMem = finalVerts;
-
-			_pd3dDevice->CreateBuffer(&bd, &InitData, &vertexBuffer);
-
-			meshData.VertexBuffer = vertexBuffer;
-			meshData.VBOffset = 0;
-			meshData.VBStride = sizeof(SimpleVertex);
 
 			unsigned short* indicesArray = new unsigned short[meshIndices.size()];
 			unsigned int numMeshIndices = meshIndices.size();
@@ -239,20 +219,19 @@ MeshData OBJLoader::Load(char* filename, ID3D11Device* _pd3dDevice, bool invertT
 			outbin.write((char*)indicesArray, sizeof(unsigned short) * numMeshIndices);
 			outbin.close();
 
-			ID3D11Buffer* indexBuffer;
-
-			ZeroMemory(&bd, sizeof(bd));
-			bd.Usage = D3D11_USAGE_DEFAULT;
-			bd.ByteWidth = sizeof(WORD) * meshIndices.size();     
-			bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
-			bd.CPUAccessFlags = 0;
-
-			ZeroMemory(&InitData, sizeof(InitData));
-			InitData.pSysMem = indicesArray;
-			_pd3dDevice->CreateBuffer(&bd, &InitData, &indexBuffer);
-
 			meshData.IndexCount = meshIndices.size();
-			meshData.IndexBuffer = indexBuffer;
+			meshData.vertices = std::vector<Vertex>();
+			meshData.indices = std::vector<DWORD>();
+
+			for (unsigned int i = 0; i < numMeshVertices; ++i)
+			{
+				meshData.vertices.push_back(Vertex(finalVerts[i].Pos.x, finalVerts[i].Pos.y, finalVerts[i].Pos.z, finalVerts[i].TexC.x, finalVerts[i].TexC.y));
+				meshData.indices.push_back(meshIndices[i]);
+			}
+			for (unsigned int i = 0; i < numIndices; ++i)
+			{
+				meshData.indices.push_back(meshIndices[i]);
+			}
 
 			//This data has now been sent over to the GPU so we can delete this CPU-side stuff
 			delete [] indicesArray;
@@ -277,41 +256,15 @@ MeshData OBJLoader::Load(char* filename, ID3D11Device* _pd3dDevice, bool invertT
 		binaryInFile.read((char*)finalVerts, sizeof(SimpleVertex) * numVertices);
 		binaryInFile.read((char*)indices, sizeof(unsigned short) * numIndices);
 
-		//Put data into vertex and index buffers, then pass the relevant data to the MeshData object.	
-		//The rest of the code will hopefully look familiar to you, as it's similar to whats in your InitVertexBuffer and InitIndexBuffer methods
-		ID3D11Buffer* vertexBuffer;
-
-		D3D11_BUFFER_DESC bd;
-		ZeroMemory(&bd, sizeof(bd));
-		bd.Usage = D3D11_USAGE_DEFAULT;
-		bd.ByteWidth = sizeof(SimpleVertex) * numVertices;
-		bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-		bd.CPUAccessFlags = 0;
-
-		D3D11_SUBRESOURCE_DATA InitData;
-		ZeroMemory(&InitData, sizeof(InitData));
-		InitData.pSysMem = finalVerts;
-
-		_pd3dDevice->CreateBuffer(&bd, &InitData, &vertexBuffer);
-
-		meshData.VertexBuffer = vertexBuffer;
-		meshData.VBOffset = 0;
-		meshData.VBStride = sizeof(SimpleVertex);
-
-		ID3D11Buffer* indexBuffer;
-
-		ZeroMemory(&bd, sizeof(bd));
-		bd.Usage = D3D11_USAGE_DEFAULT;
-		bd.ByteWidth = sizeof(WORD) * numIndices;     
-		bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
-		bd.CPUAccessFlags = 0;
-
-		ZeroMemory(&InitData, sizeof(InitData));
-		InitData.pSysMem = indices;
-		_pd3dDevice->CreateBuffer(&bd, &InitData, &indexBuffer);
-
+		for (unsigned int i = 0; i < numVertices; ++i)
+		{
+			meshData.vertices.push_back(Vertex(finalVerts[i].Pos.x, finalVerts[i].Pos.y, finalVerts[i].Pos.z, finalVerts[i].TexC.x, finalVerts[i].TexC.y));
+		}
+		for (unsigned int i = 0; i < numIndices; ++i)
+		{
+			meshData.indices.push_back(indices[i]);
+		}
 		meshData.IndexCount = numIndices;
-		meshData.IndexBuffer = indexBuffer;
 
 		//This data has now been sent over to the GPU so we can delete this CPU-side stuff
 		delete [] indices;

@@ -3,9 +3,7 @@
 int WINAPI WinMain(HINSTANCE hInstance,    //Main windows function
 	HINSTANCE hPrevInstance,
 	LPSTR lpCmdLine,
-	int nShowCmd)
-
-{
+	int nShowCmd){
 	// create the window
 	if (!InitializeWindow(hInstance, nShowCmd, FullScreen))
 	{
@@ -727,11 +725,6 @@ bool InitD3D()
 		indies.push_back(v);
 	}
 
-	CreateObjectStruct COS(device, commandList,"Obj1" ,ObjectType::GameObj, verts, indies);
-
-	m_Manager->BuildObject(COS);
-
-
 	// Create the depth/stencil buffer
 
 	// create a depth stencil descriptor heap so we can get a pointer to the depth stencil buffer
@@ -951,13 +944,6 @@ bool InitD3D()
 	cameraTarget = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
 	cameraUp = XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f);
 
-	// build view matrix
-	XMVECTOR cPos = XMLoadFloat4(&cameraPosition);
-	XMVECTOR cTarg = XMLoadFloat4(&cameraTarget);
-	XMVECTOR cUp = XMLoadFloat4(&cameraUp);
-	tmpMat = XMMatrixLookAtLH(cPos, cTarg, cUp);
-	XMStoreFloat4x4(&cameraViewMat, tmpMat);
-
 	// set starting cubes position
 	// first cube
 	cube1Position = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f); // set cube 1's position
@@ -979,76 +965,115 @@ bool InitD3D()
 	m_Manager = new SystemManager();
 	m_Manager->SetUpCamera(cameraPosition, cameraTarget, cameraUp, Width, Height, 0.1, 1000);
 	m_Manager->ReturnCamera()->Update();
+
+	Transform* transform = new Transform(Vector3D(0.0f, 0.0f, 0.0f), Vector3D(0.0f, 90.0f, 0.0f), Vector3D(10.0f, 1.0f, 1.0f));
+	XMStoreFloat4x4(&transform->RotationalMatrix, XMMatrixIdentity());
+	CreateObjectStruct COS(device, commandList, "Obj1", ObjectType::GameObj, verts, indies, 1, ConstantBufferPerObjectAlignedSize, transform);
+	m_Manager->BuildObject(COS);
+
+	transform = new Transform(Vector3D(1.5f, 0.0f, 0.0f), Vector3D(0.0f, 00.0f, 0.0f), Vector3D(0.5f, 0.5f, 0.5f));
+	XMStoreFloat4x4(&transform->RotationalMatrix, XMMatrixIdentity());
+	COS = CreateObjectStruct(device, commandList, "Obj2", ObjectType::GameObj, verts, indies, 2, ConstantBufferPerObjectAlignedSize, transform);
+	m_Manager->BuildObject(COS);	
+	GameObject* GO = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(0));
+	GameObject* GO2 = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(1));
+	GO2->m_Particle->SetParentTransform(GO->m_Transform);
 	return true;
 }
 
 void Update()
 {
-	// update app logic, such as moving the camera or figuring out what objects are in view
+	GameObject* GO = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(0));
+	GameObject* GO2 = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(1));
 
-	// create rotation matrices
-	XMMATRIX rotXMat = XMMatrixRotationX(69.f);
-	XMMATRIX rotYMat = XMMatrixRotationY(0.0002f);
-	XMMATRIX rotZMat = XMMatrixRotationZ(0.0003f);
+	Vector3D rot = GO->m_Transform->ReturnRot();
+	GO->m_Transform->SetRot(Vector3D(rot.ReturnX(), rot.ReturnY() + 0.00005f, rot.ReturnZ()));
 
-	// add rotation to cube1's rotation matrix and store it
-	XMMATRIX rotMat = XMLoadFloat4x4(&cube1RotMat) * rotXMat * rotYMat * rotZMat;
-	XMStoreFloat4x4(&cube1RotMat, rotMat);
+	rot = GO2->m_Transform->ReturnRot();
+	GO2->m_Transform->SetRot(Vector3D(rot.ReturnX() + 0.0003f, rot.ReturnY() + 0.000420f, rot.ReturnZ() + 0.00069f));
 
-	// create translation matrix for cube 1 from cube 1's position vector
-	XMMATRIX translationMat = XMMatrixTranslationFromVector(XMLoadFloat4(&cube1Position));
+	GO->Update(0.f);
+	GO2->Update(0.f);
 
-	// create cube1's world matrix by first rotating the cube, then positioning the rotated cube
-	XMMATRIX worldMat = rotMat * translationMat;
-
-	// store cube1's world matrix
-	XMStoreFloat4x4(&cube1WorldMat, worldMat);
 
 	// update constant buffer for cube1
 	// create the wvp matrix and store in constant buffer
 	CameraBufferData CBD = m_Manager->ReturnCamera()->ReturnViewPlusProjection();
 	XMMATRIX viewMat = XMLoadFloat4x4(&CBD.m_view); // load view matrix
-	XMMATRIX projMat = XMLoadFloat4x4(&CBD.m_projection); // load projection matrix
-	XMMATRIX wvpMat = XMLoadFloat4x4(&cube1WorldMat) * viewMat * projMat; // create wvp matrix
+	XMMATRIX projMat = XMLoadFloat4x4(&CBD.m_projection); // load projection matrix#
+
+
+	XMMATRIX wvpMat = GO->m_Particle->ReturnWorldMatrix() * viewMat * projMat; // create wvp matrix
 	XMMATRIX transposed = XMMatrixTranspose(wvpMat); // must transpose wvp matrix for the gpu
 	XMStoreFloat4x4(&cbPerObject.wvpMat, transposed); // store transposed wvp matrix in constant buffer
+
 
 	// copy our ConstantBuffer instance to the mapped constant buffer resource
 	memcpy(cbvGPUAddress[frameIndex], &cbPerObject, sizeof(cbPerObject));
 
-	
-	// now do cube2's world matrix
-	// create rotation matrices for cube2
-	rotXMat = XMMatrixRotationX(0.0003f);
-	rotYMat = XMMatrixRotationY(0.00420f);
-	rotZMat = XMMatrixRotationZ(0.0069f);
 
-	// add rotation to cube2's rotation matrix and store it
-	rotMat = rotZMat * (XMLoadFloat4x4(&cube2RotMat) * (rotXMat * rotYMat));
-	XMStoreFloat4x4(&cube2RotMat, rotMat);
-
-	// create translation matrix for cube 2 to offset it from cube 1 (its position relative to cube1
-	XMMATRIX translationOffsetMat = XMMatrixTranslationFromVector(XMLoadFloat4(&cube2PositionOffset));
-
-	// we want cube 2 to be half the size of cube 1, so we scale it by .5 in all dimensions
-	XMMATRIX scaleMat = XMMatrixScaling(0.5f, 0.5f, 0.5f);
-
-	// reuse worldMat. 
-	// first we scale cube2. scaling happens relative to point 0,0,0, so you will almost always want to scale first
-	// then we translate it. 
-	// then we rotate it. rotation always rotates around point 0,0,0
-	// finally we move it to cube 1's position, which will cause it to rotate around cube 1
-	worldMat = scaleMat * translationOffsetMat * rotMat * translationMat;
-
-	wvpMat = XMLoadFloat4x4(&cube2WorldMat) * viewMat * projMat; // create wvp matrix
+	wvpMat = GO2->m_Particle->ReturnWorldMatrix() * viewMat * projMat; // create wvp matrix
 	transposed = XMMatrixTranspose(wvpMat); // must transpose wvp matrix for the gpu
 	XMStoreFloat4x4(&cbPerObject.wvpMat, transposed); // store transposed wvp matrix in constant buffer
+
 
 	// copy our ConstantBuffer instance to the mapped constant buffer resource
 	memcpy(cbvGPUAddress[frameIndex] + ConstantBufferPerObjectAlignedSize, &cbPerObject, sizeof(cbPerObject));
 
-	// store cube2's world matrix
-	XMStoreFloat4x4(&cube2WorldMat, worldMat);
+	// update app logic, such as moving the camera or figuring out what objects are in view
+	
+	/*
+	// create rotation matrices
+	Vector3D rot = GO->m_Transform->ReturnRot();
+	GO->m_Transform->SetRot(Vector3D(rot.ReturnX(), rot.ReturnY() + 0.00005f, rot.ReturnZ()));
+
+	XMMATRIX scale = XMMatrixScaling(GO->m_Transform->ReturnSca().ReturnX(), GO->m_Transform->ReturnSca().ReturnY(), GO->m_Transform->ReturnSca().ReturnZ());
+	XMMATRIX rotation = XMMatrixRotationX(GO->m_Transform->ReturnRot().ReturnX()) * XMMatrixRotationY(GO->m_Transform->ReturnRot().ReturnY()) * XMMatrixRotationZ(GO->m_Transform->ReturnRot().ReturnZ());
+	XMMATRIX translation = XMMatrixTranslation(GO->m_Transform->ReturnPos().ReturnX(), GO->m_Transform->ReturnPos().ReturnY(), GO->m_Transform->ReturnPos().ReturnZ());
+
+	// create cube1's world matrix by first rotating the cube, then positioning the rotated cube
+	XMMATRIX worldMat = scale * rotation * translation;
+
+
+	// update constant buffer for cube1
+	// create the wvp matrix and store in constant buffer
+	CameraBufferData CBD = m_Manager->ReturnCamera()->ReturnViewPlusProjection();
+	XMMATRIX viewMat = XMLoadFloat4x4(&CBD.m_view); // load view matrix
+	XMMATRIX projMat = XMLoadFloat4x4(&CBD.m_projection); // load projection matrix#
+
+
+	XMMATRIX wvpMat = worldMat * viewMat * projMat; // create wvp matrix
+	XMMATRIX transposed = XMMatrixTranspose(wvpMat); // must transpose wvp matrix for the gpu
+	XMStoreFloat4x4(&cbPerObject.wvpMat, transposed); // store transposed wvp matrix in constant buffer
+
+
+	// copy our ConstantBuffer instance to the mapped constant buffer resource
+	memcpy(cbvGPUAddress[frameIndex], &cbPerObject, sizeof(cbPerObject));
+
+
+
+
+
+
+
+
+	rot = GO2->m_Transform->ReturnRot();
+	GO2->m_Transform->SetRot(Vector3D(rot.ReturnX() + 0.0003f, rot.ReturnY() + 0.000420f, rot.ReturnZ() + 0.00069f));
+
+	scale = XMMatrixScaling(GO2->m_Transform->ReturnSca().ReturnX(), GO2->m_Transform->ReturnSca().ReturnY(), GO2->m_Transform->ReturnSca().ReturnZ());
+	rotation = XMMatrixRotationX(GO2->m_Transform->ReturnRot().ReturnX()) * XMMatrixRotationY(GO2->m_Transform->ReturnRot().ReturnY()) * XMMatrixRotationZ(GO2->m_Transform->ReturnRot().ReturnZ());
+	translation = XMMatrixTranslation(GO2->m_Transform->ReturnPos().ReturnX(), GO2->m_Transform->ReturnPos().ReturnY(), GO2->m_Transform->ReturnPos().ReturnZ());
+
+	XMMATRIX worldMat2 = scale * rotation * translation * worldMat;
+
+	wvpMat = worldMat2 * viewMat * projMat; // create wvp matrix
+	transposed = XMMatrixTranspose(wvpMat); // must transpose wvp matrix for the gpu
+	XMStoreFloat4x4(&cbPerObject.wvpMat, transposed); // store transposed wvp matrix in constant buffer
+
+
+	// copy our ConstantBuffer instance to the mapped constant buffer resource
+	memcpy(cbvGPUAddress[frameIndex] + ConstantBufferPerObjectAlignedSize, &cbPerObject, sizeof(cbPerObject));
+	*/
 }
 
 void UpdatePipeline()

@@ -6,6 +6,7 @@
 #include "d3dx12.h"
 #include "Vector3D.h"
 #include "Vector2.h"
+#include "Transform.h"
 #include <random>
 #include <vector>
 #include <string>
@@ -27,13 +28,25 @@ enum class ObjectType
 
 struct CreateObjectStruct
 {
-	CreateObjectStruct(ID3D12Device* device, ID3D12GraphicsCommandList* cl, std::string oN , ObjectType type, std::vector<Vertex> verts, std::vector<DWORD> indies) : dev(device), commandList(cl), objName(oN),objType(type), vertices(verts), indices(indies) {}
-	ID3D12Device* dev;
+	CreateObjectStruct(ID3D12Device* device, ID3D12GraphicsCommandList* cl, std::string oN , ObjectType type, std::vector<Vertex> verts, std::vector<DWORD> indies, int objNum, int alignment, Transform* trans) : dev(device), commandList(cl), objName(oN),objType(type), vertices(verts), indices(indies), bufferAlignment((objNum - 1) * alignment), transform(trans) {}
+	ID3D12Device* dev = nullptr;
 	ID3D12GraphicsCommandList* commandList;
 	std::string objName;
 	ObjectType objType;
 	std::vector<Vertex> vertices;
 	std::vector<DWORD> indices;
+	int bufferAlignment;
+	Transform* transform = nullptr;
+};
+
+struct DrawObjectsStruct
+{
+	DrawObjectsStruct(ID3D12GraphicsCommandList* cL, D3D12_VIEWPORT* vp, D3D12_RECT* rect, ID3D12Resource* cBUH, int CBO, int index) : commandList(cL), viewport(vp), sisRect(rect), constantBufferUploadHeaps(cBUH), frameIndex(index){ }
+	ID3D12GraphicsCommandList* commandList;
+	D3D12_VIEWPORT* viewport;
+	D3D12_RECT* sisRect;
+	ID3D12Resource* constantBufferUploadHeaps;
+	int frameIndex;
 };
 
 struct Geometry
@@ -42,8 +55,9 @@ struct Geometry
 	ID3D12Resource* indexBuffer; // a default buffer in GPU memory that we will load index data
 	int numberOfIndices;
 	XMFLOAT3 Point;
-	UINT vertexBufferStride;
-	UINT vertexBufferOffset;
+	D3D12_VERTEX_BUFFER_VIEW vertexBufferView; // a structure containing a pointer to the vertex data in gpu memory
+										   // the total size of the buffer, and the size of each element (vertex)
+	D3D12_INDEX_BUFFER_VIEW indexBufferView; // a structure holding information about the index buffer
 };
 
 struct Material
@@ -179,8 +193,8 @@ struct SimpleVertex
 //Struct for storing object meshes
 struct MeshData
 {
-	ID3D11Buffer* VertexBuffer;
-	ID3D11Buffer* IndexBuffer;
+	std::vector<Vertex> vertices;
+	std::vector<DWORD> indices;
 	UINT VBStride;
 	UINT VBOffset;
 	UINT IndexCount;

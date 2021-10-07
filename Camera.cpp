@@ -3,7 +3,7 @@
 
 //Pages 500 onwards
 
-Camera::Camera(XMFLOAT4 position, XMFLOAT4 at, XMFLOAT4 up, FLOAT windowWidth, FLOAT windowHeight, FLOAT nearDepth, FLOAT farDepth)
+Camera::Camera(XMFLOAT4 position, XMFLOAT4 at, XMFLOAT4 up, FLOAT windowWidth, FLOAT windowHeight, FLOAT nearDepth, FLOAT farDepth) : ImaginaryObject(nullptr)
 {
 	m_Eye = position;
 	m_At = at;

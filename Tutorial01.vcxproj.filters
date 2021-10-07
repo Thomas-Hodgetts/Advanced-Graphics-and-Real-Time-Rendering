@@ -57,6 +57,7 @@
     <ClCompile Include="Apperance.cpp">
       <Filter>Objects\Object Component\Apperance</Filter>
     </ClCompile>
+    <ClCompile Include="GameObjectClass.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -116,6 +117,7 @@
     <ClInclude Include="Vector2.h">
       <Filter>Vector\Vector2</Filter>
     </ClInclude>
+    <ClInclude Include="GameObjectClass.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Camera">

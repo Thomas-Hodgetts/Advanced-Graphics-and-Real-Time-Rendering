@@ -48,6 +48,8 @@ public:
 	Material GetMaterial() const { return m_Apperance->ReturnMat(); }
 	//Legacy function. will simply call m_Apperance->SetTex().
 	void SetTextureRV(ID3D11ShaderResourceView * textureRV) { m_Apperance->SetTex(textureRV); }
+	//
+	void SetSubResources() { m_Apperance->SetSubResources(); }
 	//Legacy function. will simply call m_Apperance->ReturnTex().
 	ID3D11ShaderResourceView * GetTextureRV() const { return m_Apperance->ReturnTex(); }
 	//Checks if the object has a texture. returns true if so and false if not.

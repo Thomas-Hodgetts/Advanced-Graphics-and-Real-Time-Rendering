@@ -127,22 +127,37 @@ HRESULT SystemManager::BuildObject(CreateObjectStruct COS)
 		geo.vertexBuffer = VB;
 		geo.numberOfIndices = numIndices;
 		geo.Point = XMFLOAT3(0, 0, 0);
-		geo.vertexBufferOffset = 0;
-		geo.vertexBufferStride = 0;
-
+		// create a vertex buffer view for the triangle. We get the GPU memory address to the vertex pointer using the GetGPUVirtualAddress() method
+		geo.vertexBufferView.BufferLocation = geo.vertexBuffer->GetGPUVirtualAddress();
+		geo.vertexBufferView.StrideInBytes = sizeof(Vertex);
+		geo.vertexBufferView.SizeInBytes = vBufferSize;
+		// create a vertex buffer view for the triangle. We get the GPU memory address to the vertex pointer using the GetGPUVirtualAddress() method
+		geo.indexBufferView.BufferLocation = geo.indexBuffer->GetGPUVirtualAddress();
+		geo.indexBufferView.Format = DXGI_FORMAT_R32_UINT; // 32-bit unsigned integer (this is what a dword is, double word, a word is 2 bytes)
+		geo.indexBufferView.SizeInBytes = iBufferSize;
 
 		Apperance* objAppearence = new Apperance(geo, Material(), nullptr);
-		GameObject* GO = new GameObject(COS.objName, objAppearence, &Transform());
+		objAppearence->SetBufferOffset(COS.bufferAlignment);
+		GameObject* GO = new GameObject(COS.objName, objAppearence, COS.transform);
 		m_Objects.AddObject(GO);
-		int i = 1;
 	}
 	else
 	{
-		ImaginaryObject IO;
+		
 	}
 }
 
 void SystemManager::SetUpCamera(XMFLOAT4 position, XMFLOAT4 at, XMFLOAT4 up, FLOAT windowWidth, FLOAT windowHeight, FLOAT nearDepth, FLOAT farDepth)
 {
 	m_Camera = new Camera(position, at, up, windowWidth, windowHeight, nearDepth, farDepth);
+}
+
+void SystemManager::Update()
+{
+	m_Objects.Update();
+}
+
+void SystemManager::Draw(DrawObjectsStruct DOS)
+{
+	m_Objects.Draw(DOS);
 }

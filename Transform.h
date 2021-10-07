@@ -66,7 +66,10 @@ public:
 	//Returns the transforms scale
 	Vector3D ReturnSca() { return m_Scale; };
 
+	XMFLOAT4X4 RotationalMatrix;
+
 private:
+
 	Vector3D m_Position;
 	Vector3D m_Rotation;
 	Vector3D m_Scale;

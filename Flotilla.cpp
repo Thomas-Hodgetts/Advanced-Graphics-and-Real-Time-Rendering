@@ -33,12 +33,12 @@ void Flotilla::Update()
 	}
 }
 
-void Flotilla::Draw(ID3D11DeviceContext* IC, ID3D11Buffer* _pCB, ConstantBuffer cb)
+void Flotilla::Draw(DrawObjectsStruct DOS)
 {
 	for (int i = 0; i < m_Objects.size(); i++)
 	{
 		m_Objects[i]->SetSubResources();
-		m_Objects[i]->Draw(IC, _pCB, cb);
+		m_Objects[i]->Draw(DOS);
 	}
 }
 

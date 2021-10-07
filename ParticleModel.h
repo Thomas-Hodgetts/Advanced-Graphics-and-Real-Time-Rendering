@@ -83,6 +83,8 @@ public:
 	void SetCentreOfGravity(Vector3D value) { m_CentreOfGravity = value; };
 	//Sets the point of gravity
 	void SetCentreOfGravity(XMFLOAT3 value) { m_CentreOfGravity = value; };
+	//Sets the Parent Transform
+	void SetParentTransform(Transform* Parent) { m_ParentTransform = Parent; }
 
 	//Return
 	Particle* ReturnRelatives() { return m_Relatives[0]; };
