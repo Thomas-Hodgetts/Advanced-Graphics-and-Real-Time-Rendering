@@ -37,8 +37,15 @@ void Flotilla::Draw(DrawObjectsStruct DOS)
 {
 	for (int i = 0; i < m_Objects.size(); i++)
 	{
-		m_Objects[i]->SetSubResources();
-		m_Objects[i]->Draw(DOS);
+		switch (m_Objects[i]->m_ObjType)
+		{
+		default:
+			break;
+		case ObjectType::GameObj:
+			GameObject* object = static_cast<GameObject*>(m_Objects[i]);
+			object->SetSubResources();
+			object->Draw(DOS);
+		}
 	}
 }
 

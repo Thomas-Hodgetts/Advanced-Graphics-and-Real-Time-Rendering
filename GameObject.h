@@ -21,6 +21,8 @@ public:
 
 	// Setters and Getters for position/rotation/scale. Majority of these are legacy functions for compatability
 
+	//Calls m_Apperance->Draw()
+	void Draw(DrawObjectsStruct DOS);
 
 	//Legacy function. will simply call m_Transform->SetPos().
 	void SetPosition(XMFLOAT3 position) { m_Transform->SetPos(position); }

@@ -1,5 +1,7 @@
 #pragma once
-#include "Object.h"
+#include "GameObject.h"
+#include "PhysicalObject.h"
+#include "ImaginaryObject.h"
 #include "ThreadVector.h"
 
 

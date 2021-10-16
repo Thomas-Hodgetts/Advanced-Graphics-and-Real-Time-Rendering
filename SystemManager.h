@@ -25,6 +25,8 @@ public:
 
 private:
 	
+	void PreparePipeline(DrawObjectsStruct DOS);
+	
 	Camera* m_Camera;
 	Flotilla m_Objects;
 	Flotilla m_DrawQueue;

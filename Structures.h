@@ -41,12 +41,22 @@ struct CreateObjectStruct
 
 struct DrawObjectsStruct
 {
-	DrawObjectsStruct(ID3D12GraphicsCommandList* cL, D3D12_VIEWPORT* vp, D3D12_RECT* rect, ID3D12Resource* cBUH, int CBO, int index) : commandList(cL), viewport(vp), sisRect(rect), constantBufferUploadHeaps(cBUH), frameIndex(index){ }
-	ID3D12GraphicsCommandList* commandList;
-	D3D12_VIEWPORT* viewport;
-	D3D12_RECT* sisRect;
-	ID3D12Resource* constantBufferUploadHeaps;
-	int frameIndex;
+	DrawObjectsStruct() {};
+	DrawObjectsStruct(ID3D12GraphicsCommandList* cL, ID3D12CommandAllocator* cA, ID3D12Resource* rT, ID3D12Resource* dSB, ID3D12DescriptorHeap* rTRH, ID3D12DescriptorHeap* dSRH, ID3D12DescriptorHeap* mDH, ID3D12PipelineState* pSO ,D3D12_VIEWPORT* vp, D3D12_RECT* rect, ID3D12Resource* cBUH, int CBO, ID3D12RootSignature* r, int index) : commandList(cL), commandAllocator(cA), renderTargets(rT), depthStencilBuffer(dSB),renderTargetResourceHeap(rTRH), depthAndStencilResourceHeap(dSRH), mainDescriptorHeap(mDH), pipelineStateObject(pSO),viewport(vp), sisRect(rect), constantBufferUploadHeaps(cBUH), root(r),frameIndex(index){ }
+	ID3D12GraphicsCommandList* commandList = nullptr;
+	ID3D12CommandAllocator* commandAllocator = nullptr;
+	ID3D12Resource* renderTargets = nullptr;
+	ID3D12Resource* depthStencilBuffer = nullptr;
+	ID3D12DescriptorHeap* renderTargetResourceHeap = nullptr;
+	ID3D12DescriptorHeap* depthAndStencilResourceHeap = nullptr;
+	ID3D12DescriptorHeap* mainDescriptorHeap = nullptr;
+	ID3D12PipelineState* pipelineStateObject = nullptr;
+	D3D12_VIEWPORT* viewport = nullptr;
+	D3D12_RECT* sisRect = nullptr;
+	ID3D12Resource* constantBufferUploadHeaps = nullptr;
+	ID3D12RootSignature* root = nullptr;
+	int frameIndex = 0;
+	int renderTargetDescriptorSize = 0;
 };
 
 struct Geometry

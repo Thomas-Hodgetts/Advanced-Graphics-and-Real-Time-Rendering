@@ -15,6 +15,10 @@
 
 #include "SystemManager.h"
 #include "Structures.h"
+#include "iamgui/imgui.h"
+#include "iamgui/imgui_impl_win32.h"
+#include "iamgui/imgui_impl_dx12.h"
+#include "iamgui/imconfig.h"
 
 // this will only call release if an object exists (prevents exceptions calling release on non existant objects)
 #define SAFE_RELEASE(p) { if ( (p) ) { (p)->Release(); (p) = 0; } }
@@ -168,3 +172,4 @@ ID3D12Resource* textureBufferUploadHeap;
 
 
 SystemManager* m_Manager = nullptr;
+DrawObjectsStruct m_DrawObjectStructs = DrawObjectsStruct();

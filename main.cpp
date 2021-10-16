@@ -21,6 +21,8 @@ int WINAPI WinMain(HINSTANCE hInstance,    //Main windows function
 		return 1;
 	}
 
+	//ImGui::Begin("Sample Window");
+
 	// start the main loop
 	mainloop();
 
@@ -67,6 +69,8 @@ bool InitializeWindow(HINSTANCE hInstance,
 	wc.lpszMenuName = NULL;
 	wc.lpszClassName = WindowName;
 	wc.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
+
+
 
 	if (!RegisterClassEx(&wc))
 	{
@@ -126,12 +130,18 @@ void mainloop() {
 	}
 }
 
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 LRESULT CALLBACK WndProc(HWND hwnd,
 	UINT msg,
 	WPARAM wParam,
 	LPARAM lParam)
 
 {
+
+	if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam))
+		return true;
+
 	switch (msg)
 	{
 	case WM_KEYDOWN:
@@ -160,6 +170,7 @@ BYTE* imageData;
 
 bool InitD3D()
 {
+
 	HRESULT hr;
 
 	// -- Create the Device -- //
@@ -966,7 +977,7 @@ bool InitD3D()
 	m_Manager->SetUpCamera(cameraPosition, cameraTarget, cameraUp, Width, Height, 0.1, 1000);
 	m_Manager->ReturnCamera()->Update();
 
-	Transform* transform = new Transform(Vector3D(0.0f, 0.0f, 0.0f), Vector3D(0.0f, 90.0f, 0.0f), Vector3D(10.0f, 1.0f, 1.0f));
+	Transform* transform = new Transform(Vector3D(0.0f, 0.0f, 0.0f), Vector3D(0.0f, 90.0f, 0.0f), Vector3D(5.0f, 5.0f, 5.0f));
 	XMStoreFloat4x4(&transform->RotationalMatrix, XMMatrixIdentity());
 	CreateObjectStruct COS(device, commandList, "Obj1", ObjectType::GameObj, verts, indies, 1, ConstantBufferPerObjectAlignedSize, transform);
 	m_Manager->BuildObject(COS);
@@ -978,6 +989,46 @@ bool InitD3D()
 	GameObject* GO = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(0));
 	GameObject* GO2 = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(1));
 	GO2->m_Particle->SetParentTransform(GO->m_Transform);
+
+	//Iamgui Directx 12 win 32 example
+
+	bool CompletedSetup;
+
+
+	// Setup Dear ImGui context
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+	ImGui::StyleColorsClassic();
+
+	CompletedSetup = ImGui_ImplWin32_Init(hwnd);
+	
+	if (!CompletedSetup)
+	{
+		return false;
+	}
+
+	CompletedSetup = ImGui_ImplDX12_Init(device, frameBufferCount, DXGI_FORMAT_R8G8B8A8_UNORM,  dsDescriptorHeap, dsDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), dsDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+	if (!CompletedSetup)
+	{
+		return false;
+	}
+
+	m_DrawObjectStructs.commandAllocator = *commandAllocator;
+	m_DrawObjectStructs.commandList = commandList;
+	m_DrawObjectStructs.constantBufferUploadHeaps = *constantBufferUploadHeaps;
+	m_DrawObjectStructs.depthAndStencilResourceHeap = dsDescriptorHeap;
+	m_DrawObjectStructs.depthStencilBuffer = depthStencilBuffer;
+	m_DrawObjectStructs.renderTargetResourceHeap = rtvDescriptorHeap;
+	m_DrawObjectStructs.renderTargets = *renderTargets;
+	m_DrawObjectStructs.sisRect = &scissorRect;
+	m_DrawObjectStructs.viewport = &viewport;
+	m_DrawObjectStructs.renderTargetDescriptorSize = rtvDescriptorSize;
+	m_DrawObjectStructs.root = rootSignature;
+	m_DrawObjectStructs.mainDescriptorHeap = mainDescriptorHeap;
+	m_DrawObjectStructs.pipelineStateObject = pipelineStateObject;
+
 	return true;
 }
 
@@ -987,7 +1038,7 @@ void Update()
 	GameObject* GO2 = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(1));
 
 	Vector3D rot = GO->m_Transform->ReturnRot();
-	GO->m_Transform->SetRot(Vector3D(rot.ReturnX(), rot.ReturnY() + 0.00005f, rot.ReturnZ()));
+	GO->m_Transform->SetRot(Vector3D(rot.ReturnX(), rot.ReturnY() + 0.0005f, rot.ReturnZ()));
 
 	rot = GO2->m_Transform->ReturnRot();
 	GO2->m_Transform->SetRot(Vector3D(rot.ReturnX() + 0.0003f, rot.ReturnY() + 0.000420f, rot.ReturnZ() + 0.00069f));
@@ -995,9 +1046,15 @@ void Update()
 	GO->Update(0.f);
 	GO2->Update(0.f);
 
+	// Start the Dear ImGui frame
+	//ImGui_ImplDX12_NewFrame();
+	//ImGui_ImplWin32_NewFrame();
+	//ImGui::NewFrame();
 
 	// update constant buffer for cube1
 	// create the wvp matrix and store in constant buffer
+	//m_Manager->ReturnCamera()->Walk(sinf());
+	m_Manager->ReturnCamera()->Update();
 	CameraBufferData CBD = m_Manager->ReturnCamera()->ReturnViewPlusProjection();
 	XMMATRIX viewMat = XMLoadFloat4x4(&CBD.m_view); // load view matrix
 	XMMATRIX projMat = XMLoadFloat4x4(&CBD.m_projection); // load projection matrix#
@@ -1091,6 +1148,17 @@ void UpdatePipeline()
 		Running = false;
 	}
 
+
+
+	m_DrawObjectStructs.frameIndex = frameIndex;
+	m_DrawObjectStructs.commandAllocator = commandAllocator[frameIndex];
+	m_DrawObjectStructs.renderTargets = renderTargets[frameIndex];
+
+
+	m_Manager->Draw(m_DrawObjectStructs);
+
+
+	/*
 	// reset the command list. by resetting the command list we are putting it into
 	// a recording state so we can start recording commands into the command allocator.
 	// the command allocator that we reference here may have multiple command lists
@@ -1171,6 +1239,7 @@ void UpdatePipeline()
 	{
 		Running = false;
 	}
+	*/
 }
 void Render()
 {
@@ -1197,6 +1266,7 @@ void Render()
 	hr = swapChain->Present(0, 0);
 	if (FAILED(hr))
 	{
+		hr = device->GetDeviceRemovedReason();
 		Running = false;
 	}
 }
