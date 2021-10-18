@@ -161,14 +161,20 @@
     <ClCompile Include="Flotilla.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="GameObjectClass.cpp" />
+    <ClCompile Include="iamgui\imgui.cpp" />
+    <ClCompile Include="iamgui\imgui_draw.cpp" />
+    <ClCompile Include="iamgui\imgui_impl_dx12.cpp" />
+    <ClCompile Include="iamgui\imgui_impl_win32.cpp" />
+    <ClCompile Include="iamgui\imgui_tables.cpp" />
+    <ClCompile Include="iamgui\imgui_widgets.cpp" />
     <ClCompile Include="ImaginaryObject.cpp" />
     <ClCompile Include="Loader.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Object.cpp" />
-    <ClCompile Include="OBJLoader.cpp" />
     <ClCompile Include="ParticleModel.cpp" />
     <ClCompile Include="PhysicalObject.cpp" />
     <ClCompile Include="RigidBody.cpp" />
+    <ClCompile Include="Source1.cpp" />
     <ClCompile Include="SystemManager.cpp" />
     <ClCompile Include="Transform.cpp" />
     <ClCompile Include="Vector2.cpp" />
@@ -182,10 +188,17 @@
     <ClInclude Include="Flotilla.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GameObjectClass.h" />
+    <ClInclude Include="iamgui\imconfig.h" />
+    <ClInclude Include="iamgui\imgui.h" />
+    <ClInclude Include="iamgui\imgui_impl_dx12.h" />
+    <ClInclude Include="iamgui\imgui_impl_win32.h" />
+    <ClInclude Include="iamgui\imgui_internal.h" />
+    <ClInclude Include="iamgui\imstb_rectpack.h" />
+    <ClInclude Include="iamgui\imstb_textedit.h" />
+    <ClInclude Include="iamgui\imstb_truetype.h" />
     <ClInclude Include="ImaginaryObject.h" />
     <ClInclude Include="Loader.h" />
     <ClInclude Include="Object.h" />
-    <ClInclude Include="OBJLoader.h" />
     <ClInclude Include="ParticleModel.h" />
     <ClInclude Include="PhysicalObject.h" />
     <ClInclude Include="Quaternion.h" />
@@ -218,6 +231,9 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="iamgui\LICENSE.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

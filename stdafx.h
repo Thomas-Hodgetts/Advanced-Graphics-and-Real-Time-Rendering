@@ -19,6 +19,7 @@
 #include "iamgui/imgui_impl_win32.h"
 #include "iamgui/imgui_impl_dx12.h"
 #include "iamgui/imconfig.h"
+#include "Source1.cpp"
 
 // this will only call release if an object exists (prevents exceptions calling release on non existant objects)
 #define SAFE_RELEASE(p) { if ( (p) ) { (p)->Release(); (p) = 0; } }
@@ -32,7 +33,7 @@ HWND hwnd = NULL;
 LPCTSTR WindowName = L"Cirno Fumo Rotate";
 
 // title of the window
-LPCTSTR WindowTitle = L"Cirno Window";
+LPCTSTR WindowTitle = L"Cirno Fumo Rotate";
 
 // width and height of the window
 int Width = 1920;

@@ -2,6 +2,7 @@ struct VS_INPUT
 {
 	float4 pos : POSITION;
 	float2 texCoord: TEXCOORD;
+	float2 norm: NORMAL;
 	float3 tan: TANGENT;
 	float3 biNorm: BINORMAL;
 };

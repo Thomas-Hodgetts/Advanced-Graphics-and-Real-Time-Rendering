@@ -71,10 +71,12 @@ MeshData Loader::LoadMesh(char* filename, ID3D11Device* _pd3dDevice, bool From3d
 {
 	if (From3dsMax)
 	{
-		return OBJLoader::Load(filename, _pd3dDevice);
+		//return OBJLoader::Load(filename, _pd3dDevice);
 	}
 	else if (!From3dsMax)
 	{
-		return OBJLoader::Load(filename, _pd3dDevice, false);
+		//return OBJLoader::Load(filename, _pd3dDevice, false);
 	}
+
+	return MeshData();
 }

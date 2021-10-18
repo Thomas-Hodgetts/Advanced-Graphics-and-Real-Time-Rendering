@@ -36,9 +36,6 @@
     <ClCompile Include="DDSTextureLoader.cpp">
       <Filter>Loader\DDS</Filter>
     </ClCompile>
-    <ClCompile Include="OBJLoader.cpp">
-      <Filter>Loader\OBJ</Filter>
-    </ClCompile>
     <ClCompile Include="PhysicalObject.cpp">
       <Filter>Objects\Physical Object</Filter>
     </ClCompile>
@@ -58,6 +55,25 @@
       <Filter>Objects\Object Component\Apperance</Filter>
     </ClCompile>
     <ClCompile Include="GameObjectClass.cpp" />
+    <ClCompile Include="iamgui\imgui.cpp">
+      <Filter>ImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="iamgui\imgui_draw.cpp">
+      <Filter>ImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="iamgui\imgui_impl_dx12.cpp">
+      <Filter>ImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="iamgui\imgui_impl_win32.cpp">
+      <Filter>ImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="iamgui\imgui_tables.cpp">
+      <Filter>ImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="iamgui\imgui_widgets.cpp">
+      <Filter>ImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="Source1.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -92,9 +108,6 @@
     <ClInclude Include="DDSTextureLoader.h">
       <Filter>Loader\DDS</Filter>
     </ClInclude>
-    <ClInclude Include="OBJLoader.h">
-      <Filter>Loader\OBJ</Filter>
-    </ClInclude>
     <ClInclude Include="ThreadVector.h">
       <Filter>ThreadVector</Filter>
     </ClInclude>
@@ -118,6 +131,30 @@
       <Filter>Vector\Vector2</Filter>
     </ClInclude>
     <ClInclude Include="GameObjectClass.h" />
+    <ClInclude Include="iamgui\imconfig.h">
+      <Filter>ImGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="iamgui\imgui.h">
+      <Filter>ImGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="iamgui\imgui_impl_dx12.h">
+      <Filter>ImGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="iamgui\imgui_impl_win32.h">
+      <Filter>ImGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="iamgui\imgui_internal.h">
+      <Filter>ImGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="iamgui\imstb_rectpack.h">
+      <Filter>ImGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="iamgui\imstb_textedit.h">
+      <Filter>ImGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="iamgui\imstb_truetype.h">
+      <Filter>ImGUI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Camera">
@@ -150,9 +187,6 @@
     <Filter Include="Debug">
       <UniqueIdentifier>{0a8085ee-9045-4f46-9d0d-4688f0f83433}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Loader\OBJ">
-      <UniqueIdentifier>{425362c7-7b51-4b7f-bfbe-c9e7102a9a74}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Loader\DDS">
       <UniqueIdentifier>{5f502090-8c42-41a1-ab3a-659ddf99612b}</UniqueIdentifier>
     </Filter>
@@ -183,5 +217,13 @@
     <Filter Include="Vertex">
       <UniqueIdentifier>{a951e828-e61f-4795-9e78-7b44ab5c1e13}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ImGUI">
+      <UniqueIdentifier>{6e036d7a-70c1-458a-9a44-2e1b167f14c8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="iamgui\LICENSE.txt">
+      <Filter>ImGUI</Filter>
+    </Text>
   </ItemGroup>
 </Project>
