@@ -502,7 +502,9 @@ bool InitD3D()
 	D3D12_INPUT_ELEMENT_DESC inputLayout[] =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TANGENT", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "BINORMAL", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 36, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 
 	// fill out an input layout description structure
@@ -837,7 +839,7 @@ bool InitD3D()
 	// Load the image from file
 	D3D12_RESOURCE_DESC textureDesc;
 	int imageBytesPerRow;
-	int imageSize = LoadImageDataFromFile(&imageData, textureDesc, L"dx12.jpg", imageBytesPerRow);
+	int imageSize = LoadImageDataFromFile(&imageData, textureDesc, L"conenormal.jpg", imageBytesPerRow);
 
 	// make sure we have data
 	if(imageSize <= 0)
@@ -1155,10 +1157,10 @@ void UpdatePipeline()
 	m_DrawObjectStructs.renderTargets = renderTargets[frameIndex];
 
 
-	m_Manager->Draw(m_DrawObjectStructs);
+	//m_Manager->Draw(m_DrawObjectStructs);
 
 
-	/*
+	
 	// reset the command list. by resetting the command list we are putting it into
 	// a recording state so we can start recording commands into the command allocator.
 	// the command allocator that we reference here may have multiple command lists
@@ -1239,7 +1241,7 @@ void UpdatePipeline()
 	{
 		Running = false;
 	}
-	*/
+	
 }
 void Render()
 {

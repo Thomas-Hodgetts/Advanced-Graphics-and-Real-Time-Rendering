@@ -11,12 +11,22 @@
 #include <vector>
 #include <string>
 
+
 using namespace DirectX;
 struct Vertex
 {
+	Vertex() {};
 	Vertex(float x, float y, float z, float u, float v) : pos(x, y, z), texCoord(u, v) {}
 	Vector3D pos;
 	Vector2 texCoord;
+	Vector3D Normal;
+	Vector3D tangent;
+	Vector3D biTangent;
+
+	bool operator<(const Vertex other) const
+	{
+		return memcmp((void*)this, (void*)&other, sizeof(Vertex)) > 0;
+	};
 };
 
 enum class ObjectType
@@ -186,18 +196,6 @@ enum Axis
 	X,
 	Y,
 	Z
-};
-
-struct SimpleVertex
-{
-	XMFLOAT3 Pos;
-	XMFLOAT3 Normal;
-	XMFLOAT2 TexC;
-
-	bool operator<(const SimpleVertex other) const
-	{
-		return memcmp((void*)this, (void*)&other, sizeof(SimpleVertex)) > 0;
-	};
 };
 
 //Struct for storing object meshes
