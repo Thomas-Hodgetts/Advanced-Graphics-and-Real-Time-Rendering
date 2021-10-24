@@ -82,10 +82,19 @@ struct Geometry
 
 struct Material
 {
-	XMFLOAT4 diffuse;
-	XMFLOAT4 ambient;
-	XMFLOAT4 specular;
-	float specularPower;
+	XMFLOAT4 AmbientMtrl;
+	XMFLOAT4 DiffuseMtrl;
+	XMFLOAT4 SpecularMtrl;
+};
+
+struct Light
+{
+	XMFLOAT4 AmbientLight;
+	XMFLOAT4 DiffuseLight;
+	XMFLOAT4 SpecularLight;
+
+	float SpecularPower;
+	XMFLOAT3 LightVecW;
 };
 
 struct Colour
@@ -188,7 +197,6 @@ struct ConstantBuffer
 	XMFLOAT4 SpecularLight;
 	float SpecularPower;
 	XMFLOAT3 EyePosW;
-
 };
 
 enum Axis

@@ -19,7 +19,7 @@
 #include "iamgui/imgui_impl_win32.h"
 #include "iamgui/imgui_impl_dx12.h"
 #include "iamgui/imconfig.h"
-#include "Source1.cpp"
+#include "NormalCalculations.h"
 
 // this will only call release if an object exists (prevents exceptions calling release on non existant objects)
 #define SAFE_RELEASE(p) { if ( (p) ) { (p)->Release(); (p) = 0; } }
@@ -122,6 +122,19 @@ ID3D12DescriptorHeap* dsDescriptorHeap; // This is a heap for our depth/stencil 
 // this is the structure of our constant buffer.
 struct ConstantBufferPerObject {
 	XMFLOAT4X4 wvpMat;
+	XMFLOAT4X4 view;
+	XMFLOAT4X4 projection;
+	Material Mat;
+	Light point;
+	XMFLOAT3 EyePosW;
+	
+};
+
+struct ConstantBufferLighting 
+{
+	Material Mat;
+	Light point;
+	XMFLOAT3 EyePosW;
 };
 
 // Constant buffers must be 256-byte aligned which has to do with constant reads on the GPU.
@@ -137,6 +150,8 @@ int ConstantBufferPerObjectAlignedSize = (sizeof(ConstantBufferPerObject) + 255)
 
 ConstantBufferPerObject cbPerObject; // this is the constant buffer data we will send to the gpu 
 										// (which will be placed in the resource we created above)
+
+ConstantBufferLighting cbLighting;
 
 ID3D12Resource* constantBufferUploadHeaps[frameBufferCount]; // this is the memory on the gpu where constant buffers for each frame will be placed
 
@@ -174,3 +189,5 @@ ID3D12Resource* textureBufferUploadHeap;
 
 SystemManager* m_Manager = nullptr;
 DrawObjectsStruct m_DrawObjectStructs = DrawObjectsStruct();
+Material shinyMaterial;
+Light basicLight;

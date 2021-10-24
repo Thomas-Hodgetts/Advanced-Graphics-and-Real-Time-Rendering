@@ -1,3 +1,4 @@
+#pragma once
 #include "Structures.h"
 
 class NormalCalculations
@@ -21,19 +22,19 @@ public:
 			Vector3D e0 = v1.pos - v0.pos;
 			Vector3D e1 = v2.pos - v0.pos;
 
-			Vector3D faceNormal = e0.CrossProductCalculation(e1);
+			Vector3D faceNormal = XMVector3Cross(e0.ConvertToXMvector3(), e1.ConvertToXMvector3());
 
 			vertices[i0].Normal += faceNormal;
 			vertices[i1].Normal += faceNormal;
 			vertices[i2].Normal += faceNormal;
-			size_t vertsize = sizeof(vertices->Normal);
-
-			for (size_t i = vertsize;i--;)
-			{
-				//vertices[i].Normal = XMVector3Normalize(vertices[i].Normal.ConvertToXMvector3());
-			}
 
 		}
+		size_t vertsize = sizeof(vertices->Normal);
+		for (size_t i = vertsize; i--;)
+		{
+			vertices[i].Normal = XMVector3Normalize(vertices[i].Normal.ConvertToXMvector3());
+		}
+		int i = 0;
 	}
 
 	static XMVECTOR CalculateNormal(FXMVECTOR p0, FXMVECTOR p1, FXMVECTOR p2)

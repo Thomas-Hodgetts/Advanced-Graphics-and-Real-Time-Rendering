@@ -682,6 +682,7 @@ bool InitD3D()
 	int iBufferSize = sizeof(iList);
 
 	numCubeIndices = sizeof(iList) / sizeof(DWORD);
+	NormalCalculations::CalculateObjectNormals(vList, iList, numCubeIndices/3);
 
 	// create default heap to hold index buffer
 	hr = device->CreateCommittedResource(
@@ -816,6 +817,7 @@ bool InitD3D()
 		constantBufferUploadHeaps[i]->SetName(L"Constant Buffer Upload Resource Heap");
 
 		ZeroMemory(&cbPerObject, sizeof(cbPerObject));
+		ZeroMemory(&cbLighting, sizeof(cbLighting));
 
 		CD3DX12_RANGE readRange(0, 0);	// We do not intend to read from this resource on the CPU. (so end is less than or equal to begin)
 		
@@ -984,7 +986,7 @@ bool InitD3D()
 	m_Manager->SetUpCamera(cameraPosition, cameraTarget, cameraUp, Width, Height, 0.1, 1000);
 	m_Manager->ReturnCamera()->Update();
 
-	Transform* transform = new Transform(Vector3D(0.0f, 0.0f, 0.0f), Vector3D(0.0f, 90.0f, 0.0f), Vector3D(5.0f, 5.0f, 5.0f));
+	Transform* transform = new Transform(Vector3D(0.0f, 0.0f, 0.0f), Vector3D(0.0f, 90.0f, 0.0f), Vector3D(2.0f, 2.0f, 2.0f));
 	XMStoreFloat4x4(&transform->RotationalMatrix, XMMatrixIdentity());
 	CreateObjectStruct COS(device, commandList, "Obj1", ObjectType::GameObj, verts, indies, 1, ConstantBufferPerObjectAlignedSize, transform);
 	m_Manager->BuildObject(COS);
@@ -1037,6 +1039,17 @@ bool InitD3D()
 	m_DrawObjectStructs.mainDescriptorHeap = mainDescriptorHeap;
 	m_DrawObjectStructs.pipelineStateObject = pipelineStateObject;
 
+	shinyMaterial.AmbientMtrl = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
+	shinyMaterial.DiffuseMtrl = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	shinyMaterial.SpecularMtrl = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+
+	// Setup the scene's light
+	basicLight.AmbientLight = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+	basicLight.DiffuseLight = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	basicLight.SpecularLight = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+	basicLight.SpecularPower = 20.0f;
+	basicLight.LightVecW = XMFLOAT3(0.0f, 14.0f, -8.0f);
+
 	return true;
 }
 
@@ -1061,17 +1074,23 @@ void Update()
 
 	// update constant buffer for cube1
 	// create the wvp matrix and store in constant buffer
-	//m_Manager->ReturnCamera()->Walk(sinf());
+	m_Manager->ReturnCamera()->Walk(-0.0001);
 	m_Manager->ReturnCamera()->Update();
 	CameraBufferData CBD = m_Manager->ReturnCamera()->ReturnViewPlusProjection();
 	XMMATRIX viewMat = XMLoadFloat4x4(&CBD.m_view); // load view matrix
 	XMMATRIX projMat = XMLoadFloat4x4(&CBD.m_projection); // load projection matrix#
 
+	/// <summary>
+	/// CONSTANT BUFFER STUFF
+	/// </summary>
 
 	XMMATRIX wvpMat = GO->m_Particle->ReturnWorldMatrix() * viewMat * projMat; // create wvp matrix
 	XMMATRIX transposed = XMMatrixTranspose(wvpMat); // must transpose wvp matrix for the gpu
 	XMStoreFloat4x4(&cbPerObject.wvpMat, transposed); // store transposed wvp matrix in constant buffer
-
+	cbPerObject.projection = m_Manager->ReturnCamera()->ReturnViewPlusProjection().m_projection;
+	cbPerObject.view = m_Manager->ReturnCamera()->ReturnViewPlusProjection().m_view;
+	cbPerObject.point = basicLight;
+	cbPerObject.Mat = shinyMaterial;
 
 	// copy our ConstantBuffer instance to the mapped constant buffer resource
 	memcpy(cbvGPUAddress[frameIndex], &cbPerObject, sizeof(cbPerObject));
@@ -1080,65 +1099,19 @@ void Update()
 	wvpMat = GO2->m_Particle->ReturnWorldMatrix() * viewMat * projMat; // create wvp matrix
 	transposed = XMMatrixTranspose(wvpMat); // must transpose wvp matrix for the gpu
 	XMStoreFloat4x4(&cbPerObject.wvpMat, transposed); // store transposed wvp matrix in constant buffer
+	cbPerObject.projection = m_Manager->ReturnCamera()->ReturnViewPlusProjection().m_projection;
+	cbPerObject.view = m_Manager->ReturnCamera()->ReturnViewPlusProjection().m_view;
 
 
-	// copy our ConstantBuffer instance to the mapped constant buffer resource
-	memcpy(cbvGPUAddress[frameIndex] + ConstantBufferPerObjectAlignedSize, &cbPerObject, sizeof(cbPerObject));
-
-	// update app logic, such as moving the camera or figuring out what objects are in view
-	
-	/*
-	// create rotation matrices
-	Vector3D rot = GO->m_Transform->ReturnRot();
-	GO->m_Transform->SetRot(Vector3D(rot.ReturnX(), rot.ReturnY() + 0.00005f, rot.ReturnZ()));
-
-	XMMATRIX scale = XMMatrixScaling(GO->m_Transform->ReturnSca().ReturnX(), GO->m_Transform->ReturnSca().ReturnY(), GO->m_Transform->ReturnSca().ReturnZ());
-	XMMATRIX rotation = XMMatrixRotationX(GO->m_Transform->ReturnRot().ReturnX()) * XMMatrixRotationY(GO->m_Transform->ReturnRot().ReturnY()) * XMMatrixRotationZ(GO->m_Transform->ReturnRot().ReturnZ());
-	XMMATRIX translation = XMMatrixTranslation(GO->m_Transform->ReturnPos().ReturnX(), GO->m_Transform->ReturnPos().ReturnY(), GO->m_Transform->ReturnPos().ReturnZ());
-
-	// create cube1's world matrix by first rotating the cube, then positioning the rotated cube
-	XMMATRIX worldMat = scale * rotation * translation;
-
-
-	// update constant buffer for cube1
-	// create the wvp matrix and store in constant buffer
-	CameraBufferData CBD = m_Manager->ReturnCamera()->ReturnViewPlusProjection();
-	XMMATRIX viewMat = XMLoadFloat4x4(&CBD.m_view); // load view matrix
-	XMMATRIX projMat = XMLoadFloat4x4(&CBD.m_projection); // load projection matrix#
-
-
-	XMMATRIX wvpMat = worldMat * viewMat * projMat; // create wvp matrix
-	XMMATRIX transposed = XMMatrixTranspose(wvpMat); // must transpose wvp matrix for the gpu
-	XMStoreFloat4x4(&cbPerObject.wvpMat, transposed); // store transposed wvp matrix in constant buffer
-
-
-	// copy our ConstantBuffer instance to the mapped constant buffer resource
-	memcpy(cbvGPUAddress[frameIndex], &cbPerObject, sizeof(cbPerObject));
-
-
-
-
-
-
-
-
-	rot = GO2->m_Transform->ReturnRot();
-	GO2->m_Transform->SetRot(Vector3D(rot.ReturnX() + 0.0003f, rot.ReturnY() + 0.000420f, rot.ReturnZ() + 0.00069f));
-
-	scale = XMMatrixScaling(GO2->m_Transform->ReturnSca().ReturnX(), GO2->m_Transform->ReturnSca().ReturnY(), GO2->m_Transform->ReturnSca().ReturnZ());
-	rotation = XMMatrixRotationX(GO2->m_Transform->ReturnRot().ReturnX()) * XMMatrixRotationY(GO2->m_Transform->ReturnRot().ReturnY()) * XMMatrixRotationZ(GO2->m_Transform->ReturnRot().ReturnZ());
-	translation = XMMatrixTranslation(GO2->m_Transform->ReturnPos().ReturnX(), GO2->m_Transform->ReturnPos().ReturnY(), GO2->m_Transform->ReturnPos().ReturnZ());
-
-	XMMATRIX worldMat2 = scale * rotation * translation * worldMat;
-
-	wvpMat = worldMat2 * viewMat * projMat; // create wvp matrix
-	transposed = XMMatrixTranspose(wvpMat); // must transpose wvp matrix for the gpu
-	XMStoreFloat4x4(&cbPerObject.wvpMat, transposed); // store transposed wvp matrix in constant buffer
-
+	XMStoreFloat3(&cbLighting.EyePosW, m_Manager->ReturnCamera()->GetEye());
+	cbPerObject.projection = m_Manager->ReturnCamera()->ReturnViewPlusProjection().m_projection;
+	cbPerObject.view = m_Manager->ReturnCamera()->ReturnViewPlusProjection().m_view;
+	cbLighting.Mat = shinyMaterial;
+	cbLighting.point = basicLight;
 
 	// copy our ConstantBuffer instance to the mapped constant buffer resource
 	memcpy(cbvGPUAddress[frameIndex] + ConstantBufferPerObjectAlignedSize, &cbPerObject, sizeof(cbPerObject));
-	*/
+	memcpy(cbvGPUAddress[frameIndex] + (ConstantBufferPerObjectAlignedSize*2), &cbLighting, sizeof(cbLighting));
 }
 
 void UpdatePipeline()
@@ -1224,6 +1197,7 @@ void UpdatePipeline()
 
 	// set cube1's constant buffer
 	commandList->SetGraphicsRootConstantBufferView(0, constantBufferUploadHeaps[frameIndex]->GetGPUVirtualAddress());
+	commandList->SetGraphicsRootConstantBufferView(1, constantBufferUploadHeaps[frameIndex]->GetGPUVirtualAddress() + (ConstantBufferPerObjectAlignedSize*2));
 
 	// draw first cube
 	commandList->DrawIndexedInstanced(numCubeIndices, 1, 0, 0, 0);
@@ -1234,6 +1208,7 @@ void UpdatePipeline()
 	// resource heaps address. This is because cube1's constant buffer is stored at the beginning of the resource heap, while
 	// cube2's constant buffer data is stored after (256 bits from the start of the heap).
 	commandList->SetGraphicsRootConstantBufferView(0, constantBufferUploadHeaps[frameIndex]->GetGPUVirtualAddress() + ConstantBufferPerObjectAlignedSize);
+	commandList->SetGraphicsRootConstantBufferView(1, constantBufferUploadHeaps[frameIndex]->GetGPUVirtualAddress() + (ConstantBufferPerObjectAlignedSize * 2));
 
 	// draw second cube
 	commandList->DrawIndexedInstanced(numCubeIndices, 1, 0, 0, 0);

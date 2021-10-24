@@ -19,7 +19,6 @@ public:
 	//Denotes what type of object it is
 	ObjectType m_ObjType;
 protected:
-	Loader c_SystemLoad;
 
 };
 
