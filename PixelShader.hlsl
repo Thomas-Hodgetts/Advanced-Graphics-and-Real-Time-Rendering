@@ -22,6 +22,7 @@ struct VS_OUTPUT
 	float4 SpecularMtrl: POSITION6;
 	float SpecularPower : PSIZE;
 	float3 LightVecW : TANGENT1;
+	float3x3 TBN : TBN;
 	float3 eyeVectorTS : TANGENT4;
 	float3 lightVectorTS : TANGENT3;
 };
@@ -47,42 +48,34 @@ float4 main(VS_OUTPUT input) : SV_TARGET
 {
 
 	input.NormalW = normalize(input.NormalW);
+	
 
 	float3 toEye = normalize(input.EyePosW - input.pos);
-
 
 	float4 bumpMap;
 	bumpMap = t1.Sample(s1, input.texCoord);
 	bumpMap = (bumpMap * 2.0f) - 1.0f;
 	bumpMap = float4(normalize(bumpMap.xyz), 1);
 
-
-	//float3 ambient = float3(0.0f, 0.0f, 0.0f);
-	//float3 diffuse = float3(0.0f, 0.0f, 0.0f);
-	//float3 specular = float3(0.0f, 0.0f, 0.0f);
+	bumpMap.rgb = mul(bumpMap, input.TBN);
 
 	float3 lightLecNorm = normalize(input.LightVecW);
 	// Compute Colour
 
 	// Compute the reflection vector.
-	float3 r = reflect(-lightLecNorm, input.NormalW);
+	float3 r = reflect(-lightLecNorm, (bumpMap));
 
 	// Determine how much specular light makes it into the eye.
 	float specularAmount = pow(max(dot(r, toEye), 0.0f), input.SpecularPower);
 
 	// Determine the diffuse light intensity that strikes the vertex.
-	float diffuseAmount = max(dot(lightLecNorm, input.NormalW), 0.0f);
+	float diffuseAmount = max(dot(lightLecNorm, bumpMap), 0.0f);
 
 	// Only display specular when there is diffuse
 	if (diffuseAmount <= 0.0f)
 	{
 		specularAmount = 0.0f;
 	}
-
-	// Compute the ambient, diffuse, and specular terms separately.
-	//specular += specularAmount * (input.SpecularMtrl * input.SpecularLight).rgb;
-	//diffuse += diffuseAmount * (input.DiffuseMtrl * input.DiffuseLight).rgb;
-	//ambient += (input.AmbientMtrl * input.AmbientLight).rgb;
 
 	float3 tx = t1.Sample(s1, input.texCoord).rgb;
 
@@ -92,4 +85,4 @@ float4 main(VS_OUTPUT input) : SV_TARGET
 	finalCol.a = input.DiffuseMtrl.a;
 	return finalCol;
 
-}
+} 

@@ -11,13 +11,13 @@ public:
 	{
 		for (size_t i = 0; i < triangles; i++)
 		{
-			UINT i0 = indices[i * 3 + 0];
-			UINT i1 = indices[i * 3 + 1];
-			UINT i2 = indices[i * 3 + 2];
+			UINT i0 = indices[i + 0];
+			UINT i1 = indices[i + 1];
+			UINT i2 = indices[i + 2];
 
-			Vertex v0 = vertices[i0];
-			Vertex v1 = vertices[i1];
-			Vertex v2 = vertices[i2];
+			Vertex v0 = vertices[i + 0];
+			Vertex v1 = vertices[i + 1];
+			Vertex v2 = vertices[i + 2];
 
 			Vector3D e0 = v1.pos - v0.pos;
 			Vector3D e1 = v2.pos - v0.pos;

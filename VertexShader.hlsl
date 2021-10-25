@@ -24,6 +24,7 @@ struct VS_OUTPUT
 	float4 SpecularMtrl: POSITION6;
 	float SpecularPower : PSIZE;
 	float3 LightVecW : TANGENT1;
+	float3x3 TBN : TBN;
 	float3 eyeVectorTS : TANGENT4;
 	float3 lightVectorTS : TANGENT3;
 };
@@ -93,5 +94,6 @@ VS_OUTPUT main(VS_INPUT input)
 	output.EyePosW = EyePosW - WorldPos;
 	output.eyeVectorTS = VectorToTangentSpace(output.EyePosW.xyz, TBN_inv);
 	output.lightVectorTS = VectorToTangentSpace(output.LightVecW.xyz, TBN_inv);
+	output.TBN = TBN;
 	return output;
 }

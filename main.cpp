@@ -556,40 +556,60 @@ bool InitD3D()
 	// a quad
 	Vertex vList[] = {
 		// front face
-		{ -0.5f,  0.5f, -0.5f, 0.0f, 0.0f },
-		{  0.5f, -0.5f, -0.5f, 1.0f, 1.0f },
-		{ -0.5f, -0.5f, -0.5f, 0.0f, 1.0f },
-		{  0.5f,  0.5f, -0.5f, 1.0f, 0.0f },
+		{ -0.5f,  0.5f, -0.5f, 0.0f, 0.0f }, //0
+		{  0.5f, -0.5f, -0.5f, 1.0f, 1.0f }, //1
+		{ -0.5f, -0.5f, -0.5f, 0.0f, 1.0f }, //2
+
+
+		{ -0.5f,  0.5f, -0.5f, 0.0f, 0.0f }, //0
+		{  0.5f,  0.5f, -0.5f, 1.0f, 0.0f }, //3
+		{  0.5f, -0.5f, -0.5f, 1.0f, 1.0f }, //1
+
 
 		// right side face
-		{  0.5f, -0.5f, -0.5f, 0.0f, 1.0f },
-		{  0.5f,  0.5f,  0.5f, 1.0f, 0.0f },
-		{  0.5f, -0.5f,  0.5f, 1.0f, 1.0f },
-		{  0.5f,  0.5f, -0.5f, 0.0f, 0.0f },
+		{  0.5f, -0.5f, -0.5f, 0.0f, 1.0f }, //4
+		{  0.5f,  0.5f,  0.5f, 1.0f, 0.0f }, //5
+		{  0.5f, -0.5f,  0.5f, 1.0f, 1.0f }, //6
+
+		{  0.5f, -0.5f, -0.5f, 0.0f, 1.0f }, //4
+		{  0.5f,  0.5f, -0.5f, 0.0f, 0.0f }, //7
+		{  0.5f,  0.5f,  0.5f, 1.0f, 0.0f }, //5
 
 		// left side face
-		{ -0.5f,  0.5f,  0.5f, 0.0f, 0.0f },
-		{ -0.5f, -0.5f, -0.5f, 1.0f, 1.0f },
-		{ -0.5f, -0.5f,  0.5f, 0.0f, 1.0f },
-		{ -0.5f,  0.5f, -0.5f, 1.0f, 0.0f },
+		{ -0.5f,  0.5f,  0.5f, 0.0f, 0.0f }, //8
+		{ -0.5f, -0.5f, -0.5f, 1.0f, 1.0f }, //9
+		{ -0.5f, -0.5f,  0.5f, 0.0f, 1.0f }, //10
+
+		{ -0.5f,  0.5f,  0.5f, 0.0f, 0.0f }, //8
+		{ -0.5f,  0.5f, -0.5f, 1.0f, 0.0f }, //11
+		{ -0.5f, -0.5f, -0.5f, 1.0f, 1.0f }, //9
 
 		// back face
-		{  0.5f,  0.5f,  0.5f, 0.0f, 0.0f },
-		{ -0.5f, -0.5f,  0.5f, 1.0f, 1.0f },
-		{  0.5f, -0.5f,  0.5f, 0.0f, 1.0f },
-		{ -0.5f,  0.5f,  0.5f, 1.0f, 0.0f },
+		{  0.5f,  0.5f,  0.5f, 0.0f, 0.0f }, //12
+		{ -0.5f, -0.5f,  0.5f, 1.0f, 1.0f }, //13
+		{  0.5f, -0.5f,  0.5f, 0.0f, 1.0f }, //14
+
+		{  0.5f,  0.5f,  0.5f, 0.0f, 0.0f }, //12
+		{ -0.5f,  0.5f,  0.5f, 1.0f, 0.0f }, //15
+		{ -0.5f, -0.5f,  0.5f, 1.0f, 1.0f }, //13
 
 		// top face
-		{ -0.5f,  0.5f, -0.5f, 0.0f, 1.0f },
-		{  0.5f,  0.5f,  0.5f, 1.0f, 0.0f },
-		{  0.5f,  0.5f, -0.5f, 1.0f, 1.0f },
-		{ -0.5f,  0.5f,  0.5f, 0.0f, 0.0f },
+		{ -0.5f,  0.5f, -0.5f, 0.0f, 1.0f }, //16
+		{  0.5f,  0.5f,  0.5f, 1.0f, 0.0f }, //17
+		{  0.5f,  0.5f, -0.5f, 1.0f, 1.0f }, //18
+
+		{ -0.5f,  0.5f, -0.5f, 0.0f, 1.0f }, //16
+		{ -0.5f,  0.5f,  0.5f, 0.0f, 0.0f }, //19
+		{  0.5f,  0.5f,  0.5f, 1.0f, 0.0f }, //17
 
 		// bottom face
-		{  0.5f, -0.5f,  0.5f, 0.0f, 0.0f },
-		{ -0.5f, -0.5f, -0.5f, 1.0f, 1.0f },
-		{  0.5f, -0.5f, -0.5f, 0.0f, 1.0f },
-		{ -0.5f, -0.5f,  0.5f, 1.0f, 0.0f },
+		{  0.5f, -0.5f,  0.5f, 0.0f, 0.0f }, //20
+		{ -0.5f, -0.5f, -0.5f, 1.0f, 1.0f }, //21
+		{  0.5f, -0.5f, -0.5f, 0.0f, 1.0f }, //22
+
+		{  0.5f, -0.5f,  0.5f, 0.0f, 0.0f }, //20
+		{ -0.5f, -0.5f,  0.5f, 1.0f, 0.0f }, //23
+		{ -0.5f, -0.5f, -0.5f, 1.0f, 1.0f }, //21
 	};
 
 	int i = sizeof(vList) / sizeof(Vertex);
@@ -656,27 +676,27 @@ bool InitD3D()
 	DWORD iList[] = {
 		// ffront face
 		0, 1, 2, // first triangle
-		0, 3, 1, // second triangle
+		3, 4, 5, // second triangle
 
 		// left face
-		4, 5, 6, // first triangle
-		4, 7, 5, // second triangle
+		6, 7, 8, // first triangle
+		9, 10, 11, // second triangle
 
 		// right face
-		8, 9, 10, // first triangle
-		8, 11, 9, // second triangle
+		12, 13, 14, // first triangle
+		15, 16, 17, // second triangle
 
 		// back face
-		12, 13, 14, // first triangle
-		12, 15, 13, // second triangle
+		18, 19, 20, // first triangle
+		21, 22, 23, // second triangle
 
 		// top face
-		16, 17, 18, // first triangle
-		16, 19, 17, // second triangle
+		24, 25, 26, // first triangle
+		27, 28, 29, // second triangle
 
 		// bottom face
-		20, 21, 22, // first triangle
-		20, 23, 21, // second triangle
+		30, 31, 32, // first triangle
+		33, 34, 35, // second triangle
 	};
 
 	int iBufferSize = sizeof(iList);
@@ -1048,7 +1068,7 @@ bool InitD3D()
 	basicLight.DiffuseLight = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	basicLight.SpecularLight = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
 	basicLight.SpecularPower = 20.0f;
-	basicLight.LightVecW = XMFLOAT3(0.0f, 14.0f, -8.0f);
+	basicLight.LightVecW = XMFLOAT3(0.0f, 1.0f, -2.0f);
 
 	return true;
 }
@@ -1197,7 +1217,6 @@ void UpdatePipeline()
 
 	// set cube1's constant buffer
 	commandList->SetGraphicsRootConstantBufferView(0, constantBufferUploadHeaps[frameIndex]->GetGPUVirtualAddress());
-	commandList->SetGraphicsRootConstantBufferView(1, constantBufferUploadHeaps[frameIndex]->GetGPUVirtualAddress() + (ConstantBufferPerObjectAlignedSize*2));
 
 	// draw first cube
 	commandList->DrawIndexedInstanced(numCubeIndices, 1, 0, 0, 0);
@@ -1208,7 +1227,6 @@ void UpdatePipeline()
 	// resource heaps address. This is because cube1's constant buffer is stored at the beginning of the resource heap, while
 	// cube2's constant buffer data is stored after (256 bits from the start of the heap).
 	commandList->SetGraphicsRootConstantBufferView(0, constantBufferUploadHeaps[frameIndex]->GetGPUVirtualAddress() + ConstantBufferPerObjectAlignedSize);
-	commandList->SetGraphicsRootConstantBufferView(1, constantBufferUploadHeaps[frameIndex]->GetGPUVirtualAddress() + (ConstantBufferPerObjectAlignedSize * 2));
 
 	// draw second cube
 	commandList->DrawIndexedInstanced(numCubeIndices, 1, 0, 0, 0);
