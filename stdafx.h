@@ -185,9 +185,12 @@ int GetDXGIFormatBitsPerPixel(DXGI_FORMAT& dxgiFormat);
 
 ID3D12DescriptorHeap* mainDescriptorHeap;
 ID3D12Resource* textureBufferUploadHeap;
+ID3D12Resource* textureBufferUploadHeap2;
 
 
 SystemManager* m_Manager = nullptr;
 DrawObjectsStruct m_DrawObjectStructs = DrawObjectsStruct();
 Material shinyMaterial;
 Light basicLight;
+int ImageOffset;
+int buffOffset;

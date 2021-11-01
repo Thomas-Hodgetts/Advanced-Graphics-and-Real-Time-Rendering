@@ -11,30 +11,22 @@ public:
 	{
 		for (size_t i = 0; i < triangles; i++)
 		{
-			UINT i0 = indices[i + 0];
-			UINT i1 = indices[i + 1];
-			UINT i2 = indices[i + 2];
+			UINT i0 = indices[i * 3 + 0];
+			UINT i1 = indices[i * 3 + 1];
+			UINT i2 = indices[i * 3 + 2];
 
-			Vertex v0 = vertices[i + 0];
-			Vertex v1 = vertices[i + 1];
-			Vertex v2 = vertices[i + 2];
+			Vertex v0 = vertices[i0];
+			Vertex v1 = vertices[i1];
+			Vertex v2 = vertices[i2];
 
-			Vector3D e0 = v1.pos - v0.pos;
-			Vector3D e1 = v2.pos - v0.pos;
-
-			Vector3D faceNormal = XMVector3Cross(e0.ConvertToXMvector3(), e1.ConvertToXMvector3());
+			Vector3D faceNormal = CalculateNormal(v0.pos.ConvertToXMvector3(), v1.pos.ConvertToXMvector3(), v2.pos.ConvertToXMvector3());
 
 			vertices[i0].Normal += faceNormal;
 			vertices[i1].Normal += faceNormal;
 			vertices[i2].Normal += faceNormal;
 
 		}
-		size_t vertsize = sizeof(vertices->Normal);
-		for (size_t i = vertsize; i--;)
-		{
-			vertices[i].Normal = XMVector3Normalize(vertices[i].Normal.ConvertToXMvector3());
-		}
-		int i = 0;
+
 	}
 
 	static XMVECTOR CalculateNormal(FXMVECTOR p0, FXMVECTOR p1, FXMVECTOR p2)
@@ -131,35 +123,11 @@ public:
 		// Go through all the faces and calculate the the tangent, binormal, and normal vectors.
 		for (i = 0; i < faceCount; i++)
 		{
-			// Get the three vertices for this face from the model.
-			vertex1.pos.SetX(vertices[index].pos.ReturnX());
-			vertex1.pos.SetY(vertices[index].pos.ReturnY());
-			vertex1.pos.SetZ(vertices[index].pos.ReturnZ());
-			vertex1.texCoord.SetU(vertices[index].texCoord.ReturnU());
-			vertex1.texCoord.SetV(vertices[index].texCoord.ReturnV());
-			vertex1.Normal.SetX(vertices[index].Normal.ReturnX());
-			vertex1.Normal.SetY(vertices[index].Normal.ReturnY());
-			vertex1.Normal.SetZ(vertices[index].Normal.ReturnZ());
+			vertex1 = vertices[index];
 			index++;
-
-			vertex2.pos.SetX(vertices[index].pos.ReturnX());
-			vertex2.pos.SetY(vertices[index].pos.ReturnY());
-			vertex2.pos.SetZ(vertices[index].pos.ReturnZ());
-			vertex2.texCoord.SetU(vertices[index].texCoord.ReturnU());
-			vertex2.texCoord.SetV(vertices[index].texCoord.ReturnV());
-			vertex2.Normal.SetX(vertices[index].Normal.ReturnX());
-			vertex2.Normal.SetY(vertices[index].Normal.ReturnY());
-			vertex2.Normal.SetZ(vertices[index].Normal.ReturnZ());
+			vertex2 = vertices[index];
 			index++;
-
-			vertex3.pos.SetX(vertices[index].pos.ReturnX());
-			vertex3.pos.SetY(vertices[index].pos.ReturnY());
-			vertex3.pos.SetZ(vertices[index].pos.ReturnZ());
-			vertex3.texCoord.SetU(vertices[index].texCoord.ReturnU());
-			vertex3.texCoord.SetV(vertices[index].texCoord.ReturnV());
-			vertex3.Normal.SetX(vertices[index].Normal.ReturnX());
-			vertex3.Normal.SetY(vertices[index].Normal.ReturnY());
-			vertex3.Normal.SetZ(vertices[index].Normal.ReturnZ());
+			vertex3 = vertices[index];
 			index++;
 
 			// Calculate the tangent and binormal of that face.

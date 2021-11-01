@@ -15,9 +15,6 @@
     <ClCompile Include="Object.cpp">
       <Filter>Objects</Filter>
     </ClCompile>
-    <ClCompile Include="Loader.cpp">
-      <Filter>Loader</Filter>
-    </ClCompile>
     <ClCompile Include="SystemManager.cpp">
       <Filter>System Manager</Filter>
     </ClCompile>
@@ -32,9 +29,6 @@
     </ClCompile>
     <ClCompile Include="Debug.cpp">
       <Filter>Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="DDSTextureLoader.cpp">
-      <Filter>Loader\DDS</Filter>
     </ClCompile>
     <ClCompile Include="PhysicalObject.cpp">
       <Filter>Objects\Physical Object</Filter>
@@ -73,7 +67,9 @@
     <ClCompile Include="iamgui\imgui_widgets.cpp">
       <Filter>ImGUI</Filter>
     </ClCompile>
-    <ClCompile Include="Source1.cpp" />
+    <ClCompile Include="DDSTextureLoader.cpp">
+      <Filter>Loader\DDS</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -85,9 +81,6 @@
     </ClInclude>
     <ClInclude Include="Object.h">
       <Filter>Objects</Filter>
-    </ClInclude>
-    <ClInclude Include="Loader.h">
-      <Filter>Loader</Filter>
     </ClInclude>
     <ClInclude Include="SystemManager.h">
       <Filter>System Manager</Filter>
@@ -104,9 +97,6 @@
     </ClInclude>
     <ClInclude Include="Debug.h">
       <Filter>Debug</Filter>
-    </ClInclude>
-    <ClInclude Include="DDSTextureLoader.h">
-      <Filter>Loader\DDS</Filter>
     </ClInclude>
     <ClInclude Include="ThreadVector.h">
       <Filter>ThreadVector</Filter>
@@ -155,6 +145,10 @@
     <ClInclude Include="iamgui\imstb_truetype.h">
       <Filter>ImGUI</Filter>
     </ClInclude>
+    <ClInclude Include="DDSTextureLoader.h">
+      <Filter>Loader\DDS</Filter>
+    </ClInclude>
+    <ClInclude Include="NormalCalculations.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Camera">
@@ -225,5 +219,8 @@
     <Text Include="iamgui\LICENSE.txt">
       <Filter>ImGUI</Filter>
     </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="LightingUtility.hlsli" />
   </ItemGroup>
 </Project>

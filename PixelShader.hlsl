@@ -1,31 +1,6 @@
-
-
 Texture2D t1 : register(t0);
 Texture2D t2 : register(t1);
 SamplerState s1 : register(s0);
-
-
-struct VS_OUTPUT
-{
-	float4 pos: SV_POSITION;
-	float2 texCoord: TEXCOORD;
-	float3 NormalW : NORMAL;
-	float3 PosL : POSITION;
-	float3 Tan: TANGENT;
-	float3 BiNorm: BINORMAL;
-	float4 AmbientLight : POSITION1;
-	float3 EyePosW : TANGENT2;
-	float4 DiffuseLight: POSITION2;
-	float4 SpecularLight: POSITION3;
-	float4 AmbientMtrl: POSITION4;
-	float4 DiffuseMtrl: POSITION5;
-	float4 SpecularMtrl: POSITION6;
-	float SpecularPower : PSIZE;
-	float3 LightVecW : TANGENT1;
-	float3x3 TBN : TBN;
-	float3 eyeVectorTS : TANGENT4;
-	float3 lightVectorTS : TANGENT3;
-};
 
 struct SurfaceInfo
 {
@@ -44,29 +19,41 @@ struct Light
 	float3 LightVecW;
 };
 
+struct VS_OUTPUT
+{
+	float4 pos: SV_POSITION;
+	float2 texCoord: TEXCOORD;
+	float3 PosL : POSITION;
+	float3 normalW: NORMAL;
+	float3 EyePosW : TANGENT2;
+	Light l : LIGHTDATA;
+	SurfaceInfo s : SURFACEINFO;
+	float3 LightVecW : TANGENT1;
+	float3x3 TBN : TBN;
+	float3 eyeVectorTS : TANGENT4;
+	float3 lightVectorTS : TANGENT3;
+	float4x4 worldMat : WORLDMAT;
+};
+
 float4 main(VS_OUTPUT input) : SV_TARGET
 {
 
-	input.NormalW = normalize(input.NormalW);
-	
-
-	float3 toEye = normalize(input.EyePosW - input.pos);
+	float3 toEye = normalize(input.eyeVectorTS - input.pos.xyz);
 
 	float4 bumpMap;
 	bumpMap = t1.Sample(s1, input.texCoord);
 	bumpMap = (bumpMap * 2.0f) - 1.0f;
 	bumpMap = float4(normalize(bumpMap.xyz), 1);
-
-	bumpMap.rgb = mul(bumpMap, input.TBN);
+	bumpMap = normalize(mul(bumpMap, input.normalW));
 
 	float3 lightLecNorm = normalize(input.LightVecW);
 	// Compute Colour
 
 	// Compute the reflection vector.
-	float3 r = reflect(-lightLecNorm, (bumpMap));
+	float3 r = reflect(-lightLecNorm, bumpMap);
 
 	// Determine how much specular light makes it into the eye.
-	float specularAmount = pow(max(dot(r, toEye), 0.0f), input.SpecularPower);
+	float specularAmount = pow(max(dot(r, toEye), 0.0f), input.l.SpecularPower);
 
 	// Determine the diffuse light intensity that strikes the vertex.
 	float diffuseAmount = max(dot(lightLecNorm, bumpMap), 0.0f);
@@ -77,12 +64,17 @@ float4 main(VS_OUTPUT input) : SV_TARGET
 		specularAmount = 0.0f;
 	}
 
-	float3 tx = t1.Sample(s1, input.texCoord).rgb;
+	float3 ambient = float3(0.0f, 0.0f, 0.0f);
+	float3 diffuse = float3(0.0f, 0.0f, 0.0f);
+	float3 specular = float3(0.0f, 0.0f, 0.0f);
+
+	specular += specularAmount * (input.s.SpecularMtrl * input.l.SpecularLight).rgb;
+	diffuse += diffuseAmount * (input.s.DiffuseMtrl * input.l.DiffuseLight).rgb;
+	ambient += (input.s.AmbientMtrl * input.l.AmbientLight).rgb;
 
 	float4 finalCol;
-	finalCol.rgb = (t1.Sample(s1, input.texCoord).rgb * (((input.AmbientMtrl * input.AmbientLight).rgb) + (diffuseAmount * (input.DiffuseMtrl * input.DiffuseLight).rgb))) + specularAmount * (input.SpecularMtrl * input.SpecularLight).rgb;
-	//finalCol.rgb = tx * (ambient + diffuse) + specular;
-	finalCol.a = input.DiffuseMtrl.a;
+	finalCol.rgb = (t1.Sample(s1, input.texCoord).rgb * (ambient + diffuse)) + specular;
+	finalCol.a = input.s.DiffuseMtrl.a;
 	return finalCol;
 
 } 
