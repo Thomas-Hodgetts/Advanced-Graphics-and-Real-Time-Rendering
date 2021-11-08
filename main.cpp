@@ -1099,7 +1099,7 @@ bool InitD3D()
 	basicLight.DiffuseLight = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	basicLight.SpecularLight = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
 	basicLight.SpecularPower = 20.0f;
-	basicLight.LightVecW = XMFLOAT3(0.0f, 10.0f, 6.0f);
+	basicLight.LightVecW = XMFLOAT3(0.0f, 10.0f, -6.0f);
 
 	return true;
 }

@@ -70,4 +70,4 @@ VS_OUTPUT main(VS_INPUT input)
 	output.EyePosW = EyePosW - output.pos;
 	output.worldMat = wvpMat;
 	return output;
-}
+} 

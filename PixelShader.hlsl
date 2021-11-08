@@ -40,6 +40,14 @@ float3 VectorToTangentSpace(float3 vectorV, float3x3 TBN_inv)
 	return tangentSpaceNormal;
 }
 
+float2 ParallaxMapping(float2 texCoords, float3 viewDir)
+{
+	float heightScale = 0.1;
+	float height = heightMap.Sample(s1, texCoords).x;
+	float2 p = viewDir.xy / viewDir.z * (height * heightScale);
+	return texCoords - p;
+}
+
 float4 main(VS_OUTPUT input) : SV_TARGET
 {
 
@@ -50,18 +58,25 @@ float4 main(VS_OUTPUT input) : SV_TARGET
 
 	float3 eyeVectorTS = VectorToTangentSpace(input.EyePosW.xyz, TBN_inv);
 	float3 lightVectorTS = VectorToTangentSpace(input.LightVecW.xyz, TBN_inv);
+	float3 normalTS = VectorToTangentSpace(N, TBN_inv);
+	float3 posTS = VectorToTangentSpace(input.pos.xyz, TBN_inv);
 
-
-	float3 toEye = normalize(input.EyePosW - input.pos.xyz);
+	float3 viewDir = normalize(eyeVectorTS - posTS);
+	float2 texCoords = ParallaxMapping(input.texCoord, viewDir);
 
 	float4 bumpMap;
-	bumpMap = heightMap.Sample(s1, input.texCoord);
+	bumpMap = heightMap.Sample(s1, texCoords);
 	bumpMap = (bumpMap * 2.0f) - 1.0f;
 	bumpMap = float4(normalize(bumpMap.xyz), 1);
-	bumpMap = normalize(mul(bumpMap, N));
-	bumpMap = -bumpMap;
+	bumpMap.rgb = normalize(mul(bumpMap, TBN));
+	bumpMap = bumpMap;
 
-	float3 lightLecNorm = normalize(input.LightVecW);
+
+	//float3 toEye = normalize(input.EyePosW.xyz - input.pos.xyz);
+	float3 toEye = normalize(eyeVectorTS - posTS);
+
+	//float3 lightLecNorm = normalize(input.LightVecW.xyz);
+	float3 lightLecNorm = normalize(lightVectorTS);
 	// Compute Colour
 
 	// Compute the reflection vector.
