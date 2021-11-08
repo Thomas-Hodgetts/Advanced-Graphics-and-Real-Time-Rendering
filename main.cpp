@@ -380,52 +380,42 @@ bool InitD3D()
 		Texture1Sampler,
 		Texture2SRV,
 		Texture2Sampler,
+		Texture3SRV,
+		Texture3Sampler,
 		ConstantBuffer,
 		RootParameterCount
 	};
 
+	D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
+		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
 
-	// create a descriptor range (descriptor table) and fill it out
-	// this is a range of descriptors inside a descriptor heap
-	D3D12_DESCRIPTOR_RANGE  descriptorTableRanges[1]; // only one range right now
-	descriptorTableRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV; // this is a range of shader resource views (descriptors)
-	descriptorTableRanges[0].NumDescriptors = 1; // we only have one texture right now, so the range is only 1
-	descriptorTableRanges[0].BaseShaderRegister = 0; // start index of the shader registers in the range
-	descriptorTableRanges[0].RegisterSpace = 0; // space 0. can usually be zero
-	descriptorTableRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND; // this appends the range to the end of the root signature descriptor tables
+	CD3DX12_ROOT_PARAMETER rootParameters[RootParameterIndex::RootParameterCount] = {};
+	rootParameters[RootParameterIndex::ConstantBuffer].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_ALL);
 
-	D3D12_DESCRIPTOR_RANGE  descriptorTableRanges2[1];
-	descriptorTableRanges2[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV; // this is a range of shader resource views (descriptors)
-	descriptorTableRanges2[0].NumDescriptors = 1; // we only have one texture right now, so the range is only 1
-	descriptorTableRanges2[0].BaseShaderRegister = 1; // start index of the shader registers in the range
-	descriptorTableRanges2[0].RegisterSpace = 1; // space 0. can usually be zero
-	descriptorTableRanges2[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND; // this appends the range to the end of the root signature descriptor tables
-						 
-	// create a descriptor table
-	D3D12_ROOT_DESCRIPTOR_TABLE descriptorTable;
-	descriptorTable.NumDescriptorRanges = _countof(descriptorTableRanges); // we only have one range
-	descriptorTable.pDescriptorRanges = &descriptorTableRanges[0]; // the pointer to the beginning of our ranges array
+	// Texture 1
+	CD3DX12_DESCRIPTOR_RANGE texture1Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+	rootParameters[RootParameterIndex::Texture1SRV].InitAsDescriptorTable(1, &texture1Range, D3D12_SHADER_VISIBILITY_PIXEL);
 
-	D3D12_ROOT_DESCRIPTOR_TABLE descriptorTable2 = {};
-	descriptorTable2.NumDescriptorRanges = _countof(descriptorTableRanges2); // we only have one range
-	descriptorTable2.pDescriptorRanges = &descriptorTableRanges2[0]; // the pointer to the beginning of our ranges array
+	// Texture 2
+	CD3DX12_DESCRIPTOR_RANGE texture2Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);
+	rootParameters[RootParameterIndex::Texture2SRV].InitAsDescriptorTable(1, &texture2Range, D3D12_SHADER_VISIBILITY_PIXEL);
 
+	// Texture 3
+	CD3DX12_DESCRIPTOR_RANGE texture3Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2);
+	rootParameters[RootParameterIndex::Texture3SRV].InitAsDescriptorTable(1, &texture3Range, D3D12_SHADER_VISIBILITY_PIXEL);
+	// Create the root signature
+	CD3DX12_ROOT_SIGNATURE_DESC rsigDesc = {};
+	rsigDesc.Init(_countof(rootParameters), rootParameters, 0, nullptr, rootSignatureFlags);
 
-	// create a root parameter for the root descriptor and fill it out
-	D3D12_ROOT_PARAMETER  rootParameters[3]; // only one parameter right now
-	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV; // this is a constant buffer view root descriptor
-	rootParameters[0].Descriptor = rootCBVDescriptor; // this is the root descriptor for this root parameter
-	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX; // our pixel shader will be the only shader accessing this parameter for now
+	D3D12_ROOT_PARAMETER  rootParameter[4];
+	rootParameter[0] = rootParameters[ConstantBuffer];
+	rootParameter[1] = rootParameters[RootParameterIndex::Texture1SRV];
+	rootParameter[2] = rootParameters[RootParameterIndex::Texture2SRV];
+	rootParameter[3] = rootParameters[RootParameterIndex::Texture3SRV];
 
-	// fill out the parameter for our descriptor table. Remember it's a good idea to sort parameters by frequency of change. Our constant
-	// buffer will be changed multiple times per frame, while our descriptor table will not be changed at all (in this tutorial)
-	rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE; // this is a descriptor table
-	rootParameters[1].DescriptorTable = descriptorTable; // this is our descriptor table for this root parameter
-	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL; // our pixel shader will be the only shader accessing this parameter for now
-
-	rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE; // this is a descriptor table
-	rootParameters[2].DescriptorTable = descriptorTable2; // this is our descriptor table for this root parameter
-	rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
 	// create a static sampler
 	D3D12_STATIC_SAMPLER_DESC sampler = {};
@@ -444,8 +434,8 @@ bool InitD3D()
 	sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
 	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-	rootSignatureDesc.Init(_countof(rootParameters), // we have 2 root parameters
-		rootParameters, // a pointer to the beginning of our root parameters array
+	rootSignatureDesc.Init(_countof(rootParameter), // we have 2 root parameters
+		rootParameter, // a pointer to the beginning of our root parameters array
 		1, // we have one static sampler
 		&sampler, // a pointer to our static sampler (array)
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT | // we can deny shader stages here for better performance
@@ -900,7 +890,7 @@ bool InitD3D()
 	D3D12_RESOURCE_DESC textureDesc;
 	int imageBytesPerRow;
 
-	LPCWSTR filename[4] = { L"dx12.jpg" ,L"BaseTexture.jpg" ,L"conenormal.jpg" ,L"conenormal.jpg" };
+	LPCWSTR filename[4] = { L"color.jpg" ,L"normals.jpg" ,L"displacement.jpg" ,L"dx12.jpg" };
 	int objectCount = sizeof(filename) / sizeof(LPCWSTR);
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE hdescriptor(mainDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
@@ -1021,7 +1011,7 @@ bool InitD3D()
 	XMStoreFloat4x4(&cameraProjMat, tmpMat);
 
 	// set starting camera state
-	cameraPosition = XMFLOAT4(0.0f, 2.0f, -4.0f, 0.0f);
+	cameraPosition = XMFLOAT4(0.0f, 2.0f, -6.0f, 0.0f);
 	cameraTarget = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
 	cameraUp = XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f);
 
@@ -1258,8 +1248,10 @@ void UpdatePipeline()
 	//Book
 	CD3DX12_GPU_DESCRIPTOR_HANDLE Cube1tex(mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 	commandList->SetGraphicsRootDescriptorTable(1, Cube1tex);
-	Cube1tex.Offset(3, buffOffset);
+	Cube1tex.Offset(2, buffOffset);
 	commandList->SetGraphicsRootDescriptorTable(2, Cube1tex);
+	Cube1tex.Offset(-1, buffOffset);
+	commandList->SetGraphicsRootDescriptorTable(3, Cube1tex);
 
 	// set cube1's constant buffer
 	commandList->SetGraphicsRootConstantBufferView(0, constantBufferUploadHeaps[frameIndex]->GetGPUVirtualAddress());
@@ -1277,11 +1269,12 @@ void UpdatePipeline()
 
 	//Book
 	CD3DX12_GPU_DESCRIPTOR_HANDLE Cube2tex(mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-	Cube2tex.Offset(1, buffOffset);
 	commandList->SetGraphicsRootDescriptorTable(1, Cube2tex);
 	Cube2tex.Offset(2, buffOffset);
 	commandList->SetGraphicsRootDescriptorTable(2, Cube2tex);
-	 
+	Cube1tex.Offset(-1, buffOffset);
+	commandList->SetGraphicsRootDescriptorTable(3, Cube2tex);
+
 	// draw second cube
 	commandList->DrawIndexedInstanced(numCubeIndices, 1, 0, 0, 0);
 
