@@ -1074,11 +1074,11 @@ bool InitD3D()
 
 void Update()
 {
-	m_Time++;
+	//m_Time++;
 
 	if (m_Time < 100000)
 	{
-		cbPerObject.mode = 0;
+		cbPerObject.mode = 2;
 		basicLight.LightVecW = XMFLOAT3(0.0f, 10.0f, -6.0f);
 	}
 	else if (m_Time < 200000)

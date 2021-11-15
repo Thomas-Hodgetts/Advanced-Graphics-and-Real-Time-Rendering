@@ -42,18 +42,6 @@ float3 VectorToTangentSpace(float3 vectorV, float3x3 TBN_inv)
 }
 
 /***********************************************
-MARKING SCHEME: Parallax Mapping
-DESCRIPTION: Map sampling, normal value decompression, transformation to tangent space
-***********************************************/
-float2 ParallaxMapping(float2 texCoords, float3 viewDir)
-{
-	float heightScale = 0.1;
-	float height = heightMap.Sample(s1, texCoords).x;
-	float2 p = viewDir.xy / viewDir.z * (height * heightScale);
-	return texCoords - p;
-}
-
-/***********************************************
 MARKING SCHEME: Normal Mapping
 DESCRIPTION: Map sampling, normal value decompression, transformation to tangent space
 ***********************************************/
@@ -76,6 +64,68 @@ float4 ProcessBumpMap(float4 Sample, float3x3 tbn, float2 texCoords, int flip)
 		bumpMap.rgb = normalize(mul(bumpMap, tbn));
 		return bumpMap;
 	}
+}
+
+/***********************************************
+MARKING SCHEME: Parallax Mapping
+DESCRIPTION: Map sampling, normal value decompression, transformation to tangent space
+***********************************************/
+float2 ParallaxMapping(float2 texCoords, float3 viewDir)
+{
+	float heightScale = 0.1;
+	float height = heightMap.Sample(s1, texCoords).x;
+	float2 p = viewDir.xy / viewDir.z * (height * heightScale);
+	return texCoords - p;
+}
+
+/***********************************************
+MARKING SCHEME: Parallax Mapping Self Shadowing
+DESCRIPTION: 
+***********************************************/
+
+float parallaxSoftShadowMultiplier(float3 L, float2 initTex, float initHieght)
+{
+	float shadowMultiplier = 1;
+	const float minLayers = 15;
+	const float maxLayers = 30;
+
+	if (dot(float3(0,0,1), L) > 0)
+	{
+		float numSamplesUnderSurface = 0;
+		shadowMultiplier = 0;
+		float numLayers = lerp(maxLayers, minLayers, abs(dot(float3(0, 0, 1), L)));
+		float layerHeight = initHieght / numLayers;
+		float2 texStep = 0.1 * L.xy / L.z / numLayers;
+
+		float currentLayerHeight = initHieght - layerHeight;
+		float2 currentTextureCoords = initTex + texStep;
+
+		int stepIndex = 1;
+
+		while (currentLayerHeight > 0)
+		{
+			float heightFromTexture = currentLayerHeight -  initTex.y;
+			if (heightFromTexture < currentLayerHeight)
+			{
+				numSamplesUnderSurface += 1;
+				float newShadowMultiplier = (currentLayerHeight - heightFromTexture) * (1.0 - stepIndex / numLayers);
+				shadowMultiplier = max(shadowMultiplier, newShadowMultiplier);
+			}
+			stepIndex += 1;
+			currentLayerHeight -= layerHeight;
+			currentTextureCoords += texStep;
+
+		}
+		if (numSamplesUnderSurface < 1)
+		{
+			shadowMultiplier = 1;
+		}
+		else
+		{
+			shadowMultiplier = 1.0 - shadowMultiplier;
+		}
+	}
+	return shadowMultiplier;
 }
 
 void accumLightSH(float3 sharm[9], float3 colour, float3 n, float solAngle)
@@ -165,6 +215,7 @@ float4 main(VS_OUTPUT input) : SV_TARGET
 	float3 viewDir = normalize(eyeVectorTS - posTS);
 	float2 texCoords = input.texCoord;
 	float4 bumpMap;
+	float shadowFactor = 0;
 
 	if (input.mode == 0)
 	{
@@ -177,6 +228,27 @@ float4 main(VS_OUTPUT input) : SV_TARGET
 		specularAmount = pow(max(dot(r, toEye), 0.0f), input.l.SpecularPower);
 		diffuseAmount = max(dot(lightLecNorm, bumpMap), 0.0f);
 
+		shadowFactor = parallaxSoftShadowMultiplier(lightVectorTS, texCoords, heightMap.Sample(s1, texCoords).x );
+
+
+		if (diffuseAmount <= 0.0f)
+		{
+			specularAmount = 0.0f;
+		}
+
+		lightLecNorm = lightVectorTS;
+		// Compute Colour
+
+		// Compute the reflection vector.
+		r = reflect(-lightLecNorm, bumpMap);
+
+		// Determine how much specular light makes it into the eye.
+		specularAmount = pow(max(dot(r, toEye), 0.0f), input.l.SpecularPower);
+
+		// Determine the diffuse light intensity that strikes the vertex.
+		diffuseAmount = max(dot(lightLecNorm, bumpMap), 0.0f);
+
+		// Only display specular when there is diffuse
 		if (diffuseAmount <= 0.0f)
 		{
 			specularAmount = 0.0f;
@@ -214,20 +286,20 @@ float4 main(VS_OUTPUT input) : SV_TARGET
 		bumpMap = normalize(mul(bumpMap, N));
 		bumpMap = -bumpMap;
 
-		float3 toEye = normalize(input.EyePosW.xyz - input.pos.xyz);
+		toEye = normalize(input.EyePosW.xyz - input.pos.xyz);
 
-		float3 lightLecNorm = normalize(input.LightVecW.xyz);
+		lightLecNorm = normalize(input.LightVecW.xyz);
 
 		// Compute Colour
 
 		// Compute the reflection vector.
-		r = reflect(-lightLecNorm, bumpMap);
+		r = reflect(-lightLecNorm, N);
 
 		// Determine how much specular light makes it into the eye.
 		specularAmount = pow(max(dot(r, toEye), 0.0f), input.l.SpecularPower);
 
 		// Determine the diffuse light intensity that strikes the vertex.
-		diffuseAmount = max(dot(lightLecNorm, bumpMap), 0.0f);
+		diffuseAmount = max(dot(lightLecNorm, N), 0.0f);
 
 		// Only display specular when there is diffuse
 		if (diffuseAmount <= 0.0f)
@@ -244,9 +316,18 @@ float4 main(VS_OUTPUT input) : SV_TARGET
 	diffuse += diffuseAmount * (input.s.DiffuseMtrl * input.l.DiffuseLight).rgb;
 	ambient += (input.s.AmbientMtrl * input.l.AmbientLight).rgb;
 
-	float4 finalCol;
-	finalCol.rgb = (t1.Sample(s1, input.texCoord).rgb * (ambient + diffuse)) + specular;
-	finalCol.a = input.s.DiffuseMtrl.a;
+	float4 finalCol = float4(0.0f, 0.0f, 0.0f, 0.0f);
+
+	if (input.mode == 0)
+	{
+		finalCol.rgb = ((ambient + diffuse) + specular * shadowFactor) * t1.Sample(s1, input.texCoord).rgb;
+		finalCol.a = input.s.DiffuseMtrl.a;
+	}
+	else
+	{
+		finalCol.rgb = ((ambient + diffuse) + specular) * t1.Sample(s1, input.texCoord).rgb;
+		finalCol.a = input.s.DiffuseMtrl.a;
+	}
 	return finalCol;
 
 } 
