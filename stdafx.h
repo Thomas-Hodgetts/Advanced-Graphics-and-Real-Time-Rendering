@@ -15,10 +15,6 @@
 
 #include "SystemManager.h"
 #include "Structures.h"
-#include "iamgui/imgui.h"
-#include "iamgui/imgui_impl_win32.h"
-#include "iamgui/imgui_impl_dx12.h"
-#include "iamgui/imconfig.h"
 #include "NormalCalculations.h"
 
 // this will only call release if an object exists (prevents exceptions calling release on non existant objects)
@@ -127,7 +123,7 @@ struct ConstantBufferPerObject {
 	Material Mat;
 	Light point;
 	XMFLOAT3 EyePosW;
-	
+	int mode = 0;
 };
 
 struct ConstantBufferLighting 
@@ -202,3 +198,4 @@ Material shinyMaterial;
 Light basicLight;
 int ImageOffset;
 int buffOffset;
+int m_Time = 0;

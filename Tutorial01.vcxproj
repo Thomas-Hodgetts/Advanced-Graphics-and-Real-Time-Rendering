@@ -162,12 +162,6 @@
     <ClCompile Include="Flotilla.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="GameObjectClass.cpp" />
-    <ClCompile Include="iamgui\imgui.cpp" />
-    <ClCompile Include="iamgui\imgui_draw.cpp" />
-    <ClCompile Include="iamgui\imgui_impl_dx12.cpp" />
-    <ClCompile Include="iamgui\imgui_impl_win32.cpp" />
-    <ClCompile Include="iamgui\imgui_tables.cpp" />
-    <ClCompile Include="iamgui\imgui_widgets.cpp" />
     <ClCompile Include="ImaginaryObject.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Object.cpp" />
@@ -187,14 +181,6 @@
     <ClInclude Include="Flotilla.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GameObjectClass.h" />
-    <ClInclude Include="iamgui\imconfig.h" />
-    <ClInclude Include="iamgui\imgui.h" />
-    <ClInclude Include="iamgui\imgui_impl_dx12.h" />
-    <ClInclude Include="iamgui\imgui_impl_win32.h" />
-    <ClInclude Include="iamgui\imgui_internal.h" />
-    <ClInclude Include="iamgui\imstb_rectpack.h" />
-    <ClInclude Include="iamgui\imstb_textedit.h" />
-    <ClInclude Include="iamgui\imstb_truetype.h" />
     <ClInclude Include="ImaginaryObject.h" />
     <ClInclude Include="NormalCalculations.h" />
     <ClInclude Include="Object.h" />
@@ -230,9 +216,6 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
     </FxCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="iamgui\LICENSE.txt" />
   </ItemGroup>
   <ItemGroup>
     <None Include="LightingUtility.hlsli" />

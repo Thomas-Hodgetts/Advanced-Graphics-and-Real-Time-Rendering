@@ -21,8 +21,6 @@ int WINAPI WinMain(HINSTANCE hInstance,    //Main windows function
 		return 1;
 	}
 
-	//ImGui::Begin("Sample Window");
-
 	// start the main loop
 	mainloop();
 
@@ -130,18 +128,12 @@ void mainloop() {
 	}
 }
 
-extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
 LRESULT CALLBACK WndProc(HWND hwnd,
 	UINT msg,
 	WPARAM wParam,
 	LPARAM lParam)
 
 {
-
-	if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam))
-		return true;
-
 	switch (msg)
 	{
 	case WM_KEYDOWN:
@@ -1050,30 +1042,6 @@ bool InitD3D()
 	GameObject* GO2 = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(1));
 	GO2->m_Particle->SetParentTransform(GO->m_Transform);
 
-	//Iamgui Directx 12 win 32 example
-
-	bool CompletedSetup;
-
-
-	// Setup Dear ImGui context
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-	ImGui::StyleColorsClassic();
-
-	CompletedSetup = ImGui_ImplWin32_Init(hwnd);
-	
-	if (!CompletedSetup)
-	{
-		return false;
-	}
-
-	CompletedSetup = ImGui_ImplDX12_Init(device, frameBufferCount, DXGI_FORMAT_R8G8B8A8_UNORM,  dsDescriptorHeap, dsDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), dsDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-	if (!CompletedSetup)
-	{
-		return false;
-	}
 
 
 	m_DrawObjectStructs.commandAllocator = *commandAllocator;
@@ -1106,6 +1074,28 @@ bool InitD3D()
 
 void Update()
 {
+	m_Time++;
+
+	if (m_Time < 100000)
+	{
+		cbPerObject.mode = 0;
+		basicLight.LightVecW = XMFLOAT3(0.0f, 10.0f, -6.0f);
+	}
+	else if (m_Time < 200000)
+	{
+		cbPerObject.mode = 1;
+		basicLight.LightVecW = XMFLOAT3(0.0f, 10.0f, -6.0f);
+	}
+	else if (m_Time < 300000)
+	{
+		cbPerObject.mode = 2;
+		basicLight.LightVecW = XMFLOAT3(0.0f, 10.0f, 6.0f);
+	}
+	else 
+	{
+		m_Time = 0;
+	}
+
 	GameObject* GO = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(0));
 	GameObject* GO2 = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(1));
 
@@ -1117,11 +1107,6 @@ void Update()
 
 	GO->Update(0.f);
 	GO2->Update(0.f);
-
-	// Start the Dear ImGui frame
-	//ImGui_ImplDX12_NewFrame();
-	//ImGui_ImplWin32_NewFrame();
-	//ImGui::NewFrame();
 
 	// update constant buffer for cube1
 	// create the wvp matrix and store in constant buffer
@@ -1184,9 +1169,6 @@ void UpdatePipeline()
 	m_DrawObjectStructs.frameIndex = frameIndex;
 	m_DrawObjectStructs.commandAllocator = commandAllocator[frameIndex];
 	m_DrawObjectStructs.renderTargets = renderTargets[frameIndex];
-
-
-	//m_Manager->Draw(m_DrawObjectStructs);
 
 
 	

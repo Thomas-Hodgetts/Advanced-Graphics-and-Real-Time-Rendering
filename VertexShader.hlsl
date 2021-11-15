@@ -37,6 +37,7 @@ struct VS_OUTPUT
 	float3 biNorm : TANGENT3;
 	float3 tangent : TANGENT4;
 	float4x4 worldMat : WORLDMAT;
+	int mode : MODE;
 };
 
 cbuffer ConstantBuffer : register(b0)
@@ -48,6 +49,7 @@ cbuffer ConstantBuffer : register(b0)
 	SurfaceInfo Si;
 	Light light;
 	float3 EyePosW;
+	int mode;
 };
 
 VS_OUTPUT main(VS_INPUT input)
@@ -62,12 +64,13 @@ VS_OUTPUT main(VS_INPUT input)
 	output.l.AmbientLight = light.AmbientLight;
 	output.l.DiffuseLight = light.DiffuseLight;
 	output.l.SpecularLight = light.SpecularLight;
+	output.l.SpecularPower = light.SpecularPower;
 	output.s.AmbientMtrl = Si.AmbientMtrl;
 	output.s.DiffuseMtrl = Si.DiffuseMtrl;
 	output.s.SpecularMtrl = Si.SpecularMtrl;
-	output.l.SpecularPower = light.SpecularPower;
 	output.LightVecW = light.LightVecW - output.pos;
 	output.EyePosW = EyePosW - output.pos;
 	output.worldMat = wvpMat;
+	output.mode = mode;
 	return output;
 } 
