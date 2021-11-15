@@ -1,13 +1,125 @@
 #pragma once
 #include <windows.h>
+#include <d3d12.h>
 #include <d3d11_1.h>
-#include <directxmath.h>
+#include <DirectXMath.h>
+#include "d3dx12.h"
+#include "Vector3D.h"
+#include "Vector2.h"
+#include "Transform.h"
 #include <random>
 #include <vector>
+#include <string>
 
 
 using namespace DirectX;
+struct Vertex
+{
+	Vertex() {};
+	Vertex(float x, float y, float z, float u, float v) : pos(x, y, z), texCoord(u, v) {}
+	Vector3D pos;
+	Vector2 texCoord;
+	Vector3D Normal;
+	Vector3D tangent;
+	Vector3D biTangent;
 
+	bool operator<(const Vertex other) const
+	{
+		return memcmp((void*)this, (void*)&other, sizeof(Vertex)) > 0;
+	};
+};
+
+enum class ObjectType
+{
+	GameObj,
+	PhysicalObj,
+	ImaginaryObj
+};
+
+struct CreateObjectStruct
+{
+	CreateObjectStruct(ID3D12Device* device, ID3D12GraphicsCommandList* cl, std::string oN , ObjectType type, std::vector<Vertex> verts, std::vector<DWORD> indies, int objNum, int alignment, Transform* trans) : dev(device), commandList(cl), objName(oN),objType(type), vertices(verts), indices(indies), bufferAlignment((objNum - 1) * alignment), transform(trans) {}
+	ID3D12Device* dev = nullptr;
+	ID3D12GraphicsCommandList* commandList;
+	std::string objName;
+	ObjectType objType;
+	std::vector<Vertex> vertices;
+	std::vector<DWORD> indices;
+	int bufferAlignment;
+	Transform* transform = nullptr;
+};
+
+struct DrawObjectsStruct
+{
+	DrawObjectsStruct() {};
+	DrawObjectsStruct(ID3D12GraphicsCommandList* cL, ID3D12CommandAllocator* cA, ID3D12Resource* rT, ID3D12Resource* dSB, ID3D12DescriptorHeap* rTRH, ID3D12DescriptorHeap* dSRH, ID3D12DescriptorHeap* mDH, ID3D12PipelineState* pSO ,D3D12_VIEWPORT* vp, D3D12_RECT* rect, ID3D12Resource* cBUH, int CBO, ID3D12RootSignature* r, int index) : commandList(cL), commandAllocator(cA), renderTargets(rT), depthStencilBuffer(dSB),renderTargetResourceHeap(rTRH), depthAndStencilResourceHeap(dSRH), mainDescriptorHeap(mDH), pipelineStateObject(pSO),viewport(vp), sisRect(rect), constantBufferUploadHeaps(cBUH), root(r),frameIndex(index){ }
+	ID3D12GraphicsCommandList* commandList = nullptr;
+	ID3D12CommandAllocator* commandAllocator = nullptr;
+	ID3D12Resource* renderTargets = nullptr;
+	ID3D12Resource* depthStencilBuffer = nullptr;
+	ID3D12DescriptorHeap* renderTargetResourceHeap = nullptr;
+	ID3D12DescriptorHeap* depthAndStencilResourceHeap = nullptr;
+	ID3D12DescriptorHeap* mainDescriptorHeap = nullptr;
+	ID3D12PipelineState* pipelineStateObject = nullptr;
+	D3D12_VIEWPORT* viewport = nullptr;
+	D3D12_RECT* sisRect = nullptr;
+	ID3D12Resource* constantBufferUploadHeaps = nullptr;
+	ID3D12RootSignature* root = nullptr;
+	int frameIndex = 0;
+	int renderTargetDescriptorSize = 0;
+};
+
+struct Geometry
+{
+	ID3D12Resource* vertexBuffer; // a default buffer in GPU memory that we will load vertex data
+	ID3D12Resource* indexBuffer; // a default buffer in GPU memory that we will load index data
+	int numberOfIndices;
+	XMFLOAT3 Point;
+	D3D12_VERTEX_BUFFER_VIEW vertexBufferView; // a structure containing a pointer to the vertex data in gpu memory
+										   // the total size of the buffer, and the size of each element (vertex)
+	D3D12_INDEX_BUFFER_VIEW indexBufferView; // a structure holding information about the index buffer
+};
+
+struct Material
+{
+	XMFLOAT4 AmbientMtrl;
+	XMFLOAT4 DiffuseMtrl;
+	XMFLOAT4 SpecularMtrl;
+};
+
+struct Light
+{
+	XMFLOAT4 AmbientLight;
+	XMFLOAT4 DiffuseLight;
+	XMFLOAT4 SpecularLight;
+
+	float SpecularPower;
+	XMFLOAT3 LightVecW;
+};
+
+struct Colour
+{
+	Colour()
+	{
+		R = 0;
+		G = 0;
+		B = 0;
+	}
+	Colour(float r, float g, float b)
+	{
+		R = r;
+		G = g;
+		B = b;
+	}
+	Colour(int r, int g, int b)
+	{
+		R = r;
+		G = g;
+		B = b;
+	}
+
+	float R, G, B;
+};
 
 //Container For the MouseInput class. Makes it esier to move data
 enum MouseButtonEvent 
@@ -27,6 +139,7 @@ struct MouseData
 		PrevXPos = 0;
 		PrevYPos = 0;
 		m_MouseEvent = NONE_CLICKED;
+		Error = false;
 	}
 	~MouseData()
 	{
@@ -69,30 +182,6 @@ struct BlendFactor
 	float A;
 };
 
-struct SystemData
-{
-	HINSTANCE hInst;
-	HWND hWnd;
-	D3D_DRIVER_TYPE driverType;
-	D3D_FEATURE_LEVEL featureLevel;
-	ID3D11Device* d3dDevice;
-	ID3D11DeviceContext* ImmediateContext;
-	IDXGISwapChain* SwapChain;
-	ID3D11RenderTargetView* RenderTargetView;
-	ID3D11VertexShader* VertexShader;
-	ID3D11PixelShader* PixelShader;
-	ID3D11InputLayout* VertexLayout;
-	ID3D11Buffer* VertexBuffer;
-	ID3D11Buffer* IndexBuffer;
-	ID3D11Buffer* ConstantBuffer;
-	ID3D11DepthStencilView* depthStencilView;
-	ID3D11Texture2D* depthStencilBuffer;
-	ID3D11RasterizerState* wireFrame;
-	ID3D11RasterizerState* solidFrame;
-	ID3D11SamplerState* SamplerLinear;
-	ID3D11BlendState* Transparency;
-};
-
 struct ConstantBuffer
 {
 	XMMATRIX mWorld;
@@ -108,7 +197,6 @@ struct ConstantBuffer
 	XMFLOAT4 SpecularLight;
 	float SpecularPower;
 	XMFLOAT3 EyePosW;
-
 };
 
 enum Axis
@@ -118,23 +206,11 @@ enum Axis
 	Z
 };
 
-struct SimpleVertex
-{
-	XMFLOAT3 Pos;
-	XMFLOAT3 Normal;
-	XMFLOAT2 TexC;
-
-	bool operator<(const SimpleVertex other) const
-	{
-		return memcmp((void*)this, (void*)&other, sizeof(SimpleVertex)) > 0;
-	};
-};
-
 //Struct for storing object meshes
 struct MeshData
 {
-	ID3D11Buffer* VertexBuffer;
-	ID3D11Buffer* IndexBuffer;
+	std::vector<Vertex> vertices;
+	std::vector<DWORD> indices;
 	UINT VBStride;
 	UINT VBOffset;
 	UINT IndexCount;
@@ -145,64 +221,4 @@ struct ObjectStruct
 	XMFLOAT3 Pos;
 	MeshData MD;
 	ID3D11ShaderResourceView* Tex;
-};
-
-//Used to Calculate normals in a convient container. A vestage from week 4
-struct NormalsCalculations
-{
-
-
-	XMFLOAT3 Original;
-	XMFLOAT3 NextPoint;
-	XMFLOAT3 NextPoint2;
-	XMFLOAT3 FinalCrossProduct;
-	XMFLOAT3 Average;
-
-	//Calculates the normals for each point using Cross Products and normalisation. Doesn't calculate averages
-	XMFLOAT3 CrossProductCalculation()
-	{
-
-		XMVECTOR U = XMVectorSubtract(XMLoadFloat3(&NextPoint), XMLoadFloat3(&Original));
-		XMVECTOR V = XMVectorSubtract(XMLoadFloat3(&NextPoint2), XMLoadFloat3(&Original));
-		XMVECTOR Cross = XMVector3Cross(U, V);
-		XMStoreFloat3(&FinalCrossProduct, XMVector3Normalize(Cross));
-		return FinalCrossProduct;
-	}
-
-	//Calculates Cross Product Averages
-	XMFLOAT3 CalculateAverage(XMFLOAT3 CrossList[])
-	{
-		XMFLOAT3 Average = { 0,0,0 };
-		int dd = *(&CrossList + 1) - CrossList;
-		for (int i = 0; i < *(&CrossList + 1) - CrossList; i++)
-		{
-			Average.x += CrossList[i].x;
-			Average.y += CrossList[i].y;
-			Average.z += CrossList[i].z;
-		}
-
-		Average.x /= *(&CrossList + 1) - CrossList;
-		Average.y /= *(&CrossList + 1) - CrossList;
-		Average.z /= *(&CrossList + 1) - CrossList;
-		return Average;
-	}
-
-	//Calculates Cross Product Averages
-	XMFLOAT3 CalculateAverageWithVector(std::vector<XMFLOAT3> CrossList)
-	{
-		XMFLOAT3 Average = { 0,0,0 };
-		for (int i = 0; i < CrossList.size(); i++)
-		{
-			Average.x += CrossList[i].x;
-			Average.y += CrossList[i].y;
-			Average.z += CrossList[i].z;
-		}
-
-		Average.x /= CrossList.size();
-		Average.y /= CrossList.size();
-		Average.z /= CrossList.size();
-		return Average;
-	}
-
-
 };

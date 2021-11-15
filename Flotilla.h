@@ -1,5 +1,7 @@
 #pragma once
-#include "Object.h"
+#include "GameObject.h"
+#include "PhysicalObject.h"
+#include "ImaginaryObject.h"
 #include "ThreadVector.h"
 
 
@@ -15,7 +17,7 @@ public:
 	//Clears the entire flotilla (NOT FUNCTIONAL)
 	void ClearObjects();
 	//Draws all the objects in the flotilla.
-	void Draw(ID3D11DeviceContext* IC, ID3D11Buffer* _pCB, ConstantBuffer cb);
+	void Draw(DrawObjectsStruct DOS);
 	//Calls the update function of all of the objects in a flotilla leader
 	void Update();
 	//Returns a specified object
@@ -60,6 +62,7 @@ public:
 	bool AutoUpdate = true;
 	//Name of the flotilla
 	std::string Name;
+
 
 private:
 

@@ -99,8 +99,7 @@ float Vector3D::DotProduct(const Vector3D& vec)
 
 void Vector3D::Display()
 {
-	Debug debugger;
-	debugger.OutputString("Current Value is: X = " + std::to_string(m_X) + " , Y = " + std::to_string(m_Y) + " , Z = " + std::to_string(m_Z) + "\n");
+	Debug::OutputString("Current Value is: X = " + std::to_string(m_X) + " , Y = " + std::to_string(m_Y) + " , Z = " + std::to_string(m_Z) + "\n");
 }
 
 Vector3D Vector3D::operator+(const Vector3D& vec)

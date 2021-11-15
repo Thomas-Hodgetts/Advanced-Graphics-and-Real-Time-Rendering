@@ -1,7 +1,8 @@
 #pragma once
-#include <directxmath.h>
-#include <d3d11_1.h>
 #include <windows.h>
+#include <d3d12.h>
+#include <DirectXMath.h>
+#include "d3dx12.h"
 #include "Debug.h"
 
 using namespace DirectX;

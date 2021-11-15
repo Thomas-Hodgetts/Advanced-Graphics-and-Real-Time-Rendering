@@ -4,7 +4,7 @@ void Object::Update()
 {
 
 }
-void Object::Draw(ID3D11DeviceContext* IC, ID3D11Buffer* _pCB, ConstantBuffer cb)
+void Object::Draw(DrawObjectsStruct DOS)
 {
 
 }

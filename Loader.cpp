@@ -36,7 +36,7 @@ ObjectStruct Loader::LoadFromFile(std::string FileLocation, ID3D11Device* d3dDev
 		pos = FileDataIn.find(Deliminator);
 		std::string FileLoc = FileDataIn.substr(0, pos);
 		std::wstring* wstring = new std::wstring(FileLoc.begin(), FileLoc.end());
-		ObjectFromFile.Tex = LoadTex(d3dDevice, (L"" + *wstring + L"").c_str());
+		//ObjectFromFile.Tex = LoadTex(d3dDevice, (L"" + *wstring + L"").c_str());
 		FileDataIn.erase(0, pos+1);
 
 		pos = FileDataIn.find(Deliminator);
@@ -71,10 +71,12 @@ MeshData Loader::LoadMesh(char* filename, ID3D11Device* _pd3dDevice, bool From3d
 {
 	if (From3dsMax)
 	{
-		return OBJLoader::Load(filename, _pd3dDevice);
+		//return OBJLoader::Load(filename, _pd3dDevice);
 	}
 	else if (!From3dsMax)
 	{
-		return OBJLoader::Load(filename, _pd3dDevice, false);
+		//return OBJLoader::Load(filename, _pd3dDevice, false);
 	}
+
+	return MeshData();
 }

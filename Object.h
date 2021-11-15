@@ -11,15 +11,14 @@ public:
 	//Basic Update function on objects
 	virtual void Update();
 	//Basic draw function on objects
-	virtual void Draw(ID3D11DeviceContext* IC, ID3D11Buffer* _pCB, ConstantBuffer cb);
+	void Draw(DrawObjectsStruct DOS);
 	//TBD
 	virtual void ReturnObjectType();
 	//Not used by default Physcial Object. Defined by user
 	virtual void SetSubResources();
-
+	//Denotes what type of object it is
+	ObjectType m_ObjType;
 protected:
-
-	Loader c_SystemLoad;
 
 };
 

@@ -14,6 +14,8 @@
 #include <wincodec.h>
 
 #include "SystemManager.h"
+#include "Structures.h"
+#include "NormalCalculations.h"
 
 // this will only call release if an object exists (prevents exceptions calling release on non existant objects)
 #define SAFE_RELEASE(p) { if ( (p) ) { (p)->Release(); (p) = 0; } }
@@ -24,14 +26,14 @@ using namespace DirectX; // we will be using the directxmath library
 HWND hwnd = NULL;
 
 // name of the window (not the title)
-LPCTSTR WindowName = L"BzTutsApp";
+LPCTSTR WindowName = L"Cirno Fumo Rotate";
 
 // title of the window
-LPCTSTR WindowTitle = L"Bz Window";
+LPCTSTR WindowTitle = L"Cirno Fumo Rotate";
 
 // width and height of the window
-int Width = 800;
-int Height = 600;
+int Width = 1920;
+int Height = 1080;
 
 // is window full screen?
 bool FullScreen = false;
@@ -116,6 +118,19 @@ ID3D12DescriptorHeap* dsDescriptorHeap; // This is a heap for our depth/stencil 
 // this is the structure of our constant buffer.
 struct ConstantBufferPerObject {
 	XMFLOAT4X4 wvpMat;
+	XMFLOAT4X4 view;
+	XMFLOAT4X4 projection;
+	Material Mat;
+	Light point;
+	XMFLOAT3 EyePosW;
+	int mode = 0;
+};
+
+struct ConstantBufferLighting 
+{
+	Material Mat;
+	Light point;
+	XMFLOAT3 EyePosW;
 };
 
 // Constant buffers must be 256-byte aligned which has to do with constant reads on the GPU.
@@ -131,6 +146,8 @@ int ConstantBufferPerObjectAlignedSize = (sizeof(ConstantBufferPerObject) + 255)
 
 ConstantBufferPerObject cbPerObject; // this is the constant buffer data we will send to the gpu 
 										// (which will be placed in the resource we created above)
+
+ConstantBufferLighting cbLighting;
 
 ID3D12Resource* constantBufferUploadHeaps[frameBufferCount]; // this is the memory on the gpu where constant buffers for each frame will be placed
 
@@ -153,8 +170,7 @@ XMFLOAT4 cube2PositionOffset; // our second cube will rotate around the first cu
 
 int numCubeIndices; // the number of indices to draw the cube
 
-ID3D12Resource* textureBuffer; // the resource heap containing our texture
-ID3D12Resource* textureBuffer1; // the resource heap containing our texture
+ID3D12Resource* textureBuffer[4]; // the resource heap containing our texture
 
 int LoadImageDataFromFile(BYTE** imageData, D3D12_RESOURCE_DESC& resourceDescription, LPCWSTR filename, int &bytesPerRow);
 
@@ -163,7 +179,23 @@ WICPixelFormatGUID GetConvertToWICFormat(WICPixelFormatGUID& wicFormatGUID);
 int GetDXGIFormatBitsPerPixel(DXGI_FORMAT& dxgiFormat);
 
 ID3D12DescriptorHeap* mainDescriptorHeap;
-ID3D12Resource* textureBufferUploadHeap;
+ID3D12Resource* textureBufferUploadHeap[4];
+
+enum RootParameterIndex
+{
+	Texture1SRV,
+	Texture1Sampler,
+	Texture2SRV,
+	Texture2Sampler,
+	ConstantBuffer,
+	RootParameterCount
+};
 
 
 SystemManager* m_Manager = nullptr;
+DrawObjectsStruct m_DrawObjectStructs = DrawObjectsStruct();
+Material shinyMaterial;
+Light basicLight;
+int ImageOffset;
+int buffOffset;
+int m_Time = 0;

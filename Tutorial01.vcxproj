@@ -110,6 +110,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -154,33 +155,45 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Apperance.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />
     <ClCompile Include="Debug.cpp" />
     <ClCompile Include="Flotilla.cpp" />
+    <ClCompile Include="GameObject.cpp" />
+    <ClCompile Include="GameObjectClass.cpp" />
     <ClCompile Include="ImaginaryObject.cpp" />
-    <ClCompile Include="Loader.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Object.cpp" />
-    <ClCompile Include="OBJLoader.cpp" />
+    <ClCompile Include="ParticleModel.cpp" />
+    <ClCompile Include="PhysicalObject.cpp" />
+    <ClCompile Include="RigidBody.cpp" />
     <ClCompile Include="SystemManager.cpp" />
     <ClCompile Include="Transform.cpp" />
+    <ClCompile Include="Vector2.cpp" />
     <ClCompile Include="Vector3D.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Apperance.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="DDSTextureLoader.h" />
     <ClInclude Include="Debug.h" />
     <ClInclude Include="Flotilla.h" />
+    <ClInclude Include="GameObject.h" />
+    <ClInclude Include="GameObjectClass.h" />
     <ClInclude Include="ImaginaryObject.h" />
-    <ClInclude Include="Loader.h" />
+    <ClInclude Include="NormalCalculations.h" />
     <ClInclude Include="Object.h" />
-    <ClInclude Include="OBJLoader.h" />
+    <ClInclude Include="ParticleModel.h" />
+    <ClInclude Include="PhysicalObject.h" />
+    <ClInclude Include="Quaternion.h" />
+    <ClInclude Include="RigidBody.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Structures.h" />
     <ClInclude Include="SystemManager.h" />
     <ClInclude Include="ThreadVector.h" />
     <ClInclude Include="Transform.h" />
+    <ClInclude Include="Vector2.h" />
     <ClInclude Include="Vector3D.h" />
   </ItemGroup>
   <ItemGroup>
@@ -203,6 +216,9 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="LightingUtility.hlsli" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
