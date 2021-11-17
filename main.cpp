@@ -1067,29 +1067,26 @@ bool InitD3D()
 	basicLight.DiffuseLight = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	basicLight.SpecularLight = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
 	basicLight.SpecularPower = 20.0f;
-	basicLight.LightVecW = XMFLOAT3(0.0f, 10.0f, -6.0f);
+	basicLight.LightVecW = XMFLOAT3(0.0f, 10.0f, 6.0f);
 
 	return true;
 }
 
 void Update()
 {
-	//m_Time++;
+	m_Time++;
 
-	if (m_Time < 100000)
+	if (m_Time < 10000)
 	{
-		cbPerObject.mode = 2;
-		basicLight.LightVecW = XMFLOAT3(0.0f, 10.0f, -6.0f);
+		cbPerObject.mode = 0;
 	}
-	else if (m_Time < 200000)
+	else if (m_Time < 20000)
 	{
 		cbPerObject.mode = 1;
-		basicLight.LightVecW = XMFLOAT3(0.0f, 10.0f, -6.0f);
 	}
-	else if (m_Time < 300000)
+	else if (m_Time < 30000)
 	{
 		cbPerObject.mode = 2;
-		basicLight.LightVecW = XMFLOAT3(0.0f, 10.0f, 6.0f);
 	}
 	else 
 	{
@@ -1100,10 +1097,10 @@ void Update()
 	GameObject* GO2 = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(1));
 
 	Vector3D rot = GO->m_Transform->ReturnRot();
-	GO->m_Transform->SetRot(Vector3D(rot.ReturnX(), rot.ReturnY() + 0.00005f, rot.ReturnZ()));
+	//GO->m_Transform->SetRot(Vector3D(rot.ReturnX(), rot.ReturnY() + 0.00005f, rot.ReturnZ()));
 
 	rot = GO2->m_Transform->ReturnRot();
-	GO2->m_Transform->SetRot(Vector3D(rot.ReturnX() + 0.0003f, rot.ReturnY() + 0.000420f, rot.ReturnZ() + 0.00069f));
+	//GO2->m_Transform->SetRot(Vector3D(rot.ReturnX() + 0.0003f, rot.ReturnY() + 0.000420f, rot.ReturnZ() + 0.00069f));
 
 	GO->Update(0.f);
 	GO2->Update(0.f);

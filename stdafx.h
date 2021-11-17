@@ -32,10 +32,10 @@ LPCTSTR WindowName = L"Cirno Fumo Rotate";
 LPCTSTR WindowTitle = L"Cirno Fumo Rotate";
 
 // width and height of the window
-int Width = 1920;
-int Height = 1080;
+int Width = 2560;
+int Height = 1440;
 
-// is window full screen?
+//// is window full screen?
 bool FullScreen = false;
 
 // we will exit the program when this becomes false
