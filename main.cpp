@@ -938,10 +938,6 @@ bool InitD3D()
 		}
 		textureBufferUploadHeap[i]->SetName(L"Texture Buffer Upload Resource Heap");
 
-		if (i == 3)
-		{
-			break;
-		}
 
 		// store vertex buffer in upload heap
 		D3D12_SUBRESOURCE_DATA textureData = {};
@@ -964,6 +960,80 @@ bool InitD3D()
 
 		device->CreateShaderResourceView(textureBuffer[i], &srvDesc, hdescriptor);
 		hdescriptor.Offset(1, buffOffset);
+
+		if (m_TextureSetUp && i == 3)
+		{
+			D3D12_RESOURCE_DESC textureDesc;
+			textureDesc = {};
+			textureDesc.MipLevels = 1;
+			textureDesc.Height = Height;
+			textureDesc.Width = Width;
+			textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+			textureDesc.DepthOrArraySize = 1;
+			textureDesc.SampleDesc.Count = 1;
+			textureDesc.SampleDesc.Quality = 0;
+			textureDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+			textureDesc.Alignment = 0;
+			textureDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+			textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+
+			// create a default heap where the upload heap will copy its contents into (contents being the texture)
+			hr = device->CreateCommittedResource(
+				&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), // a default heap
+				D3D12_HEAP_FLAG_NONE, // no flags
+				&textureDesc, // the description of our texture
+				D3D12_RESOURCE_STATE_COPY_DEST, // We will copy the texture from the upload heap to here, so we start it out in a copy dest state
+				nullptr, // used for render targets and depth/stencil buffers
+				IID_PPV_ARGS(&textureBuffer[4]));
+			if (FAILED(hr))
+			{
+				Running = false;
+				return false;
+			}
+			textureBuffer[4]->SetName(L"Texture Buffer Resource Heap");
+
+			UINT64 textureUploadBufferSize;
+			device->GetCopyableFootprints(&textureDesc, 0, 1, 0, nullptr, nullptr, nullptr, &textureUploadBufferSize);
+
+			// now we create an upload heap to upload our texture to the GPU
+			hr = device->CreateCommittedResource(
+				&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), // upload heap
+				D3D12_HEAP_FLAG_NONE, // no flags
+				&CD3DX12_RESOURCE_DESC::Buffer(textureUploadBufferSize), // resource description for a buffer (storing the image data in this heap just to copy to the default heap)
+				D3D12_RESOURCE_STATE_GENERIC_READ, // We will copy the contents from this heap to the default heap above
+				nullptr,
+				IID_PPV_ARGS(&textureBufferUploadHeap[4]));
+			if (FAILED(hr))
+			{
+				Running = false;
+				return false;
+			}
+			textureBufferUploadHeap[4]->SetName(L"Texture Buffer Upload Resource Heap");
+
+			//BOOK
+
+			// now we create a shader resource view (descriptor that points to the texture and describes it)
+			D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+			srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+			srvDesc.Format = textureDesc.Format;
+			srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+			srvDesc.Texture2D.MipLevels = 1;
+
+			D3D12_SUBRESOURCE_DATA textureData = {};
+			textureData.pData = &imageData[0]; // pointer to our image data
+			textureData.RowPitch = imageBytesPerRow; // size of all our triangle vertex data
+			textureData.SlicePitch = imageBytesPerRow * textureDesc.Height; // also the size of our triangle vertex data
+			// Now we copy the upload buffer contents to the default heap
+			UpdateSubresources(commandList, textureBuffer[i], textureBufferUploadHeap[i], 0, 0, 1, &textureData);
+			// transition the texture default heap to a pixel shader resource (we will be sampling from this heap in the pixel shader to get the color of pixels)
+			commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(textureBuffer[i], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+
+			device->CreateShaderResourceView(textureBuffer[4], &srvDesc, hdescriptor);
+			hdescriptor.Offset(1, buffOffset);
+
+			m_TextureSetUp = false;
+
+		}
 
 	}
 
@@ -1264,7 +1334,7 @@ void UpdatePipeline()
 	CD3DX12_GPU_DESCRIPTOR_HANDLE Cube2tex(mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 	Cube2tex.Offset(3, buffOffset);
 	commandList->SetGraphicsRootDescriptorTable(1, Cube2tex);
-	Cube2tex.Offset(3, buffOffset);
+	Cube2tex.Offset(0, buffOffset);
 	commandList->SetGraphicsRootDescriptorTable(2, Cube2tex);
 	Cube1tex.Offset(-1, buffOffset);
 	commandList->SetGraphicsRootDescriptorTable(3, Cube2tex);
@@ -1272,43 +1342,28 @@ void UpdatePipeline()
 	// draw second cube
 	commandList->DrawIndexedInstanced(numCubeIndices, 1, 0, 0, 0);
 
+
+	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(renderTargets[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+
 	if (m_RenderToTexture)
 	{
-		if (m_TextureSetUp)
-		{
-			D3D12_RESOURCE_DESC textureDesc;
-			textureDesc = {};
-			textureDesc.MipLevels = 1;
-			textureDesc.Height = viewport.Height;
-			textureDesc.Width = viewport.Width;
-			textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-			textureDesc.DepthOrArraySize = 1;
-			textureDesc.SampleDesc.Count = 1;
-			textureDesc.SampleDesc.Quality = 0;
-			textureDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-			textureDesc.Alignment = 0;
-			textureDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-			textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-
-		}
-
-		int imageBytesPerRow = 32 * viewport.Width;
+		DXGI_FORMAT dx = DXGI_FORMAT_R8G8B8A8_UNORM;
+		int bitsPerPixel = GetDXGIFormatBitsPerPixel(dx); // number of bits per pixel
+		int imageBytesPerRow = (Width * bitsPerPixel) / 8; // number of bytes in each row of the image data
 		// store vertex buffer in upload heap
 		D3D12_SUBRESOURCE_DATA textureData = {};
 		textureData.pData = &renderTargets[frameIndex]; // pointer to our image data
 		textureData.RowPitch = imageBytesPerRow; // size of all our triangle vertex data
 		textureData.SlicePitch = imageBytesPerRow * viewport.Height; // also the size of our triangle vertex data
 		// Now we copy the upload buffer contents to the default heap
-		UpdateSubresources(commandList, textureBuffer[3], textureBufferUploadHeap[3], 0, 0, 1, &textureData);
+		UpdateSubresources(commandList, textureBuffer[4], textureBufferUploadHeap[4], 0, 0, 1, &textureData);
 		// transition the texture default heap to a pixel shader resource (we will be sampling from this heap in the pixel shader to get the color of pixels)
-		commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(textureBuffer[3], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+		commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(renderToTextureBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
 	}
 
 	// transition the "frameIndex" render target from the render target state to the present state. If the debug layer is enabled, you will receive a
 	// warning if present is called on the render target when it's not in the present state
 	//commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
-
-	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(renderTargets[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
 	hr = commandList->Close();
 	if (FAILED(hr))

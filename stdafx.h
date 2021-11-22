@@ -32,8 +32,8 @@ LPCTSTR WindowName = L"Cirno Fumo Rotate";
 LPCTSTR WindowTitle = L"Cirno Fumo Rotate";
 
 // width and height of the window
-int Width = 2560;
-int Height = 1440;
+int Width = 1920;
+int Height = 1080;
 
 //// is window full screen?
 bool FullScreen = false;
@@ -170,7 +170,10 @@ XMFLOAT4 cube2PositionOffset; // our second cube will rotate around the first cu
 
 int numCubeIndices; // the number of indices to draw the cube
 
-ID3D12Resource* textureBuffer[4]; // the resource heap containing our texture
+ID3D12Resource* textureBuffer[5]; // the resource heap containing our texture
+
+ID3D12Resource* renderToTextureBuffer; // the resource heap containing our texture
+
 
 int LoadImageDataFromFile(BYTE** imageData, D3D12_RESOURCE_DESC& resourceDescription, LPCWSTR filename, int &bytesPerRow);
 
@@ -179,7 +182,8 @@ WICPixelFormatGUID GetConvertToWICFormat(WICPixelFormatGUID& wicFormatGUID);
 int GetDXGIFormatBitsPerPixel(DXGI_FORMAT& dxgiFormat);
 
 ID3D12DescriptorHeap* mainDescriptorHeap;
-ID3D12Resource* textureBufferUploadHeap[4];
+ID3D12Resource* textureBufferUploadHeap[5];
+ID3D12Resource* renderToTextureUploadHeap;
 
 enum RootParameterIndex
 {
@@ -200,4 +204,4 @@ int ImageOffset;
 int buffOffset;
 int m_Time = 0;
 bool m_RenderToTexture = false;
-bool m_TextureSetUp = false;
+bool m_TextureSetUp = true;
