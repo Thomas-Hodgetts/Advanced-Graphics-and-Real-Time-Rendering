@@ -20,17 +20,24 @@ struct Light
 	float3 LightVecW;
 };
 
+struct LightingResult
+{
+	float4 Diffuse;
+	float4 Specular;
+};
+
 struct VS_OUTPUT
 {
 	float4 pos: SV_POSITION;
 	float2 texCoord: TEXCOORD;
-	float3 PosL : POSITION;
 	float3 EyePosW : TANGENT2;
 	Light l : LIGHTDATA;
 	SurfaceInfo s : SURFACEINFO;
 	float3 LightVecW : TANGENT1;
+	float3 norm : NORMAL;
 	float3 biNorm : TANGENT3;
 	float3 tangent : TANGENT4;
+	float3 irradiance : IRADIANCE;
 	float4x4 worldMat : WORLDMAT;
 	int mode : MODE;
 };
@@ -128,206 +135,154 @@ float parallaxSoftShadowMultiplier(float3 L, float2 initTex, float initHieght)
 	return shadowMultiplier;
 }
 
-void accumLightSH(float3 sharm[9], float3 colour, float3 n, float solAngle)
-{
-	float xy = n.x * n.y;
-	float yz = n.y * n.z;
-	float xz = n.x * n.z;
-
-	float x2 = n.x * n.x;
-	float y2 = n.y * n.y;
-	float z2 = n.z * n.z;
-
-	float3 Y00 = 0.282095;
-	float3 Y1_1 = 0.488603 * n.y;
-	float3 Y10 = 0.488603 * n.z;
-	float3 Y11 = 0.488603 * n.x;
-	float3 Y2_2 = 1.092548 * xy;
-	float3 Y2_1 = 1.092548 * yz;
-	float3 Y20 = 0.315392 * (3 * z2 - 1);
-	float3 Y21 = 1.092548 * xz;
-	float3 Y22 = 0.546274 * (x2 - y2);
-
-	sharm[0] += colour * Y00 * solAngle;
-	sharm[1] += colour * Y1_1 * solAngle;
-	sharm[2] += colour * Y10 * solAngle;
-	sharm[3] += colour * Y11 * solAngle;
-	sharm[4] += colour * Y2_2 * solAngle;
-	sharm[5] += colour * Y2_1 * solAngle;
-	sharm[6] += colour * Y20 * solAngle;
-	sharm[7] += colour * Y21 * solAngle;
-	sharm[8] += colour * Y22 * solAngle;
-}
-
-
-float3 ISHTirradiance(float3 sharm[9], float3 n)
-{
-	float3 L00 = sharm[0]; 
-	float3 L1_1 = sharm[1];
-	float3 L10 = sharm[2];
-	float3 L11 = sharm[3];
-	float3 L2_2 = sharm[4];
-	float3 L2_1 = sharm[5];
-	float3 L20 = sharm[6];
-	float3 L21 = sharm[7];
-	float3 L22 = sharm[8];
-
-	float c1 = 0.429043;
-	float c2 = 0.511664;
-	float c3 = 0.743125;
-	float c4 = 0.886227;
-	float c5 = 0.247708;
-	
-	float xy = n.x * n.y;
-	float yz = n.y * n.z;
-	float xz = n.x * n.z;
-
-	float x2 = n.x * n.x;
-	float y2 = n.y * n.y;
-	float z2 = n.z * n.z;
-
-	float3 irradiance = c1 * L22 * (x2 - y2) + c3 * L20 * z2 + c4 * L00 - c5 * L20 + 2 * c1 * (L2_2 * xy + L21 * xz + L2_1 * yz) + 2 * c2 * (L11 * n.x + L1_1 * n.y + L10 * n.z);
-
-	return irradiance;
-}
-
 //reflDiffLight
+
+float4 DoDiffuse(float3 light, float3 L, float3 N)
+{
+	float NdotL = max(0, dot(N, L));
+	return (255,255,255) * NdotL;
+}
+
+float4 DoSpecular(float3 vertexToEye, float3 lightDirectionToVertex, float3 Normal)
+{
+	float4 lightDir = float4(normalize(-lightDirectionToVertex), 1);
+	vertexToEye = normalize(vertexToEye);
+
+	float lightIntensity = saturate(dot(Normal, lightDir));
+	float4 specular = float4(0, 0, 0, 0);
+	if (lightIntensity > 0.0f)
+	{
+		float3  reflection = normalize(2 * lightIntensity * Normal - lightDir);
+		specular = pow(saturate(dot(reflection, vertexToEye)), 20); // 32 = specular power
+	}
+
+	return specular;
+}
+
+
+float DoAttenuation( float d)
+{
+	return 1.0f;// / (1 + 1 * d + 1 * d * d);
+}
+
+LightingResult DoPointLight(float3 light, float3 vertexToEye, float4 vertexPos, float3 N)
+{
+	LightingResult result;
+
+	float3 LightDirectionToVertex = (vertexPos - light);
+	float distance = length(LightDirectionToVertex);
+	LightDirectionToVertex = LightDirectionToVertex / distance;
+
+	float3 vertexToLight = (light - vertexPos);
+	distance = length(vertexToLight);
+	vertexToLight = vertexToLight / distance;
+
+	float attenuation = DoAttenuation(distance);
+
+
+	result.Diffuse = DoDiffuse(light, vertexToLight, N) * attenuation;
+	result.Specular = DoSpecular(vertexToEye, LightDirectionToVertex, N) * attenuation;
+
+	return result;
+}
+
+LightingResult ComputeLighting(float4 vertexPos, float3 N, float3 TangentToEye, float3 lightPos)
+{
+
+	LightingResult totalResult = { { 0, 0, 0, 0 },{ 0, 0, 0, 0 } };
+	LightingResult result = { { 0, 0, 0, 0 },{ 0, 0, 0, 0 } };
+	result = DoPointLight(lightPos, TangentToEye, vertexPos, N);
+	totalResult.Diffuse += result.Diffuse;
+	totalResult.Specular += result.Specular;
+
+
+	totalResult.Diffuse = saturate(totalResult.Diffuse);
+	totalResult.Specular = saturate(totalResult.Specular);
+
+	return totalResult;
+}
+
+
+LightingResult ComputeSimpleLighting(float3 toEye, float3 Norm, float3 LightVecW, SurfaceInfo surfInfo, Light light)
+{
+	LightingResult lr;
+
+	float3 r = reflect(-LightVecW, Norm);
+
+	float diffuseAmount = max(dot(LightVecW, Norm), 0.0f);
+	lr.Diffuse = diffuseAmount * (surfInfo.DiffuseMtrl * light.DiffuseLight);
+
+	float specularAmount = pow(max(dot(r, toEye), 0.0f), light.SpecularPower);
+	lr.Specular = specularAmount * (surfInfo.SpecularMtrl * light.SpecularLight);
+	
+	return lr;
+}
 
 float4 main(VS_OUTPUT input) : SV_TARGET
 {
-	float3 toEye;
+
 	float3 lightLecNorm;
 	float3 r;
 	float specularAmount;
 	float diffuseAmount;
 
-
-	float4 normalSample = normalMap.Sample(s1, input.texCoord);
-	float3 N = normalize(mul(normalSample, input.worldMat)).rgb;
-	float3x3 TBN = float3x3(input.tangent, input.biNorm, N);
+	float3x3 TBN = float3x3(input.tangent, input.biNorm, input.norm);
 	float3x3 TBN_inv = transpose(TBN);
 
 	float3 eyeVectorTS = VectorToTangentSpace(input.EyePosW.xyz, TBN_inv);
 	float3 lightVectorTS = VectorToTangentSpace(input.LightVecW.xyz, TBN_inv);
-	float3 normalTS = VectorToTangentSpace(N, TBN_inv);
-	float3 posTS = VectorToTangentSpace(input.pos.xyz, TBN_inv);
+	float3 normalTS = VectorToTangentSpace(input.norm, TBN_inv);
+	float4 posTS = (VectorToTangentSpace(input.pos.xyz, TBN_inv), 0);
 
 	float3 viewDir = normalize(eyeVectorTS - posTS);
+	float3 toEye = normalize(input.EyePosW - input.pos);
 	float2 texCoords = input.texCoord;
 	float4 bumpMap;
 	float shadowFactor = 0;
 
+	LightingResult lr;
+
 	if (input.mode == 0)
 	{
-		float2 texCoords = ParallaxMapping(input.texCoord, viewDir);
+		texCoords = ParallaxMapping(input.texCoord, viewDir);
 
 		bumpMap = ProcessBumpMap(heightMap.Sample(s1, texCoords),TBN, texCoords, 1);
-		toEye = normalize(eyeVectorTS - posTS);
-		lightLecNorm = lightVectorTS;
-		r = reflect(-lightLecNorm, bumpMap);
-		specularAmount = pow(max(dot(r, toEye), 0.0f), input.l.SpecularPower);
-		diffuseAmount = max(dot(lightLecNorm, bumpMap), 0.0f);
 
-		shadowFactor = parallaxSoftShadowMultiplier(lightVectorTS, texCoords, heightMap.Sample(s1, texCoords).x );
+		shadowFactor = parallaxSoftShadowMultiplier(lightVectorTS, texCoords, heightMap.Sample(s1, texCoords).x);
+	
+		//lr = ComputeLighting(posTS, bumpMap, viewDir, lightVectorTS);
+		lr = ComputeSimpleLighting(viewDir, bumpMap, lightVectorTS, input.s, input.l);
 
-
-		if (diffuseAmount <= 0.0f)
-		{
-			specularAmount = 0.0f;
-		}
-
-		lightLecNorm = lightVectorTS;
-		// Compute Colour
-
-		// Compute the reflection vector.
-		r = reflect(-lightLecNorm, bumpMap);
-
-		// Determine how much specular light makes it into the eye.
-		specularAmount = pow(max(dot(r, toEye), 0.0f), input.l.SpecularPower);
-
-		// Determine the diffuse light intensity that strikes the vertex.
-		diffuseAmount = max(dot(lightLecNorm, bumpMap), 0.0f);
-
-		// Only display specular when there is diffuse
-		if (diffuseAmount <= 0.0f)
-		{
-			specularAmount = 0.0f;
-		}
 	}
 	if (input.mode == 1)
 	{
-		bumpMap = ProcessBumpMap(normalMap.Sample(s1, texCoords), TBN, texCoords, 1);
+		bumpMap = ProcessBumpMap(normalMap.Sample(s1, texCoords), TBN, texCoords, 0);
 
-		toEye = normalize(eyeVectorTS - posTS);
-
-		lightLecNorm = lightVectorTS;
-		// Compute Colour
-
-		// Compute the reflection vector.
-		r = reflect(-lightLecNorm, bumpMap);
-
-		// Determine how much specular light makes it into the eye.
-		specularAmount = pow(max(dot(r, toEye), 0.0f), input.l.SpecularPower);
-
-		// Determine the diffuse light intensity that strikes the vertex.
-		diffuseAmount = max(dot(lightLecNorm, bumpMap), 0.0f);
-
-		// Only display specular when there is diffuse
-		if (diffuseAmount <= 0.0f)
-		{
-			specularAmount = 0.0f;
-		}
+		//lr = ComputeLighting(posTS, bumpMap, viewDir, lightVectorTS);
+		lr = ComputeSimpleLighting(viewDir, bumpMap, lightVectorTS, input.s, input.l);
 	}
 	if (input.mode == 2)
 	{
-		bumpMap = heightMap.Sample(s1, input.texCoord);
-		bumpMap = (bumpMap * 2.0f) - 1.0f;
-		bumpMap = float4(normalize(bumpMap.xyz), 1);
-		bumpMap = normalize(mul(bumpMap, N));
-		bumpMap = -bumpMap;
-
-		toEye = normalize(input.EyePosW.xyz - input.pos.xyz);
-
-		lightLecNorm = normalize(input.LightVecW.xyz);
-
-		// Compute Colour
-
-		// Compute the reflection vector.
-		r = reflect(-lightLecNorm, N);
-
-		// Determine how much specular light makes it into the eye.
-		specularAmount = pow(max(dot(r, toEye), 0.0f), input.l.SpecularPower);
-
-		// Determine the diffuse light intensity that strikes the vertex.
-		diffuseAmount = max(dot(lightLecNorm, N), 0.0f);
-
-		// Only display specular when there is diffuse
-		if (diffuseAmount <= 0.0f)
-		{
-			specularAmount = 0.0f;
-		}
+		lr = ComputeSimpleLighting(toEye, input.norm, input.LightVecW, input.s, input.l);
 	}
 
-	float3 ambient = float3(0.0f, 0.0f, 0.0f);
-	float3 diffuse = float3(0.0f, 0.0f, 0.0f);
-	float3 specular = float3(0.0f, 0.0f, 0.0f);
+	float3 ambient = (0, 0, 0);
 
-	specular += specularAmount * (input.s.SpecularMtrl * input.l.SpecularLight).rgb;
-	diffuse += diffuseAmount * (input.s.DiffuseMtrl * input.l.DiffuseLight).rgb;
+
 	ambient += (input.s.AmbientMtrl * input.l.AmbientLight).rgb;
 
 	float4 finalCol = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
 	if (input.mode == 0)
 	{
-		finalCol.rgb = ((ambient + diffuse) + specular * shadowFactor) * t1.Sample(s1, input.texCoord).rgb;
+		finalCol.rgb = ((ambient + lr.Diffuse) + lr.Specular * shadowFactor) * t1.Sample(s1, input.texCoord).rgb;
 		finalCol.a = input.s.DiffuseMtrl.a;
 	}
 	else
 	{
-		finalCol.rgb = ((ambient + diffuse) + specular) * t1.Sample(s1, input.texCoord).rgb;
+		finalCol.rgb = ((ambient + lr.Diffuse) + lr.Specular) * t1.Sample(s1, input.texCoord).rgb;
 		finalCol.a = input.s.DiffuseMtrl.a;
 	}
 	return finalCol;
 
-} 
+}

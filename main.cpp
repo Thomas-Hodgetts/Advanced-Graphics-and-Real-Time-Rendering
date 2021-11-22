@@ -515,11 +515,19 @@ bool InitD3D()
 
 	D3D12_INPUT_ELEMENT_DESC inputLayout[] =
 	{
+		//{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		//{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		//{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		//{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 36, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		//{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 48, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+
+
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 36, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 48, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 44, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+
 	};
 
 	// fill out an input layout description structure
@@ -897,7 +905,6 @@ bool InitD3D()
 			return false;
 		}
 
-
 		// create a default heap where the upload heap will copy its contents into (contents being the texture)
 		hr = device->CreateCommittedResource(
 			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), // a default heap
@@ -930,6 +937,11 @@ bool InitD3D()
 			return false;
 		}
 		textureBufferUploadHeap[i]->SetName(L"Texture Buffer Upload Resource Heap");
+
+		if (i == 3)
+		{
+			break;
+		}
 
 		// store vertex buffer in upload heap
 		D3D12_SUBRESOURCE_DATA textureData = {};
@@ -1065,36 +1077,35 @@ bool InitD3D()
 	// Setup the scene's light
 	basicLight.AmbientLight = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
 	basicLight.DiffuseLight = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	basicLight.SpecularLight = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-	basicLight.SpecularPower = 20.0f;
-	basicLight.LightVecW = XMFLOAT3(0.0f, 10.0f, -6.0f);
+	basicLight.SpecularLight = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
+	basicLight.SpecularPower = 32.0f;
+	basicLight.LightVecW = XMFLOAT3(0.0f, 2.0f, -6.0f);
 
 	return true;
 }
 
 void Update()
 {
-	//m_Time++;
+	m_Time++;
 
 	if (m_Time < 100000)
 	{
-		cbPerObject.mode = 2;
-		basicLight.LightVecW = XMFLOAT3(0.0f, 10.0f, -6.0f);
+		cbPerObject.mode = 0;
 	}
 	else if (m_Time < 200000)
 	{
 		cbPerObject.mode = 1;
-		basicLight.LightVecW = XMFLOAT3(0.0f, 10.0f, -6.0f);
 	}
 	else if (m_Time < 300000)
 	{
 		cbPerObject.mode = 2;
-		basicLight.LightVecW = XMFLOAT3(0.0f, 10.0f, 6.0f);
 	}
 	else 
 	{
 		m_Time = 0;
 	}
+
+
 
 	GameObject* GO = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(0));
 	GameObject* GO2 = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(1));
@@ -1251,8 +1262,9 @@ void UpdatePipeline()
 
 	//Book
 	CD3DX12_GPU_DESCRIPTOR_HANDLE Cube2tex(mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+	Cube2tex.Offset(3, buffOffset);
 	commandList->SetGraphicsRootDescriptorTable(1, Cube2tex);
-	Cube2tex.Offset(2, buffOffset);
+	Cube2tex.Offset(3, buffOffset);
 	commandList->SetGraphicsRootDescriptorTable(2, Cube2tex);
 	Cube1tex.Offset(-1, buffOffset);
 	commandList->SetGraphicsRootDescriptorTable(3, Cube2tex);
@@ -1260,8 +1272,42 @@ void UpdatePipeline()
 	// draw second cube
 	commandList->DrawIndexedInstanced(numCubeIndices, 1, 0, 0, 0);
 
+	if (m_RenderToTexture)
+	{
+		if (m_TextureSetUp)
+		{
+			D3D12_RESOURCE_DESC textureDesc;
+			textureDesc = {};
+			textureDesc.MipLevels = 1;
+			textureDesc.Height = viewport.Height;
+			textureDesc.Width = viewport.Width;
+			textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+			textureDesc.DepthOrArraySize = 1;
+			textureDesc.SampleDesc.Count = 1;
+			textureDesc.SampleDesc.Quality = 0;
+			textureDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+			textureDesc.Alignment = 0;
+			textureDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+			textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+
+		}
+
+		int imageBytesPerRow = 32 * viewport.Width;
+		// store vertex buffer in upload heap
+		D3D12_SUBRESOURCE_DATA textureData = {};
+		textureData.pData = &renderTargets[frameIndex]; // pointer to our image data
+		textureData.RowPitch = imageBytesPerRow; // size of all our triangle vertex data
+		textureData.SlicePitch = imageBytesPerRow * viewport.Height; // also the size of our triangle vertex data
+		// Now we copy the upload buffer contents to the default heap
+		UpdateSubresources(commandList, textureBuffer[3], textureBufferUploadHeap[3], 0, 0, 1, &textureData);
+		// transition the texture default heap to a pixel shader resource (we will be sampling from this heap in the pixel shader to get the color of pixels)
+		commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(textureBuffer[3], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+	}
+
 	// transition the "frameIndex" render target from the render target state to the present state. If the debug layer is enabled, you will receive a
 	// warning if present is called on the render target when it's not in the present state
+	//commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+
 	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(renderTargets[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
 	hr = commandList->Close();
