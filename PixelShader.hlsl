@@ -37,6 +37,7 @@ struct VS_OUTPUT
 	float3 norm : NORMAL;
 	float3 biNorm : TANGENT3;
 	float3 tangent : TANGENT4;
+	float3 irradiance : IRADIANCE;
 	float4x4 worldMat : WORLDMAT;
 	int mode : MODE;
 };
@@ -134,69 +135,6 @@ float parallaxSoftShadowMultiplier(float3 L, float2 initTex, float initHieght)
 	return shadowMultiplier;
 }
 
-void accumLightSH(float3 sharm[9], float3 colour, float3 n, float solAngle)
-{
-	float xy = n.x * n.y;
-	float yz = n.y * n.z;
-	float xz = n.x * n.z;
-
-	float x2 = n.x * n.x;
-	float y2 = n.y * n.y;
-	float z2 = n.z * n.z;
-
-	float3 Y00 = 0.282095;
-	float3 Y1_1 = 0.488603 * n.y;
-	float3 Y10 = 0.488603 * n.z;
-	float3 Y11 = 0.488603 * n.x;
-	float3 Y2_2 = 1.092548 * xy;
-	float3 Y2_1 = 1.092548 * yz;
-	float3 Y20 = 0.315392 * (3 * z2 - 1);
-	float3 Y21 = 1.092548 * xz;
-	float3 Y22 = 0.546274 * (x2 - y2);
-
-	sharm[0] += colour * Y00 * solAngle;
-	sharm[1] += colour * Y1_1 * solAngle;
-	sharm[2] += colour * Y10 * solAngle;
-	sharm[3] += colour * Y11 * solAngle;
-	sharm[4] += colour * Y2_2 * solAngle;
-	sharm[5] += colour * Y2_1 * solAngle;
-	sharm[6] += colour * Y20 * solAngle;
-	sharm[7] += colour * Y21 * solAngle;
-	sharm[8] += colour * Y22 * solAngle;
-}
-
-
-float3 ISHTirradiance(float3 sharm[9], float3 n)
-{
-	float3 L00 = sharm[0]; 
-	float3 L1_1 = sharm[1];
-	float3 L10 = sharm[2];
-	float3 L11 = sharm[3];
-	float3 L2_2 = sharm[4];
-	float3 L2_1 = sharm[5];
-	float3 L20 = sharm[6];
-	float3 L21 = sharm[7];
-	float3 L22 = sharm[8];
-
-	float c1 = 0.429043;
-	float c2 = 0.511664;
-	float c3 = 0.743125;
-	float c4 = 0.886227;
-	float c5 = 0.247708;
-	
-	float xy = n.x * n.y;
-	float yz = n.y * n.z;
-	float xz = n.x * n.z;
-
-	float x2 = n.x * n.x;
-	float y2 = n.y * n.y;
-	float z2 = n.z * n.z;
-
-	float3 irradiance = c1 * L22 * (x2 - y2) + c3 * L20 * z2 + c4 * L00 - c5 * L20 + 2 * c1 * (L2_2 * xy + L21 * xz + L2_1 * yz) + 2 * c2 * (L11 * n.x + L1_1 * n.y + L10 * n.z);
-
-	return irradiance;
-}
-
 //reflDiffLight
 
 float4 DoDiffuse(float3 light, float3 L, float3 N)
@@ -264,6 +202,22 @@ LightingResult ComputeLighting(float4 vertexPos, float3 N, float3 TangentToEye, 
 	return totalResult;
 }
 
+
+LightingResult ComputeSimpleLighting(float3 toEye, float3 Norm, float3 LightVecW, SurfaceInfo surfInfo, Light light)
+{
+	LightingResult lr;
+
+	float3 r = reflect(-LightVecW, Norm);
+
+	float diffuseAmount = max(dot(LightVecW, Norm), 0.0f);
+	lr.Diffuse = diffuseAmount * (surfInfo.DiffuseMtrl * light.DiffuseLight);
+
+	float specularAmount = pow(max(dot(r, toEye), 0.0f), light.SpecularPower);
+	lr.Specular = specularAmount * (surfInfo.SpecularMtrl * light.SpecularLight);
+	
+	return lr;
+}
+
 float4 main(VS_OUTPUT input) : SV_TARGET
 {
 
@@ -272,16 +226,13 @@ float4 main(VS_OUTPUT input) : SV_TARGET
 	float specularAmount;
 	float diffuseAmount;
 
-	float4 normalSample = normalMap.Sample(s1, input.texCoord);
-	float3 N = normalize(mul(normalSample, input.worldMat)).rgb;
-	float3x3 TBN = float3x3(input.tangent, input.biNorm, N);
-	//float3x3 TBN = float3x3(input.tangent, input.biNorm, input.norm);
+	float3x3 TBN = float3x3(input.tangent, input.biNorm, input.norm);
 	float3x3 TBN_inv = transpose(TBN);
 
 	float3 eyeVectorTS = VectorToTangentSpace(input.EyePosW.xyz, TBN_inv);
 	float3 lightVectorTS = VectorToTangentSpace(input.LightVecW.xyz, TBN_inv);
-	float3 normalTS = VectorToTangentSpace(N, TBN_inv);
-	float3 posTS = VectorToTangentSpace(input.pos.xyz, TBN_inv);
+	float3 normalTS = VectorToTangentSpace(input.norm, TBN_inv);
+	float4 posTS = (VectorToTangentSpace(input.pos.xyz, TBN_inv), 0);
 
 	float3 viewDir = normalize(eyeVectorTS - posTS);
 	float3 toEye = normalize(input.EyePosW - input.pos);
@@ -293,48 +244,43 @@ float4 main(VS_OUTPUT input) : SV_TARGET
 
 	if (input.mode == 0)
 	{
-		float2 texCoords = ParallaxMapping(input.texCoord, viewDir);
+		texCoords = ParallaxMapping(input.texCoord, viewDir);
 
-		bumpMap = ProcessBumpMap(heightMap.Sample(s1, texCoords),TBN, texCoords, 0);
+		bumpMap = ProcessBumpMap(heightMap.Sample(s1, texCoords),TBN, texCoords, 1);
 
 		shadowFactor = parallaxSoftShadowMultiplier(lightVectorTS, texCoords, heightMap.Sample(s1, texCoords).x);
-
-		bumpMap = -bumpMap;
-
-		lr = ComputeLighting((posTS, 1), bumpMap, viewDir, lightVectorTS);
+	
+		//lr = ComputeLighting(posTS, bumpMap, viewDir, lightVectorTS);
+		lr = ComputeSimpleLighting(viewDir, bumpMap, lightVectorTS, input.s, input.l);
 
 	}
 	if (input.mode == 1)
 	{
 		bumpMap = ProcessBumpMap(normalMap.Sample(s1, texCoords), TBN, texCoords, 0);
 
-		lr = ComputeLighting((posTS, 1), bumpMap, viewDir, lightVectorTS);
+		//lr = ComputeLighting(posTS, bumpMap, viewDir, lightVectorTS);
+		lr = ComputeSimpleLighting(viewDir, bumpMap, lightVectorTS, input.s, input.l);
 	}
 	if (input.mode == 2)
 	{
-		lr = ComputeLighting(input.pos, N, toEye, input.LightVecW);
+		lr = ComputeSimpleLighting(toEye, input.norm, input.LightVecW, input.s, input.l);
 	}
 
-	float3 ambient = float3(0.0f, 0.0f, 0.0f);
-	float3 diffuse = float3(0.0f, 0.0f, 0.0f);
-	float3 specular = float3(0.0f, 0.0f, 0.0f);
+	float3 ambient = (0, 0, 0);
 
-	specular += lr.Specular * (input.s.SpecularMtrl * input.l.SpecularLight).rgb;
-	diffuse += lr.Diffuse * (input.s.DiffuseMtrl * input.l.DiffuseLight).rgb;
+
 	ambient += (input.s.AmbientMtrl * input.l.AmbientLight).rgb;
 
 	float4 finalCol = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
 	if (input.mode == 0)
 	{
-		finalCol.rgb = ((ambient + diffuse) + specular * shadowFactor) * t1.Sample(s1, input.texCoord).rgb;
-		finalCol.a = input.s.DiffuseMtrl.a;
-		finalCol.rgb = ((ambient + diffuse) + specular) * t1.Sample(s1, input.texCoord).rgb;
+		finalCol.rgb = ((ambient + lr.Diffuse) + lr.Specular * shadowFactor) * t1.Sample(s1, input.texCoord).rgb;
 		finalCol.a = input.s.DiffuseMtrl.a;
 	}
 	else
 	{
-		finalCol.rgb = ((ambient + diffuse) + specular) * t1.Sample(s1, input.texCoord).rgb;
+		finalCol.rgb = ((ambient + lr.Diffuse) + lr.Specular) * t1.Sample(s1, input.texCoord).rgb;
 		finalCol.a = input.s.DiffuseMtrl.a;
 	}
 	return finalCol;

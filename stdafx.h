@@ -199,3 +199,5 @@ Light basicLight;
 int ImageOffset;
 int buffOffset;
 int m_Time = 0;
+bool m_RenderToTexture = true;
+bool m_TextureSetUp = false;
