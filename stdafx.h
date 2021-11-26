@@ -32,8 +32,8 @@ LPCTSTR WindowName = L"Cirno Fumo Rotate";
 LPCTSTR WindowTitle = L"Cirno Fumo Rotate";
 
 // width and height of the window
-int Width = 1920;
-int Height = 1080;
+int Width = 640;
+int Height = 480;
 
 //// is window full screen?
 bool FullScreen = false;
@@ -97,6 +97,7 @@ void Cleanup(); // release com ojects and clean up memory
 void WaitForPreviousFrame(); // wait until gpu is finished with command list
 
 ID3D12PipelineState* pipelineStateObject; // pso containing a pipeline state
+ID3D12PipelineState* pipelineStateObject2; // pso containing a pipeline state
 
 ID3D12RootSignature* rootSignature; // root signature defines data shaders will access
 
@@ -132,6 +133,13 @@ struct ConstantBufferLighting
 	Light point;
 	XMFLOAT3 EyePosW;
 };
+
+struct Screen_Vertex
+{
+	XMFLOAT3 pos;
+	XMFLOAT2 tex;
+};
+
 
 // Constant buffers must be 256-byte aligned which has to do with constant reads on the GPU.
 // We are only able to read at 256 byte intervals from the start of a resource heap, so we will
@@ -172,8 +180,7 @@ int numCubeIndices; // the number of indices to draw the cube
 
 ID3D12Resource* textureBuffer[5]; // the resource heap containing our texture
 
-ID3D12Resource* renderToTextureBuffer; // the resource heap containing our texture
-
+Screen_Vertex svQuad[4];
 
 int LoadImageDataFromFile(BYTE** imageData, D3D12_RESOURCE_DESC& resourceDescription, LPCWSTR filename, int &bytesPerRow);
 
@@ -183,7 +190,6 @@ int GetDXGIFormatBitsPerPixel(DXGI_FORMAT& dxgiFormat);
 
 ID3D12DescriptorHeap* mainDescriptorHeap;
 ID3D12Resource* textureBufferUploadHeap[5];
-ID3D12Resource* renderToTextureUploadHeap;
 
 enum RootParameterIndex
 {
@@ -203,5 +209,5 @@ Light basicLight;
 int ImageOffset;
 int buffOffset;
 int m_Time = 0;
-bool m_RenderToTexture = false;
+bool m_RenderToTexture = true;
 bool m_TextureSetUp = true;

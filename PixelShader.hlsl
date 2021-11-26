@@ -286,3 +286,11 @@ float4 main(VS_OUTPUT input) : SV_TARGET
 	return finalCol;
 
 }
+
+
+float4 mainRenderToTex(VS_OUTPUT input) : SV_TARGET
+{
+	float4 finalCol = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	finalCol.rgb = t1.Sample(s1, input.texCoord).rgb; 
+	return finalCol;
+}
