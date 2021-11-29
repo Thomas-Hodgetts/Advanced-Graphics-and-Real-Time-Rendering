@@ -1279,7 +1279,7 @@ void Update()
 	XMMATRIX transposed = XMMatrixTranspose(wvpMat); // must transpose wvp matrix for the gpu
 	XMStoreFloat4x4(&cbPerObject.wvpMat, transposed); // store transposed wvp matrix in constant buffer
 	cbPerObject.projection = m_Manager->ReturnCamera()->ReturnViewPlusProjection().m_projection;
-	cbPerObject.view = m_Manager->ReturnCamera()->ReturnViewPlusProjection().m_view;
+	XMStoreFloat4x4(&cbPerObject.worldPos,GO->m_Particle->ReturnWorldMatrix());
 	cbPerObject.point = basicLight;
 	cbPerObject.Mat = shinyMaterial;
 
@@ -1291,12 +1291,9 @@ void Update()
 	transposed = XMMatrixTranspose(wvpMat); // must transpose wvp matrix for the gpu
 	XMStoreFloat4x4(&cbPerObject.wvpMat, transposed); // store transposed wvp matrix in constant buffer
 	cbPerObject.projection = m_Manager->ReturnCamera()->ReturnViewPlusProjection().m_projection;
-	cbPerObject.view = m_Manager->ReturnCamera()->ReturnViewPlusProjection().m_view;
-
+	XMStoreFloat4x4(&cbPerObject.worldPos, GO->m_Particle->ReturnWorldMatrix());
 
 	XMStoreFloat3(&cbLighting.EyePosW, m_Manager->ReturnCamera()->GetEye());
-	cbPerObject.projection = m_Manager->ReturnCamera()->ReturnViewPlusProjection().m_projection;
-	cbPerObject.view = m_Manager->ReturnCamera()->ReturnViewPlusProjection().m_view;
 	cbLighting.Mat = shinyMaterial;
 	cbLighting.point = basicLight;
 

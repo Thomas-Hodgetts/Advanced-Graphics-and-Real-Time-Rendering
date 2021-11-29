@@ -234,7 +234,7 @@ float4 main(VS_OUTPUT input) : SV_TARGET
 	float3 normalTS = VectorToTangentSpace(input.norm, TBN_inv);
 	float4 posTS = (VectorToTangentSpace(input.pos.xyz, TBN_inv), 0);
 
-	float3 viewDir = normalize(eyeVectorTS - posTS);
+	float3 viewDir = normalize(eyeVectorTS - posTS); // ???
 	float3 toEye = normalize(input.EyePosW - input.pos);
 	float2 texCoords = input.texCoord;
 	float4 bumpMap;
@@ -242,24 +242,25 @@ float4 main(VS_OUTPUT input) : SV_TARGET
 
 	LightingResult lr;
 
+	input.mode = 0;
 	if (input.mode == 0)
 	{
 		texCoords = ParallaxMapping(input.texCoord, viewDir);
 
 		bumpMap = ProcessBumpMap(heightMap.Sample(s1, texCoords),TBN, texCoords, 1);
 
-		shadowFactor = parallaxSoftShadowMultiplier(lightVectorTS, texCoords, heightMap.Sample(s1, texCoords).x);
+		//shadowFactor = parallaxSoftShadowMultiplier(lightVectorTS, texCoords, heightMap.Sample(s1, texCoords).x);
 	
-		//lr = ComputeLighting(posTS, bumpMap, viewDir, lightVectorTS);
-		lr = ComputeSimpleLighting(viewDir, bumpMap, lightVectorTS, input.s, input.l);
+		//lr = ComputeLighting(posTS, bumpMap, eyeVectorTS, lightVectorTS);
+		lr = ComputeSimpleLighting(eyeVectorTS, bumpMap, lightVectorTS, input.s, input.l);
 
 	}
 	if (input.mode == 1)
 	{
 		bumpMap = ProcessBumpMap(normalMap.Sample(s1, texCoords), TBN, texCoords, 0);
 
-		//lr = ComputeLighting(posTS, bumpMap, viewDir, lightVectorTS);
-		lr = ComputeSimpleLighting(viewDir, bumpMap, lightVectorTS, input.s, input.l);
+		lr = ComputeLighting(posTS, normalTS, viewDir, lightVectorTS);
+		//lr = ComputeSimpleLighting(viewDir, bumpMap, lightVectorTS, input.s, input.l);
 	}
 	if (input.mode == 2)
 	{

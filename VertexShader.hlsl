@@ -64,7 +64,7 @@ cbuffer ConstantBuffer : register(b0)
 {
 	float4x4 wvpMat;
 	//----------------------------------- (16 byte boundary)
-	float4x4 View;
+	float4x4 WorldPos;
 	//----------------------------------- (16 byte boundary)
 	float4x4 Projection;
 	//----------------------------------- (16 byte boundary)
@@ -148,6 +148,7 @@ VS_OUTPUT main(VS_INPUT input)
 {
 	VS_OUTPUT output;
 	output.pos = mul(input.pos, wvpMat);
+	float3 posWorld = mul(input.pos, WorldPos);
 	output.texCoord = input.texCoord;
 	output.norm = normalize(mul(input.normalL, wvpMat));
 	output.biNorm = normalize(mul(input.biNorm, wvpMat));
@@ -159,8 +160,8 @@ VS_OUTPUT main(VS_INPUT input)
 	output.s.AmbientMtrl = Si.AmbientMtrl;
 	output.s.DiffuseMtrl = Si.DiffuseMtrl;
 	output.s.SpecularMtrl = Si.SpecularMtrl;
-	output.LightVecW = normalize(light.LightVecW - output.pos);
-	output.EyePosW = normalize(EyePosW - output.pos);
+	output.LightVecW = normalize(light.LightVecW - posWorld);
+	output.EyePosW = normalize(EyePosW - posWorld);
 	output.worldMat = wvpMat;
 	output.mode = mode;
 

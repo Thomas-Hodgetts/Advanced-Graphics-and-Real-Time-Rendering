@@ -32,8 +32,8 @@ LPCTSTR WindowName = L"Cirno Fumo Rotate";
 LPCTSTR WindowTitle = L"Cirno Fumo Rotate";
 
 // width and height of the window
-int Width = 640;
-int Height = 480;
+int Width = 1920;
+int Height = 1080;
 
 //// is window full screen?
 bool FullScreen = false;
@@ -119,7 +119,7 @@ ID3D12DescriptorHeap* dsDescriptorHeap; // This is a heap for our depth/stencil 
 // this is the structure of our constant buffer.
 struct ConstantBufferPerObject {
 	XMFLOAT4X4 wvpMat;
-	XMFLOAT4X4 view;
+	XMFLOAT4X4 worldPos;
 	XMFLOAT4X4 projection;
 	Material Mat;
 	Light point;
