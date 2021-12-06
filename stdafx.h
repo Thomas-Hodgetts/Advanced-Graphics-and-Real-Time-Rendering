@@ -9,13 +9,14 @@
 #include <dxgi1_4.h>
 #include <D3Dcompiler.h>
 #include <DirectXMath.h>
-#include "d3dx12.h"
+#include <directxcollision.h>
 #include <string>
 #include <wincodec.h>
 
 #include "SystemManager.h"
 #include "Structures.h"
 #include "NormalCalculations.h"
+#include "ShadowMaps.h"
 
 // this will only call release if an object exists (prevents exceptions calling release on non existant objects)
 #define SAFE_RELEASE(p) { if ( (p) ) { (p)->Release(); (p) = 0; } }
@@ -83,6 +84,7 @@ int frameIndex; // current rtv we are on
 
 int rtvDescriptorSize; // size of the rtv descriptor on the device (all front and back buffers will be the same size)
 					   // function declarations
+int dsvDescriptorSize;
 
 bool InitD3D(); // initializes direct3d 12
 
@@ -98,6 +100,7 @@ void WaitForPreviousFrame(); // wait until gpu is finished with command list
 
 ID3D12PipelineState* pipelineStateObject; // pso containing a pipeline state
 ID3D12PipelineState* pipelineStateObject2; // pso containing a pipeline state
+ID3D12PipelineState* ShadowPipelineState; // pso containing a pipeline state
 
 ID3D12RootSignature* rootSignature; // root signature defines data shaders will access
 
@@ -114,6 +117,9 @@ D3D12_VERTEX_BUFFER_VIEW vertexBufferView; // a structure containing a pointer t
 D3D12_INDEX_BUFFER_VIEW indexBufferView; // a structure holding information about the index buffer
 
 ID3D12Resource* depthStencilBuffer; // This is the memory for our depth buffer. it will also be used for a stencil buffer in a later tutorial
+ID3D12Resource* depthStencilBuffer2; // This is the memory for our depth buffer. it will also be used for a stencil buffer in a later tutorial
+
+
 ID3D12DescriptorHeap* dsDescriptorHeap; // This is a heap for our depth/stencil buffer descriptor
 
 // this is the structure of our constant buffer.
@@ -191,6 +197,8 @@ int GetDXGIFormatBitsPerPixel(DXGI_FORMAT& dxgiFormat);
 ID3D12DescriptorHeap* mainDescriptorHeap;
 ID3D12Resource* textureBufferUploadHeap[5];
 
+ShadowMap m_SM;
+
 enum RootParameterIndex
 {
 	Texture1SRV,
@@ -211,3 +219,11 @@ int buffOffset;
 int m_Time = 0;
 bool m_RenderToTexture = true;
 bool m_TextureSetUp = true;
+bool m_ShadowMapping = false;
+
+XMFLOAT4X4 m_ShadowTransform;
+XMFLOAT4X4 m_LightProj;
+XMFLOAT4X4 m_LightView;
+
+
+BoundingSphere m_BS;

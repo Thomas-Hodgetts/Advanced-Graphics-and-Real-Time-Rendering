@@ -1,6 +1,7 @@
 Texture2D t1 : register(t0);
 Texture2D heightMap : register(t1);
 Texture2D normalMap : register(t2);
+Texture2D gTextureMap : register(t3);
 SamplerState s1 : register(s0);
 
 struct SurfaceInfo
@@ -30,6 +31,7 @@ struct VS_OUTPUT
 {
 	float4 pos: SV_POSITION;
 	float2 texCoord: TEXCOORD;
+	float4 projTex: TEXCOORD1;
 	float3 EyePosW : TANGENT2;
 	Light l : LIGHTDATA;
 	SurfaceInfo s : SURFACEINFO;
@@ -202,7 +204,6 @@ LightingResult ComputeLighting(float4 vertexPos, float3 N, float3 TangentToEye, 
 	return totalResult;
 }
 
-
 LightingResult ComputeSimpleLighting(float3 toEye, float3 Norm, float3 LightVecW, SurfaceInfo surfInfo, Light light)
 {
 	LightingResult lr;
@@ -234,36 +235,41 @@ float4 main(VS_OUTPUT input) : SV_TARGET
 	float3 normalTS = VectorToTangentSpace(input.norm, TBN_inv);
 	float4 posTS = (VectorToTangentSpace(input.pos.xyz, TBN_inv), 0);
 
-	float3 viewDir = normalize(eyeVectorTS - posTS); // ???
 	float3 toEye = normalize(input.EyePosW - input.pos);
+	float3 viewDir = normalize(eyeVectorTS - posTS);
 	float2 texCoords = input.texCoord;
 	float4 bumpMap;
 	float shadowFactor = 0;
 
+	input.projTex.xyz /= input.projTex.w;
+	float depth = input.projTex.z;
+	float4 c = gTextureMap.Sample(s1, input.projTex.xy);
+
 	LightingResult lr;
 
-	input.mode = 0;
+	input.mode = 2;
 	if (input.mode == 0)
 	{
-		texCoords = ParallaxMapping(input.texCoord, viewDir);
+		texCoords = ParallaxMapping(input.texCoord, eyeVectorTS);
 
-		bumpMap = ProcessBumpMap(heightMap.Sample(s1, texCoords),TBN, texCoords, 1);
+		bumpMap = ProcessBumpMap(heightMap.Sample(s1, texCoords),TBN, texCoords, 0);
 
 		//shadowFactor = parallaxSoftShadowMultiplier(lightVectorTS, texCoords, heightMap.Sample(s1, texCoords).x);
 	
-		//lr = ComputeLighting(posTS, bumpMap, eyeVectorTS, lightVectorTS);
-		lr = ComputeSimpleLighting(eyeVectorTS, bumpMap, lightVectorTS, input.s, input.l);
+		lr = ComputeLighting(posTS, bumpMap, eyeVectorTS, lightVectorTS);
+		//lr = ComputeSimpleLighting(eyeVectorTS, bumpMap, lightVectorTS, input.s, input.l);
 
 	}
 	if (input.mode == 1)
 	{
 		bumpMap = ProcessBumpMap(normalMap.Sample(s1, texCoords), TBN, texCoords, 0);
 
-		lr = ComputeLighting(posTS, normalTS, viewDir, lightVectorTS);
+		lr = ComputeLighting(posTS, bumpMap, eyeVectorTS, lightVectorTS);
 		//lr = ComputeSimpleLighting(viewDir, bumpMap, lightVectorTS, input.s, input.l);
 	}
 	if (input.mode == 2)
 	{
+		//lr = ComputeLighting(input.pos, input.norm, input.EyePosW, input.LightVecW);
 		lr = ComputeSimpleLighting(toEye, input.norm, input.LightVecW, input.s, input.l);
 	}
 
