@@ -52,6 +52,7 @@
     <ClCompile Include="DDSTextureLoader.cpp">
       <Filter>Loader\DDS</Filter>
     </ClCompile>
+    <ClCompile Include="ShadowMaps.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -107,6 +108,7 @@
       <Filter>Loader\DDS</Filter>
     </ClInclude>
     <ClInclude Include="NormalCalculations.h" />
+    <ClInclude Include="ShadowMaps.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Camera">

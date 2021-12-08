@@ -244,7 +244,7 @@ bool InitD3D()
 														// describe our multi-sampling. We are not multi-sampling, so we set the count to 1 (we need at least one sample of course)
 	DXGI_SAMPLE_DESC sampleDesc = {};
 	sampleDesc.Count = 1; // multisample count (no multisampling, so we just put 1, since we still need 1 sample)
-
+	sampleDesc.Quality = 0;
 						  // Describe and create the swap chain.
 	DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
 	swapChainDesc.BufferCount = frameBufferCount; // number of buffers we have
@@ -257,7 +257,7 @@ bool InitD3D()
 
 	IDXGISwapChain* tempSwapChain;
 
-	dxgiFactory->CreateSwapChain(
+	hr = dxgiFactory->CreateSwapChain(
 		commandQueue, // the queue will be flushed once the swap chain is created
 		&swapChainDesc, // give it the swap chain description we created above
 		&tempSwapChain // store the created swap chain in a temp IDXGISwapChain interface
@@ -577,6 +577,14 @@ bool InitD3D()
 	inputLayoutDesc.NumElements = sizeof(inputLayout) / sizeof(D3D12_INPUT_ELEMENT_DESC);
 	inputLayoutDesc.pInputElementDescs = inputLayout;
 
+	//https://github.com/microsoft/DirectXTK12/wiki/Line-drawing-and-anti-aliasing
+
+	CD3DX12_RASTERIZER_DESC rastDesc(D3D12_FILL_MODE_SOLID,
+		D3D12_CULL_MODE_NONE, FALSE,
+		D3D12_DEFAULT_DEPTH_BIAS, D3D12_DEFAULT_DEPTH_BIAS_CLAMP,
+		D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS, TRUE, FALSE, TRUE,
+		0, D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF);
+
 	// create a pipeline state object (PSO)
 
 	// In a real application, you will have many pso's. for each different shader
@@ -598,7 +606,7 @@ bool InitD3D()
 	psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM; // format of the render target
 	psoDesc.SampleDesc = sampleDesc; // must be the same sample description as the swapchain and depth/stencil buffer
 	psoDesc.SampleMask = 0xffffffff; // sample mask has to do with multi-sampling. 0xffffffff means point sampling is done
-	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT); // a default rasterizer state.
+	psoDesc.RasterizerState = rastDesc; // a default rasterizer state.
 	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT); // a default blent state.
 	psoDesc.NumRenderTargets = 1; // we are only binding one render target
 	psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT); // a default depth stencil state
@@ -1060,23 +1068,47 @@ bool InitD3D()
 			textureDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
 			textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 
-			CD3DX12_RESOURCE_DESC msaaDepthStencilDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT,static_cast<UINT>(Width), static_cast<UINT>(Height),1,1,4,0);
+			CD3DX12_RESOURCE_DESC msaaDepthStencilDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, static_cast<UINT>(Width), static_cast<UINT>(Height), 1, 1, 4, 0);
 
-			msaaDepthStencilDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-	
+			//msaaDepthStencilDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
-			FLOAT f[4] = { 0,0,0,0 };
-			D3D12_CLEAR_VALUE msaaClearVal = {};
-			msaaClearVal.Format = DXGI_FORMAT_D32_FLOAT;
-			*msaaClearVal.Color = *f;
 
-			hr = device->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,&msaaDepthStencilDesc,D3D12_RESOURCE_STATE_DEPTH_WRITE,&depthOptimizedClearValue,IID_PPV_ARGS(&depthStencilBuffer2));
+			//FLOAT f[4] = { 0,0,0,0 };
+			//D3D12_CLEAR_VALUE msaaClearVal = {};
+			//msaaClearVal.Format = DXGI_FORMAT_D32_FLOAT;
+			//*msaaClearVal.Color = *f;
+
+			//hr = device->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &msaaDepthStencilDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &depthOptimizedClearValue, IID_PPV_ARGS(&depthStencilBuffer2));
+			//if (FAILED(hr))
+			//{
+			//	Running = false;
+			//	return false;
+			//}
+
+			//D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilDesc2 = {};
+			//depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
+			//depthStencilDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMS;
+			//depthStencilDesc.Flags = D3D12_DSV_FLAG_NONE;
+
+			//CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(dsDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+
+			//dsvHandle.Offset(1, dsvDescriptorSize);
+
+			//device->CreateDepthStencilView(depthStencilBuffer2, &depthStencilDesc2, dsvHandle);
+
+			hr = device->CreateCommittedResource(
+				&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+				D3D12_HEAP_FLAG_NONE,
+				&CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, Width, Height, 1, 1, 4, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
+				D3D12_RESOURCE_STATE_DEPTH_WRITE,
+				&depthOptimizedClearValue,
+				IID_PPV_ARGS(&depthStencilBuffer2)
+			);
 			if (FAILED(hr))
 			{
 				Running = false;
 				return false;
 			}
-
 			D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilDesc2 = {};
 			depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
 			depthStencilDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMS;
@@ -1086,12 +1118,13 @@ bool InitD3D()
 
 			dsvHandle.Offset(1, dsvDescriptorSize);
 
-			device->CreateDepthStencilView(depthStencilBuffer2, &depthStencilDesc2, dsvHandle);
+			device->CreateDepthStencilView(depthStencilBuffer2, &depthStencilDesc, dsvHandle);
 
-			// create a default heap where the upload heap will copy its contents into (contents being the texture)
+			 //create a default heap where the upload heap will copy its contents into (contents being the texture)
 			hr = device->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES, &textureDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, nullptr, IID_PPV_ARGS(&textureBuffer[4]));
 			if (FAILED(hr))
 			{
+				hr = device->GetDeviceRemovedReason();
 				Running = false;
 				return false;
 			}
@@ -1135,6 +1168,32 @@ bool InitD3D()
 
 			CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 			rtvHandle.Offset(3, rtvDescriptorSize);
+
+
+			auto msaaRTDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+				DXGI_FORMAT_R8G8B8A8_UNORM,
+				static_cast<UINT>(Width),
+				static_cast<UINT>(Height),
+				1, // This render target view has only one texture.
+				1, // Use a single mipmap level
+				4,
+				0
+			);
+			msaaRTDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+
+			FLOAT f[4] = { 0,0,0,0 };
+			D3D12_CLEAR_VALUE msaaClearVal = {};
+			msaaClearVal.Format = DXGI_FORMAT_D32_FLOAT;
+			memcpy(msaaClearVal.Color, f, sizeof(float) * 4);
+
+			hr = device->CreateCommittedResource(
+				&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+				D3D12_HEAP_FLAG_NONE,
+				&msaaRTDesc,
+				D3D12_RESOURCE_STATE_RESOLVE_SOURCE,
+				&msaaClearVal,
+				IID_PPV_ARGS(&textureBuffer[4]));
+
 
 			device->CreateRenderTargetView(textureBuffer[4], nullptr, rtvHandle);
 
@@ -1638,7 +1697,7 @@ void UpdatePipeline()
 		// get a handle to the depth/stencil buffer
 		CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(dsDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
-		dsvHandle.Offset(1, dsvDescriptorSize);
+		//dsvHandle.Offset(1, dsvDescriptorSize);
 
 		// set the render target for the output merger stage (the output of the pipeline)
 		commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
