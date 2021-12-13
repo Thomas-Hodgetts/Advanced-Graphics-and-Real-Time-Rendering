@@ -308,7 +308,7 @@ float4 main(VS_OUTPUT input) : SV_TARGET
 
 	LightingResult lr;
 
-	input.mode = 3;
+	input.mode = 0;
 	if (input.mode == 0)
 	{
 		texCoords = ParallaxMapping(input.texCoord, eyeVectorTS);
@@ -317,8 +317,8 @@ float4 main(VS_OUTPUT input) : SV_TARGET
 
 		shadowFactor = parallaxSoftShadowMultiplier(lightVectorTS, texCoords, heightMap.Sample(s1, texCoords).x);
 	
-		lr = ComputeLighting(posTS, bumpMap, eyeVectorTS, lightVectorTS, shadowFactor2);
-		//lr = ComputeSimpleLighting(eyeVectorTS, bumpMap, lightVectorTS, input.s, input.l);
+		//lr = ComputeLighting(posTS, bumpMap, eyeVectorTS, lightVectorTS, shadowFactor2);
+		lr = ComputeSimpleLighting(eyeVectorTS, bumpMap, lightVectorTS, input.s, input.l, shadowFactor2);
 
 	}
 	if (input.mode == 1)

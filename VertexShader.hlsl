@@ -7,6 +7,12 @@ struct VS_INPUT
 	float3 biNorm: BINORMAL;
 };
 
+struct VS_INPUT2
+{
+	float4 pos : POSITION;
+	float2 texCoord: TEXCOORD;
+};
+
 struct SurfaceInfo
 {
 	float4 AmbientMtrl;
@@ -166,7 +172,7 @@ VS_OUTPUT main(VS_INPUT input)
 	return output;
 } 
 
-VS_OUTPUT renderToTexMain(VS_INPUT input)
+VS_OUTPUT renderToTexMain(VS_INPUT2 input)
 {
 	VS_OUTPUT output;
 	output.pos = mul(input.pos, wvpMat);
