@@ -28,6 +28,8 @@ struct Light
 struct VS_OUTPUT
 {
 	float4 pos: SV_POSITION;
+	float3 posW: POSW;
+	float4 ShadowPosH : POSITION0;
 	float2 texCoord: TEXCOORD;
 	float4 projTex: TEXCOORD1;
 	float3 EyePosW : TANGENT2;
@@ -42,6 +44,13 @@ struct VS_OUTPUT
 	int mode : MODE;
 };
 
+struct VS_SHADOW
+{
+	float4 posH : SV_POSITION;
+	float2 texCoord: TEXCOORD;
+	float4 DiffuseMtrl : MATERIAL;
+};
+
 cbuffer ConstantBuffer : register(b0)
 {
 	float4x4 wvpMat;
@@ -49,6 +58,8 @@ cbuffer ConstantBuffer : register(b0)
 	float4x4 WorldPos;
 	//----------------------------------- (16 byte boundary)
 	float4x4 Projection;
+	//----------------------------------- (16 byte boundary)
+	float4x4 gShadowTransform;
 	//----------------------------------- (16 byte boundary)
 	SurfaceInfo Si;
 	//----------------------------------- (16 byte boundary)
@@ -130,12 +141,13 @@ VS_OUTPUT main(VS_INPUT input)
 {
 	VS_OUTPUT output;
 	output.pos = mul(input.pos, wvpMat);
-	float3 posWorld = mul(input.pos, WorldPos);
+	output.posW = mul(input.pos, WorldPos);
 	output.texCoord = input.texCoord;
+	output.ShadowPosH = mul(output.posW, gShadowTransform);
 	//output.projTex = mul(float4(light.LightVecW, 1.0f), gLightWorldViewProjTexture);
-	output.norm = normalize(mul(input.normalL, wvpMat));
-	output.biNorm = normalize(mul(input.biNorm, wvpMat));
-	output.tangent = normalize(mul(input.tan, wvpMat));
+	output.norm = normalize(mul(input.normalL, WorldPos));
+	output.biNorm = normalize(mul(input.biNorm, WorldPos));
+	output.tangent = normalize(mul(input.tan, WorldPos));
 	output.l.AmbientLight = light.AmbientLight;
 	output.l.DiffuseLight = light.DiffuseLight;
 	output.l.SpecularLight = light.SpecularLight;
@@ -143,8 +155,8 @@ VS_OUTPUT main(VS_INPUT input)
 	output.s.AmbientMtrl = Si.AmbientMtrl;
 	output.s.DiffuseMtrl = Si.DiffuseMtrl;
 	output.s.SpecularMtrl = Si.SpecularMtrl;
-	output.LightVecW = normalize(light.LightVecW - posWorld);
-	output.EyePosW = normalize(EyePosW - posWorld);
+	output.LightVecW = normalize(light.LightVecW - output.posW.xyz);
+	output.EyePosW = normalize(EyePosW - output.posW.xyz);
 	output.worldMat = wvpMat;
 	output.mode = mode;
 
@@ -159,5 +171,16 @@ VS_OUTPUT renderToTexMain(VS_INPUT input)
 	VS_OUTPUT output;
 	output.pos = mul(input.pos, wvpMat);
 	output.texCoord = input.texCoord;
+	return output;
+}
+
+
+VS_SHADOW shadowMain(VS_INPUT input)
+{
+	VS_SHADOW output;
+	output.posH = mul(input.pos, WorldPos);
+	output.posH = mul(output.posH, wvpMat);
+	output.texCoord = input.texCoord;
+	output.DiffuseMtrl = Si.DiffuseMtrl;
 	return output;
 }

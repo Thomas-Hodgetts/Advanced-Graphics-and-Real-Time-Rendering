@@ -289,6 +289,7 @@ bool InitD3D()
 	// device to give us the size. we will use this size to increment a descriptor handle offset
 	rtvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	dsvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+	srvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	// get a handle to the first descriptor in the descriptor heap. a handle is basically a pointer,
 	// but we cannot literally use it like a c++ pointer.
@@ -375,6 +376,8 @@ bool InitD3D()
 		Texture2Sampler,
 		Texture3SRV,
 		Texture3Sampler,
+		Texture4SRV,
+		Texture4Sampler,
 		ConstantBuffer,
 		RootParameterCount
 	};
@@ -399,6 +402,11 @@ bool InitD3D()
 	// Texture 3
 	CD3DX12_DESCRIPTOR_RANGE texture3Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2);
 	rootParameters[RootParameterIndex::Texture3SRV].InitAsDescriptorTable(1, &texture3Range, D3D12_SHADER_VISIBILITY_PIXEL);
+	// Texture 4
+	CD3DX12_DESCRIPTOR_RANGE texture4Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3);
+	rootParameters[RootParameterIndex::Texture3SRV].InitAsDescriptorTable(1, &texture4Range, D3D12_SHADER_VISIBILITY_PIXEL);
+
+
 	// Create the root signature
 	CD3DX12_ROOT_SIGNATURE_DESC rsigDesc = {};
 	rsigDesc.Init(_countof(rootParameters), rootParameters, 0, nullptr, rootSignatureFlags);
@@ -426,15 +434,28 @@ bool InitD3D()
 	sampler.RegisterSpace = 0;
 	sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
+	//book
+	const CD3DX12_STATIC_SAMPLER_DESC shadow(
+		1, 
+		D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT,
+		D3D12_TEXTURE_ADDRESS_MODE_BORDER,
+		D3D12_TEXTURE_ADDRESS_MODE_BORDER,
+		D3D12_TEXTURE_ADDRESS_MODE_BORDER,
+		0.0f,                             
+		16,                               
+		D3D12_COMPARISON_FUNC_LESS_EQUAL,
+		D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK);
+
+	D3D12_STATIC_SAMPLER_DESC samArr[2] = { sampler , shadow };
+
 	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
 	rootSignatureDesc.Init(_countof(rootParameter), // we have 2 root parameters
 		rootParameter, // a pointer to the beginning of our root parameters array
-		1, // we have one static sampler
-		&sampler, // a pointer to our static sampler (array)
+		2, // we have one static sampler
+		samArr, // a pointer to our static sampler (array)
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT | // we can deny shader stages here for better performance
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS);
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS);
 
 	ID3DBlob* errorBuff; // a buffer holding the error data if any
 	ID3DBlob* signature;
@@ -506,8 +527,31 @@ bool InitD3D()
 	// fill out a shader bytecode structure, which is basically just a pointer
 	// to the shader bytecode and the size of the shader bytecode
 	D3D12_SHADER_BYTECODE vertexShaderBytecode2 = {};
-	vertexShaderBytecode2.BytecodeLength = vertexShader->GetBufferSize();
-	vertexShaderBytecode2.pShaderBytecode = vertexShader->GetBufferPointer();
+	vertexShaderBytecode2.BytecodeLength = renderToTexVertexShader->GetBufferSize();
+	vertexShaderBytecode2.pShaderBytecode = renderToTexVertexShader->GetBufferPointer();
+
+	ID3DBlob* ShadowVertexShader; // d3d blob for holding vertex shader bytecode
+	hr = D3DCompileFromFile(L"VertexShader.hlsl",
+		nullptr,
+		nullptr,
+		"shadowMain",
+		"vs_5_0",
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+		0,
+		&ShadowVertexShader,
+		&errorBuff);
+	if (FAILED(hr))
+	{
+		OutputDebugStringA((char*)errorBuff->GetBufferPointer());
+		Running = false;
+		return false;
+	}
+
+	// fill out a shader bytecode structure, which is basically just a pointer
+	// to the shader bytecode and the size of the shader bytecode
+	D3D12_SHADER_BYTECODE vertexShaderBytecode3 = {};
+	vertexShaderBytecode3.BytecodeLength = ShadowVertexShader->GetBufferSize();
+	vertexShaderBytecode3.pShaderBytecode = ShadowVertexShader->GetBufferPointer();
 
 	// compile pixel shader
 	ID3DBlob* pixelShader;
@@ -554,6 +598,52 @@ bool InitD3D()
 	D3D12_SHADER_BYTECODE pixelShaderBytecode2 = {};
 	pixelShaderBytecode2.BytecodeLength = renderToTexPixelShader->GetBufferSize();
 	pixelShaderBytecode2.pShaderBytecode = renderToTexPixelShader->GetBufferPointer();
+
+	ID3DBlob* shadowPixelShader;
+	hr = D3DCompileFromFile(L"PixelShader.hlsl",
+		nullptr,
+		nullptr,
+		"mainRenderToTex",
+		"ps_5_0",
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+		0,
+		&shadowPixelShader,
+		&errorBuff);
+	if (FAILED(hr))
+	{
+		OutputDebugStringA((char*)errorBuff->GetBufferPointer());
+		Running = false;
+		return false;
+	}
+
+	// fill out shader bytecode structure for pixel shader
+	D3D12_SHADER_BYTECODE pixelShaderBytecode3 = {};
+	pixelShaderBytecode2.BytecodeLength = shadowPixelShader->GetBufferSize();
+	pixelShaderBytecode2.pShaderBytecode = shadowPixelShader->GetBufferPointer();
+
+	// compile vertex shader
+	ID3DBlob* geoShader; // d3d blob for holding vertex shader bytecode
+	hr = D3DCompileFromFile(L"PixelShader.hlsl",
+		nullptr,
+		nullptr,
+		"gsMain",
+		"gs_5_0",
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+		0,
+		&geoShader,
+		&errorBuff);
+	if (FAILED(hr))
+	{
+		OutputDebugStringA((char*)errorBuff->GetBufferPointer());
+		Running = false;
+		return false;
+	}
+
+	// fill out shader bytecode structure for pixel shader
+	D3D12_SHADER_BYTECODE geoShaderBytecode = {};
+	geoShaderBytecode.BytecodeLength = geoShader->GetBufferSize();
+	geoShaderBytecode.pShaderBytecode = geoShader->GetBufferPointer();
+
 
 	// create input layout
 
@@ -602,6 +692,7 @@ bool InitD3D()
 	psoDesc.pRootSignature = rootSignature; // the root signature that describes the input data this pso needs
 	psoDesc.VS = vertexShaderBytecode; // structure describing where to find the vertex shader bytecode and how large it is
 	psoDesc.PS = pixelShaderBytecode; // same as VS but for pixel shader
+	psoDesc.GS = geoShaderBytecode; // same as VS but for pixel shader
 	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE; // type of topology we are drawing
 	psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM; // format of the render target
 	psoDesc.SampleDesc = sampleDesc; // must be the same sample description as the swapchain and depth/stencil buffer
@@ -616,6 +707,7 @@ bool InitD3D()
 	psoDesc2.pRootSignature = rootSignature; // the root signature that describes the input data this pso needseeds
 	psoDesc2.VS = vertexShaderBytecode2; // structure describing where to find the vertex shader bytecode and how large it isd how large it is
 	psoDesc2.PS = pixelShaderBytecode2; // same as VS but for pixel shader
+	psoDesc2.GS = geoShaderBytecode; // same as VS but for pixel shader
 	psoDesc2.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE; // type of topology we are drawinging
 	psoDesc2.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM; // format of the render target
 	psoDesc2.SampleDesc = sampleDesc; // must be the same sample description as the swapchain and depth/stencil buffercil buffer
@@ -625,7 +717,11 @@ bool InitD3D()
 	psoDesc2.NumRenderTargets = 1; // we are only binding one render target
 	psoDesc2.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT); // a default depth stencil state
 
+
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc3 = psoDesc2; // a structure to define a pso
+	psoDesc3.VS = vertexShaderBytecode3;
+	psoDesc3.PS = pixelShaderBytecode3;
+	psoDesc3.GS = geoShaderBytecode; // same as VS but for pixel shader
 	psoDesc3.RTVFormats[0] = DXGI_FORMAT_UNKNOWN; // format of the render target
 	psoDesc3.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT); // a default rasterizer state.
 	psoDesc3.RasterizerState.DepthBias = 100000;
@@ -966,7 +1062,7 @@ bool InitD3D()
 
 	// create the descriptor heap that will store our srv
     D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
-	heapDesc.NumDescriptors = 2;
+	heapDesc.NumDescriptors = 1;
 	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	hr = device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&mainDescriptorHeap));
@@ -983,6 +1079,7 @@ bool InitD3D()
 	int objectCount = sizeof(filename) / sizeof(LPCWSTR);
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE hdescriptor(mainDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+	CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(dsDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
 	for (size_t i = 0; i < objectCount; i++)
 	{
@@ -1114,7 +1211,6 @@ bool InitD3D()
 			depthStencilDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMS;
 			depthStencilDesc.Flags = D3D12_DSV_FLAG_NONE;
 
-			CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(dsDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
 			dsvHandle.Offset(1, dsvDescriptorSize);
 
@@ -1343,6 +1439,19 @@ bool InitD3D()
 		m_SM = ShadowMap(device, 2048, 2048);
 		m_BS.Center = { 0.f, 0.f, 0.f };
 		m_BS.Radius = sqrtf(10.f * 10.f + 15.f * 15.f);
+
+
+		D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
+		srvHeapDesc.NumDescriptors = 1;
+		srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+		srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+		device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&srvDescriptorHeap));
+
+
+		m_SM.BuildDescriptors(
+			hdescriptor,
+			CD3DX12_GPU_DESCRIPTOR_HANDLE(mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), 0, srvDescriptorSize),
+			dsvHandle);
 	}
 	return true;
 }
@@ -1350,23 +1459,19 @@ bool InitD3D()
 void Update()
 {
 	m_Time++;
+	if (GetAsyncKeyState('W') & 0x8000)
+		m_Manager->ReturnCamera()->Walk(0.00005f);
 
-	if (m_Time < 100000)
-	{
-		cbPerObject.mode = 0;
-	}
-	else if (m_Time < 200000)
-	{
-		cbPerObject.mode = 1;
-	}
-	else if (m_Time < 300000)
-	{
-		cbPerObject.mode = 2;
-	}
-	else 
-	{
-		m_Time = 0;
-	}
+	if (GetAsyncKeyState('S') & 0x8000)
+		m_Manager->ReturnCamera()->Walk(-0.00005f);
+
+	if (GetAsyncKeyState('A') & 0x8000)
+		m_Manager->ReturnCamera()->Strafe(-0.00005f);
+
+	if (GetAsyncKeyState('D') & 0x8000)
+		m_Manager->ReturnCamera()->Strafe(0.00005f);
+
+
 
 
 
@@ -1423,22 +1528,26 @@ void Update()
 
 	if (m_ShadowMapping)
 	{
-		XMFLOAT3 dir(0.1f, -1.f, 1.f);
-		XMVECTOR lightDir(XMLoadFloat3(&dir));
-		XMVECTOR lightPos(-2.0f*m_BS.Radius*lightDir);
-		XMVECTOR targetPos(XMLoadFloat3(&m_BS.Center));
-		XMVECTOR lightUp(XMVectorSet(0.f,1.f,0.f, 0.f));
+
+		XMFLOAT3 dir(0.57735f, -0.57735f, 0.57735f);
+		XMVECTOR lightDir = XMLoadFloat3(&dir);
+		XMVECTOR lightPos = -2.0f * m_BS.Radius * lightDir;
+		XMVECTOR targetPos = XMLoadFloat3(&m_BS.Center);
+		XMVECTOR lightUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 		XMMATRIX lightView = XMMatrixLookAtLH(lightPos, targetPos, lightUp);
 
-		XMFLOAT3 sphereCentreLS;
-		XMStoreFloat3(&sphereCentreLS, XMVector3TransformCoord(targetPos,lightView));
+		// Transform bounding sphere to light space.
+		XMFLOAT3 sphereCenterLS;
+		XMStoreFloat3(&sphereCenterLS, XMVector3TransformCoord(targetPos, lightView));
 
-		float l = sphereCentreLS.x - m_BS.Radius;
-		float b = sphereCentreLS.y - m_BS.Radius;
-		float n = sphereCentreLS.z - m_BS.Radius;
-		float r = sphereCentreLS.x - m_BS.Radius;
-		float t = sphereCentreLS.y - m_BS.Radius;
-		float f = sphereCentreLS.z - m_BS.Radius;
+		// Ortho frustum in light space encloses scene.
+		float l = sphereCenterLS.x - m_BS.Radius;
+		float b = sphereCenterLS.y - m_BS.Radius;
+		float n = sphereCenterLS.z - m_BS.Radius;
+		float r = sphereCenterLS.x + m_BS.Radius;
+		float t = sphereCenterLS.y + m_BS.Radius;
+		float f = sphereCenterLS.z + m_BS.Radius;
+
 
 		XMMATRIX lightProj = XMMatrixOrthographicOffCenterLH(l,r,b,t,n,f);
 		XMMATRIX T(
@@ -1459,13 +1568,13 @@ void Update()
 		XMStoreFloat4x4(&cbPerObject.wvpMat, transposed); // store transposed wvp matrix in constant buffer
 		cbPerObject.projection = m_Manager->ReturnCamera()->ReturnViewPlusProjection().m_projection;
 		XMStoreFloat4x4(&cbPerObject.worldPos, GO3->m_Particle->ReturnWorldMatrix());
+		cbPerObject.shadowTransform = m_ShadowTransform;
 
 		XMStoreFloat3(&cbLighting.EyePosW, m_Manager->ReturnCamera()->GetEye());
 		cbLighting.Mat = shinyMaterial;
 		cbLighting.point = basicLight;
 
 		XMStoreFloat3(&cbLighting.point.LightVecW, lightPos);
-
 		memcpy(cbvGPUAddress[frameIndex] + ConstantBufferPerObjectAlignedSize + ConstantBufferPerObjectAlignedSize, &cbPerObject, sizeof(cbPerObject));
 	}
 }
@@ -1549,12 +1658,26 @@ void UpdatePipeline()
 	// first cube
 
 	//Book
-	CD3DX12_GPU_DESCRIPTOR_HANDLE Cube1tex(mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-	commandList->SetGraphicsRootDescriptorTable(1, Cube1tex);
-	Cube1tex.Offset(2, buffOffset);
-	commandList->SetGraphicsRootDescriptorTable(2, Cube1tex);
-	Cube1tex.Offset(-1, buffOffset);
-	commandList->SetGraphicsRootDescriptorTable(3, Cube1tex);
+
+
+	if (m_ShadowMapping)
+	{
+		CD3DX12_GPU_DESCRIPTOR_HANDLE Cube1tex(mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+		commandList->SetGraphicsRootDescriptorTable(1, Cube1tex);
+		Cube1tex.Offset(2, buffOffset);
+		commandList->SetGraphicsRootDescriptorTable(2, Cube1tex);
+		Cube1tex.Offset(2, buffOffset);
+		commandList->SetGraphicsRootDescriptorTable(3, Cube1tex);
+	}
+	else
+	{
+		CD3DX12_GPU_DESCRIPTOR_HANDLE Cube1tex(mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+		commandList->SetGraphicsRootDescriptorTable(1, Cube1tex);
+		Cube1tex.Offset(2, buffOffset);
+		commandList->SetGraphicsRootDescriptorTable(2, Cube1tex);
+		Cube1tex.Offset(-1, buffOffset);
+		commandList->SetGraphicsRootDescriptorTable(3, Cube1tex);
+	}
 
 	// set cube1's constant buffer
 	commandList->SetGraphicsRootConstantBufferView(0, constantBufferUploadHeaps[frameIndex]->GetGPUVirtualAddress());
@@ -1570,14 +1693,31 @@ void UpdatePipeline()
 	// cube2's constant buffer data is stored after (256 bits from the start of the heap).
 	commandList->SetGraphicsRootConstantBufferView(0, constantBufferUploadHeaps[frameIndex]->GetGPUVirtualAddress() + ConstantBufferPerObjectAlignedSize);
 
-	//Book
-	CD3DX12_GPU_DESCRIPTOR_HANDLE Cube2tex(mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-	Cube2tex.Offset(4, buffOffset);
-	commandList->SetGraphicsRootDescriptorTable(1, Cube2tex);
-	Cube2tex.Offset(0, buffOffset);
-	commandList->SetGraphicsRootDescriptorTable(2, Cube2tex);
-	Cube1tex.Offset(-1, buffOffset);
-	commandList->SetGraphicsRootDescriptorTable(3, Cube2tex);
+
+	if (m_ShadowMapping)
+	{
+		//Book
+		CD3DX12_GPU_DESCRIPTOR_HANDLE Cube2tex(mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+		Cube2tex.Offset(3, buffOffset);
+		commandList->SetGraphicsRootDescriptorTable(1, Cube2tex);
+		Cube2tex.Offset(0, buffOffset);
+		commandList->SetGraphicsRootDescriptorTable(2, Cube2tex);
+		Cube2tex.Offset(1, buffOffset);
+		commandList->SetGraphicsRootDescriptorTable(3, Cube2tex);
+
+	}
+	else
+	{
+		//Book
+		CD3DX12_GPU_DESCRIPTOR_HANDLE Cube2tex(mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+		Cube2tex.Offset(4, buffOffset);
+		commandList->SetGraphicsRootDescriptorTable(1, Cube2tex);
+		Cube2tex.Offset(0, buffOffset);
+		commandList->SetGraphicsRootDescriptorTable(2, Cube2tex);
+		Cube2tex.Offset(-1, buffOffset);
+		commandList->SetGraphicsRootDescriptorTable(3, Cube2tex);
+
+	}
 
 	// draw second cube
 	commandList->DrawIndexedInstanced(numCubeIndices, 1, 0, 0, 0);
@@ -1609,7 +1749,7 @@ void UpdatePipeline()
 		commandList->RSSetViewports(1, &m_SM.Viewport());
 		commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_SM.Resource(), D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE));
 		commandList->ClearDepthStencilView(m_SM.Dsv(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-		commandList->OMSetRenderTargets(1, nullptr, FALSE, &m_SM.Dsv());
+		commandList->OMSetRenderTargets(0, nullptr, FALSE, &m_SM.Dsv());
 		commandList->SetGraphicsRootConstantBufferView(0, constantBufferUploadHeaps[frameIndex]->GetGPUVirtualAddress());
 		commandList->SetPipelineState(ShadowPipelineState);
 
@@ -1681,6 +1821,7 @@ void UpdatePipeline()
 		// draw second cube
 		commandList->DrawIndexedInstanced(numCubeIndices, 1, 0, 0, 0);
 		commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_SM.Resource(), D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE));
+
 	}
 	if (m_RenderToTexture)
 	{	

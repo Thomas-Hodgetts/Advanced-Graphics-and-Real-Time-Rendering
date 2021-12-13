@@ -66,6 +66,7 @@ IDXGISwapChain3* swapChain; // swapchain used to switch between render targets
 ID3D12CommandQueue* commandQueue; // container for command lists
 
 ID3D12DescriptorHeap* rtvDescriptorHeap; // a descriptor heap to hold resources like the render targets
+ID3D12DescriptorHeap* srvDescriptorHeap;
 
 ID3D12Resource* renderTargets[frameBufferCount]; // number of render targets equal to buffer count
 ID3D12Resource* renderTarget;
@@ -86,6 +87,7 @@ int frameIndex; // current rtv we are on
 int rtvDescriptorSize; // size of the rtv descriptor on the device (all front and back buffers will be the same size)
 					   // function declarations
 int dsvDescriptorSize;
+int srvDescriptorSize;
 
 bool InitD3D(); // initializes direct3d 12
 
@@ -128,6 +130,7 @@ struct ConstantBufferPerObject {
 	XMFLOAT4X4 wvpMat;
 	XMFLOAT4X4 worldPos;
 	XMFLOAT4X4 projection;
+	XMFLOAT4X4 shadowTransform;
 	Material Mat;
 	Light point;
 	XMFLOAT3 EyePosW;
@@ -218,9 +221,10 @@ Light basicLight;
 int ImageOffset;
 int buffOffset;
 int m_Time = 0;
-bool m_RenderToTexture = true;
-bool m_TextureSetUp = true;
-bool m_ShadowMapping = false;
+int m_TimePause = 0;
+bool m_RenderToTexture = false;
+bool m_TextureSetUp = false;
+bool m_ShadowMapping = true;
 
 XMFLOAT4X4 m_ShadowTransform;
 XMFLOAT4X4 m_LightProj;

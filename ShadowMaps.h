@@ -1,5 +1,7 @@
 #pragma once
 #include "d3dx12.h"
+#include <DirectXMath.h>
+#include <d3d11_1.h>
 
 class ShadowMap
 {
@@ -20,6 +22,8 @@ public:
 
 	void BuildDescriptors(CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuSrv, CD3DX12_GPU_DESCRIPTOR_HANDLE hGpuSrv, CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuDsv);
 
+	void Update();
+
 private:
 	void BuildDescriptors();
 	void BuildResource();
@@ -33,6 +37,7 @@ private:
 
 	UINT m_Width;
 	UINT m_Height;
+
 
 	DXGI_FORMAT m_Format = DXGI_FORMAT_R24G8_TYPELESS;
 
