@@ -1,0 +1,17 @@
+﻿<Window x:Class="ConfigGenerator.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ConfigGenerator"
+        mc:Ignorable="d"
+        Title="" Height="200" Width="200
+        ">
+
+    <Grid>
+        <ComboBox Name="SelectBox" HorizontalAlignment="Left" Margin="37,77,0,0" VerticalAlignment="Top" Width="120" RenderTransformOrigin="0.048,-2.418" SelectionChanged="ComboBox_SelectionChanged"/>
+        <TextBox HorizontalAlignment="Left" Height="23" Margin="37,49,0,0" TextWrapping="Wrap" Text="Please select a mode" IsReadOnly="True" VerticalAlignment="Top" Width="120"/>
+        <Button Content="Confirm" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Margin="59,104,0,0" Click="Button_Click"/>
+        <Label Content="Configuator Tool" HorizontalAlignment="Center" Margin="39,18,35,0" VerticalAlignment="Top" Width="118"/>
+    </Grid>
+</Window>

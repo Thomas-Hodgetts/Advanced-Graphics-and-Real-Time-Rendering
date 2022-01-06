@@ -12,6 +12,8 @@
 #include <directxcollision.h>
 #include <string>
 #include <wincodec.h>
+#include <Random>
+#include <fstream>
 
 #include "SystemManager.h"
 #include "Structures.h"
@@ -27,10 +29,10 @@ using namespace DirectX; // we will be using the directxmath library
 HWND hwnd = NULL;
 
 // name of the window (not the title)
-LPCTSTR WindowName = L"Cirno Fumo Rotate";
+LPCTSTR WindowName = L"Advanced Graphics and Real-time Rendering";
 
 // title of the window
-LPCTSTR WindowTitle = L"Cirno Fumo Rotate";
+LPCTSTR WindowTitle = L"Advanced Graphics and Real-time Rendering";
 
 // width and height of the window
 int Width = 1920;
@@ -69,7 +71,7 @@ ID3D12DescriptorHeap* rtvDescriptorHeap; // a descriptor heap to hold resources 
 ID3D12DescriptorHeap* srvDescriptorHeap;
 
 ID3D12Resource* renderTargets[frameBufferCount]; // number of render targets equal to buffer count
-ID3D12Resource* renderTarget;
+ID3D12Resource* MSAA_RenderTarget;
 
 ID3D12CommandAllocator* commandAllocator[frameBufferCount]; // we want enough allocators for each buffer * number of threads (we only have one thread)
 
@@ -104,6 +106,7 @@ void WaitForPreviousFrame(); // wait until gpu is finished with command list
 ID3D12PipelineState* pipelineStateObject; // pso containing a pipeline state
 ID3D12PipelineState* pipelineStateObject2; // pso containing a pipeline state
 ID3D12PipelineState* ShadowPipelineState; // pso containing a pipeline state
+ID3D12PipelineState* GeometryShaderPipeline; // pso containing a pipeline state
 
 ID3D12RootSignature* rootSignature; // root signature defines data shaders will access
 
@@ -113,6 +116,18 @@ D3D12_RECT scissorRect; // the area to draw in. pixels outside that area will no
 
 ID3D12Resource* vertexBuffer; // a default buffer in GPU memory that we will load vertex data for our triangle into
 ID3D12Resource* indexBuffer; // a default buffer in GPU memory that we will load index data for our triangle into
+
+std::vector<ID3D12Resource*> m_BillboardVertex; 
+std::vector<ID3D12Resource*> m_BillboardIndex;
+std::vector<D3D12_VERTEX_BUFFER_VIEW> m_BillboardVertexView;
+std::vector<D3D12_INDEX_BUFFER_VIEW> m_BillboardIndexView;
+
+ID3D12Resource* m_ScreenQuadVertexBuffer;
+ID3D12Resource* m_ScreenQuadIndexBuffer;
+
+D3D12_VERTEX_BUFFER_VIEW m_ScreenQuadVertexView;
+D3D12_INDEX_BUFFER_VIEW m_ScreenQuadIndexView;
+
 
 D3D12_VERTEX_BUFFER_VIEW vertexBufferView; // a structure containing a pointer to the vertex data in gpu memory
 										   // the total size of the buffer, and the size of each element (vertex)
@@ -126,7 +141,8 @@ ID3D12Resource* depthStencilBuffer2; // This is the memory for our depth buffer.
 ID3D12DescriptorHeap* dsDescriptorHeap; // This is a heap for our depth/stencil buffer descriptor
 
 // this is the structure of our constant buffer.
-struct ConstantBufferPerObject {
+struct ConstantBufferPerObject 
+{
 	XMFLOAT4X4 wvpMat;
 	XMFLOAT4X4 worldPos;
 	XMFLOAT4X4 projection;
@@ -165,11 +181,16 @@ int ConstantBufferPerObjectAlignedSize = (sizeof(ConstantBufferPerObject) + 255)
 ConstantBufferPerObject cbPerObject; // this is the constant buffer data we will send to the gpu 
 										// (which will be placed in the resource we created above)
 
+
+ConstantBufferPerObject cbShadow;
+
 ConstantBufferLighting cbLighting;
 
 ID3D12Resource* constantBufferUploadHeaps[frameBufferCount]; // this is the memory on the gpu where constant buffers for each frame will be placed
+ID3D12Resource* m_BillboardConstantBufferUploadHeaps[frameBufferCount]; // this is the memory on the gpu where constant buffers for each frame will be placed
 
 UINT8* cbvGPUAddress[frameBufferCount]; // this is a pointer to each of the constant buffer resource heaps
+UINT8* m_BillboardGPUAddress[frameBufferCount]; // this is a pointer to each of the constant buffer resource heaps
 
 XMFLOAT4X4 cameraProjMat; // this will store our projection matrix
 XMFLOAT4X4 cameraViewMat; // this will store our view matrix
@@ -187,6 +208,7 @@ XMFLOAT4X4 cube2RotMat; // this will keep track of our rotation for the second c
 XMFLOAT4 cube2PositionOffset; // our second cube will rotate around the first cube, so this is the position offset from the first cube
 
 int numCubeIndices; // the number of indices to draw the cube
+int numCubeIndices2; // the number of indices to draw the cube
 
 ID3D12Resource* textureBuffer[5]; // the resource heap containing our texture
 
@@ -218,17 +240,22 @@ SystemManager* m_Manager = nullptr;
 DrawObjectsStruct m_DrawObjectStructs = DrawObjectsStruct();
 Material shinyMaterial;
 Light basicLight;
+int m_BillboardCount = 100;
 int ImageOffset;
 int buffOffset;
 int m_Time = 0;
 int m_TimePause = 0;
 bool m_RenderToTexture = false;
 bool m_TextureSetUp = false;
-bool m_ShadowMapping = true;
+bool m_ShadowMapping = false;
+bool m_NormalMapping = false;
+bool m_Rotate = false;
 
 XMFLOAT4X4 m_ShadowTransform;
 XMFLOAT4X4 m_LightProj;
 XMFLOAT4X4 m_LightView;
+XMFLOAT4X4 m_LightMatrix;
 
+ID3D12Debug* m_DebugLayer;
 
 BoundingSphere m_BS;

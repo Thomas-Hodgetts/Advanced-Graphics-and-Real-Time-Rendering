@@ -1,0 +1,5 @@
+//https://stackoverflow.com/questions/55628161/how-to-bind-textures-to-different-register-in-dx12 && book
+//https://github.com/microsoft/DirectXTK12/wiki/Line-drawing-and-anti-aliasing
+//https://stackoverflow.com/questions/67548981/how-to-render-to-texture-in-directx12-c-what-is-the-process
+//https://stackoverflow.com/questions/13445688/how-to-generate-a-random-number-in-c
+//https://www.tutorialspoint.com/how-to-convert-std-string-to-lpcwstr-in-cplusplus

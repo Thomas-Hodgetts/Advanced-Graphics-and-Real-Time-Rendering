@@ -12,6 +12,10 @@ ShadowMap::ShadowMap(ID3D12Device* device, UINT width, UINT height)
 	BuildResource();
 }
 
+/***********************************************
+MARKING SCHEME: Shadow Mapping
+DESCRIPTION: Creating Views so that the pipeline can acess the shadow maps Depth Stencil and Texture
+***********************************************/
 void ShadowMap::BuildDescriptors()
 {
 	// Create SRV to resource so we can sample the shadow map in a shader program.
@@ -24,8 +28,7 @@ void ShadowMap::BuildDescriptors()
 	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 	srvDesc.Texture2D.PlaneSlice = 0;
 	m_Device->CreateShaderResourceView(m_ShadowMap, &srvDesc, m_HCpuSrv);
-
-	// Create DSV to resource so we can render to the shadow map.
+	
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc;
 	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
 	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
@@ -33,7 +36,10 @@ void ShadowMap::BuildDescriptors()
 	dsvDesc.Texture2D.MipSlice = 0;
 	m_Device->CreateDepthStencilView(m_ShadowMap, &dsvDesc, m_HCpuDsv);
 }
-
+/***********************************************
+MARKING SCHEME: Shadow Mapping
+DESCRIPTION: Creating the resources to make a shadow map
+***********************************************/
 void ShadowMap::BuildResource()
 {
 	D3D12_RESOURCE_DESC texDesc;

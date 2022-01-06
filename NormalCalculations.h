@@ -40,8 +40,8 @@ public:
 	{
 		// http://softimage.wiki.softimage.com/xsidocs/tex_tangents_binormals_AboutTangentsandBinormals.html
 		
-		XMFLOAT3 edge1(v1.pos.ReturnX() - v0.pos.ReturnX(), v1.pos.ReturnY() - v0.pos.ReturnY(), v1.pos.ReturnZ() - v0.pos.ReturnZ());
-		XMFLOAT3 edge2(v2.pos.ReturnX() - v0.pos.ReturnX(), v2.pos.ReturnY() - v0.pos.ReturnY(), v2.pos.ReturnZ() - v0.pos.ReturnZ());
+		XMFLOAT3 edge1(Vector3D(v1.pos - v0.pos).ConvertToXMfloat3());
+		XMFLOAT3 edge2(Vector3D(v2.pos - v0.pos).ConvertToXMfloat3());
 
 		XMFLOAT2 deltaUV1(v1.texCoord.ReturnU() - v0.texCoord.ReturnU(), v1.texCoord.ReturnV() - v0.texCoord.ReturnV());
 		XMFLOAT2 deltaUV2(v2.texCoord.ReturnU() - v0.texCoord.ReturnU(), v2.texCoord.ReturnV() - v0.texCoord.ReturnV());

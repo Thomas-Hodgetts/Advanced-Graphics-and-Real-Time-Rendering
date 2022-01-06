@@ -80,19 +80,27 @@ struct Geometry
 	D3D12_INDEX_BUFFER_VIEW indexBufferView; // a structure holding information about the index buffer
 };
 
+//48 bytes
 struct Material
 {
+	//------ 16 bytes
 	XMFLOAT4 AmbientMtrl;
+	//------ 16 bytes
 	XMFLOAT4 DiffuseMtrl;
+	//------ 16 bytes
 	XMFLOAT4 SpecularMtrl;
 };
 
+//64 bytes
 struct Light
 {
+	//------ 16 bytes
 	XMFLOAT4 AmbientLight;
+	//------ 16 bytes
 	XMFLOAT4 DiffuseLight;
+	//------ 16 bytes
 	XMFLOAT4 SpecularLight;
-
+	//------ 16 bytes
 	float SpecularPower;
 	XMFLOAT3 LightVecW;
 };
@@ -187,14 +195,23 @@ struct ConstantBuffer
 	XMMATRIX mWorld;
 	XMMATRIX mView;
 	XMMATRIX mProjection;
+
+	//------ 16 bytes
 	XMFLOAT4 DiffuseMtrl;
+	//------ 16 bytes
 	XMFLOAT4 DiffuseLight;
+	//------ 16 bytes
 	XMFLOAT3 LightVecW;
 	float gTime;
+	//------ 16 bytes
 	XMFLOAT4 AmbientMtrl;
+	//------ 16 bytes
 	XMFLOAT4 AmbientLight;
+	//------ 16 bytes
 	XMFLOAT4 SpecularMtrl;
+	//------ 16 bytes
 	XMFLOAT4 SpecularLight;
+	//------ 16 bytes
 	float SpecularPower;
 	XMFLOAT3 EyePosW;
 };

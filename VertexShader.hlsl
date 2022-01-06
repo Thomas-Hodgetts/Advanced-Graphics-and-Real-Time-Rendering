@@ -7,6 +7,18 @@ struct VS_INPUT
 	float3 biNorm: BINORMAL;
 };
 
+struct VS_INPUT2
+{
+	float4 pos : POSITION;
+	float2 texCoord: TEXCOORD;
+};
+
+struct VS_OUTPUT2
+{
+	float4 pos : SV_POSITION;
+	float2 texCoord: TEXCOORD;
+};
+
 struct SurfaceInfo
 {
 	float4 AmbientMtrl;
@@ -48,7 +60,7 @@ struct VS_SHADOW
 {
 	float4 posH : SV_POSITION;
 	float2 texCoord: TEXCOORD;
-	float4 DiffuseMtrl : MATERIAL;
+	float4 DiffuseMtrl : POSITION0;
 };
 
 cbuffer ConstantBuffer : register(b0)
@@ -70,8 +82,8 @@ cbuffer ConstantBuffer : register(b0)
 };
 
 /***********************************************
-MARKING SCHEME: Global Illumination (NON FUNCTIONING)
-DESCRIPTION:
+MARKING SCHEME: Spherical Harmonic Lighting (NON FUNCTIONING)
+DESCRIPTION: Calculates light accumulation
 ***********************************************/
 void accumLightSH(float3 sharm[9], float3 colour, float3 n, float solAngle)
 {
@@ -104,7 +116,10 @@ void accumLightSH(float3 sharm[9], float3 colour, float3 n, float solAngle)
 	sharm[8] += colour * Y22 * solAngle;
 }
 
-
+/***********************************************
+MARKING SCHEME: Spherical Harmonic Lighting (NON FUNCTIONING)
+DESCRIPTION: Calculates the irradiance for an object
+***********************************************/
 float3 ISHTirradiance(float3 sharm[9], float3 n)
 {
 	float3 L00 = sharm[0];
@@ -140,21 +155,23 @@ float3 ISHTirradiance(float3 sharm[9], float3 n)
 VS_OUTPUT main(VS_INPUT input)
 {
 	VS_OUTPUT output;
-	output.pos = mul(input.pos, wvpMat);
 	output.posW = mul(input.pos, WorldPos);
+	output.pos = mul(input.pos, wvpMat);
 	output.texCoord = input.texCoord;
 	output.ShadowPosH = mul(output.posW, gShadowTransform);
 	//output.projTex = mul(float4(light.LightVecW, 1.0f), gLightWorldViewProjTexture);
 	output.norm = normalize(mul(input.normalL, WorldPos));
 	output.biNorm = normalize(mul(input.biNorm, WorldPos));
 	output.tangent = normalize(mul(input.tan, WorldPos));
-	output.l.AmbientLight = light.AmbientLight;
-	output.l.DiffuseLight = light.DiffuseLight;
-	output.l.SpecularLight = light.SpecularLight;
-	output.l.SpecularPower = light.SpecularPower;
-	output.s.AmbientMtrl = Si.AmbientMtrl;
-	output.s.DiffuseMtrl = Si.DiffuseMtrl;
-	output.s.SpecularMtrl = Si.SpecularMtrl;
+	output.l = light;
+	output.s = Si;
+	//output.l.AmbientLight = float4(0.5f, 0.5f, 0.5f, 1.0f);
+	//output.l.DiffuseLight = float4(1.0f, 1.0f, 1.0f, 1.0f);
+	//output.l.SpecularLight = float4(0.3f, 0.3f, 0.3f, 1.0f);
+	//output.l.SpecularPower = 32.f;
+	//output.s.AmbientMtrl = float4(0.3f, 0.3f, 0.3f, 1.0f);
+	//output.s.DiffuseMtrl = float4(1.0f, 1.0f, 1.0f, 1.0f);
+	//output.s.SpecularMtrl = float4(0.5f, 0.5f, 0.5f, 1.0f);
 	output.LightVecW = normalize(light.LightVecW - output.posW.xyz);
 	output.EyePosW = normalize(EyePosW - output.posW.xyz);
 	output.worldMat = wvpMat;
@@ -166,16 +183,23 @@ VS_OUTPUT main(VS_INPUT input)
 	return output;
 } 
 
-VS_OUTPUT renderToTexMain(VS_INPUT input)
+/***********************************************
+MARKING SCHEME: Render to texture
+DESCRIPTION: Sets up the data passed into the shader for the pixel shader and moves the position into homogenious space
+***********************************************/
+VS_OUTPUT2 renderToTexMain(VS_INPUT2 input)
 {
-	VS_OUTPUT output;
+	VS_OUTPUT2 output;
 	output.pos = mul(input.pos, wvpMat);
 	output.texCoord = input.texCoord;
 	return output;
 }
 
-
-VS_SHADOW shadowMain(VS_INPUT input)
+/***********************************************
+MARKING SCHEME: Shadow Mapping
+DESCRIPTION: Sets up the data passed into the shader for the pixel shader
+***********************************************/
+VS_SHADOW shadowMain(VS_INPUT2 input)
 {
 	VS_SHADOW output;
 	output.posH = mul(input.pos, WorldPos);
