@@ -88,7 +88,9 @@ float CalcShadowFactor(float4 shadowPosH)
 {
 	shadowPosH.xyz /= shadowPosH.w;
 	float depth = shadowPosH.z;
-	uint width, height, numMips;
+	float width = 0;
+	float height = 0;
+	float numMips = 0;
 	gShadowMap.GetDimensions(0, width, height, numMips);
 	float dx = 1.0f / (float)width;
 	float percentLit = 0.0f;
@@ -172,6 +174,7 @@ float parallaxSoftShadowMultiplier(float3 L, float2 initTex, float initHieght)
 
 		int stepIndex = 1;
 
+		//[unroll(1024)]
 		while (currentLayerHeight > 0)
 		{
 			float heightFromTexture = currentLayerHeight - initTex.y;

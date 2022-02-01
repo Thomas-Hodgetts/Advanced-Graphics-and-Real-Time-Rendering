@@ -1,5 +1,0 @@
-E:\University\Github\Advanced-Graphics-and-Real-Time-Rendering\Debug\PixelShader.cso
-E:\University\Github\Advanced-Graphics-and-Real-Time-Rendering\Debug\VertexShader.cso
-E:\University\Github\Advanced-Graphics-and-Real-Time-Rendering\Debug\Tutorial01.exe
-E:\University\Github\Advanced-Graphics-and-Real-Time-Rendering\Debug\Tutorial01.pdb
-E:\University\Github\Advanced-Graphics-and-Real-Time-Rendering\Debug\GeometryShader.cso

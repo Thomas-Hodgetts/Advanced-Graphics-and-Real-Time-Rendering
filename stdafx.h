@@ -1,4 +1,5 @@
 #pragma once
+#pragma comment(lib, "d3d11.lib")
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN    // Exclude rarely-used stuff from Windows headers.
@@ -19,6 +20,8 @@
 #include "Structures.h"
 #include "NormalCalculations.h"
 #include "ShadowMaps.h"
+#include "GraphicsManager.h"
+#include "OutputManager.h"
 
 // this will only call release if an object exists (prevents exceptions calling release on non existant objects)
 #define SAFE_RELEASE(p) { if ( (p) ) { (p)->Release(); (p) = 0; } }

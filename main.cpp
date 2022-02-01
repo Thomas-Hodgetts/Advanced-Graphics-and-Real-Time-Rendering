@@ -229,7 +229,9 @@ bool InitD3D()
 	// -- Create the Device -- //
 
 	IDXGIFactory4* dxgiFactory;
-	hr = CreateDXGIFactory2(DXGI_CREATE_FACTORY_DEBUG,IID_PPV_ARGS(&dxgiFactory));
+	hr = CreateDXGIFactory2(DXGI_CREATE_FACTORY_DEBUG, IID_PPV_ARGS(&dxgiFactory));
+	//hr = CreateDXGIFactory(IID_PPV_ARGS(&dxgiFactory));
+	
 	D3D12GetDebugInterface(IID_PPV_ARGS(&m_DebugLayer));
 	m_DebugLayer->EnableDebugLayer();
 	if (FAILED(hr))
@@ -527,6 +529,15 @@ bool InitD3D()
 	{
 		return false;
 	}
+
+
+	GraphicsManager gm;
+
+
+
+	OutputManager output(&gm, swapChainDesc, rtvHeapDesc);
+
+
 
 	// create vertex and pixel shaders
 
@@ -1482,8 +1493,6 @@ bool InitD3D()
 		device->CreateShaderResourceView(textureBuffer[i], &srvDesc, hdescriptor);
 		hdescriptor.Offset(1, buffOffset);
 
-		//https://stackoverflow.com/questions/67548981/how-to-render-to-texture-in-directx12-c-what-is-the-process
-		//https://github.com/microsoft/DirectXTK12/wiki/Line-drawing-and-anti-aliasing
 		if (m_TextureSetUp && i == 3)
 		{
 
@@ -2041,6 +2050,9 @@ void Update()
 			memcpy(m_BillboardGPUAddress[frameIndex] + (ConstantBufferPerObjectAlignedSize * i), &cbPerObject, sizeof(cbPerObject));
 		}
 	}
+
+	int i = 0;
+
 }
 
 void UpdatePipeline()
@@ -2444,8 +2456,15 @@ void Cleanup()
 		SAFE_RELEASE(fence[i]);
 	};
 
+	for (int i = 0; i < 5; ++i)
+	{
+		SAFE_RELEASE(textureBuffer[i]);
+	}
+
 	SAFE_RELEASE(pipelineStateObject);
 	SAFE_RELEASE(pipelineStateObject2);
+	SAFE_RELEASE(ShadowPipelineState);
+	SAFE_RELEASE(GeometryShaderPipeline);
 	SAFE_RELEASE(rootSignature);
 	SAFE_RELEASE(vertexBuffer);
 	SAFE_RELEASE(indexBuffer);
@@ -2454,13 +2473,21 @@ void Cleanup()
 		SAFE_RELEASE(textureBufferUploadHeap[i]);
 	};
 
+	for (size_t i = 0; i < m_BillboardVertex.size();i++)
+	{
+		SAFE_RELEASE(m_BillboardVertex[i]);
+		SAFE_RELEASE(m_BillboardIndex[i]);
+	}
+
 	SAFE_RELEASE(depthStencilBuffer);
 	SAFE_RELEASE(dsDescriptorHeap);
+	SAFE_RELEASE(depthStencilBuffer2);
 
 	for (int i = 0; i < frameBufferCount; ++i)
 	{
 		SAFE_RELEASE(constantBufferUploadHeaps[i]);
 	};
+
 }
 
 void WaitForPreviousFrame()

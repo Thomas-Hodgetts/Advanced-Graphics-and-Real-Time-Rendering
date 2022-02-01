@@ -17,7 +17,7 @@
       <Filter>Objects</Filter>
     </ClCompile>
     <ClCompile Include="SystemManager.cpp">
-      <Filter>System Manager</Filter>
+      <Filter>Managers\System Manager</Filter>
     </ClCompile>
     <ClCompile Include="Transform.cpp">
       <Filter>Objects\Object Component\Transform</Filter>
@@ -54,6 +54,15 @@
       <Filter>Loader\DDS</Filter>
     </ClCompile>
     <ClCompile Include="ShadowMaps.cpp" />
+    <ClCompile Include="GraphicsManager.cpp">
+      <Filter>Managers\Graphic Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="OutputManager.cpp">
+      <Filter>Managers\OutputManager</Filter>
+    </ClCompile>
+    <ClCompile Include="DescriptorHeapHelper.cpp">
+      <Filter>Managers\Graphic Manager\ManagerHelpers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -67,7 +76,7 @@
       <Filter>Objects</Filter>
     </ClInclude>
     <ClInclude Include="SystemManager.h">
-      <Filter>System Manager</Filter>
+      <Filter>Managers\System Manager</Filter>
     </ClInclude>
     <ClInclude Include="Structures.h" />
     <ClInclude Include="Transform.h">
@@ -110,6 +119,15 @@
     </ClInclude>
     <ClInclude Include="NormalCalculations.h" />
     <ClInclude Include="ShadowMaps.h" />
+    <ClInclude Include="GraphicsManager.h">
+      <Filter>Managers\Graphic Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="OutputManager.h">
+      <Filter>Managers\OutputManager</Filter>
+    </ClInclude>
+    <ClInclude Include="DescriptorHeapHelper.h">
+      <Filter>Managers\Graphic Manager\ManagerHelpers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Camera">
@@ -129,9 +147,6 @@
     </Filter>
     <Filter Include="Loader">
       <UniqueIdentifier>{00b491d3-2789-48a6-8eb6-a364daf2efbc}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="System Manager">
-      <UniqueIdentifier>{a2382365-1cee-4042-ad20-d1a21b28063b}</UniqueIdentifier>
     </Filter>
     <Filter Include="Objects\Object Component">
       <UniqueIdentifier>{326ddb7f-e775-4c23-a9a6-0fedfea4bccb}</UniqueIdentifier>
@@ -171,6 +186,21 @@
     </Filter>
     <Filter Include="Vertex">
       <UniqueIdentifier>{a951e828-e61f-4795-9e78-7b44ab5c1e13}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Managers">
+      <UniqueIdentifier>{09c505f7-0170-4d94-9f22-5e43f227587d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Managers\System Manager">
+      <UniqueIdentifier>{a2382365-1cee-4042-ad20-d1a21b28063b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Managers\Graphic Manager">
+      <UniqueIdentifier>{df1cd0e8-d568-4b0a-8182-bd990a9601e7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Managers\OutputManager">
+      <UniqueIdentifier>{2aef767e-6e4a-4f5a-89d5-532b35f84c92}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Managers\Graphic Manager\ManagerHelpers">
+      <UniqueIdentifier>{36d8206c-73b8-4160-b1ba-2f736f4988b6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
