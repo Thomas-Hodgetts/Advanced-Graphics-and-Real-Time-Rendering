@@ -27,6 +27,16 @@ struct PIPELINE_SHADER_CREATION_STRUCT
 	PIPELINE_SHADER_ENUM_TYPE m_PipelineVariableType;
 };
 
+class CPU_DESC_CONTAINER
+{
+public:
+	CPU_DESC_CONTAINER(D3D12_CPU_DESCRIPTOR_HANDLE handle) : m_Handle(handle) {};
+
+private:
+	D3D12_CPU_DESCRIPTOR_HANDLE m_Handle;
+};
+
+
 class GraphicsManager
 {
 public:
@@ -54,11 +64,13 @@ private:
 	ID3D12CommandQueue* m_CommadQueue = nullptr;
 	IDXGIFactory4* m_Factory = nullptr;
 
+	std::vector<ID3D12Resource*> m_RenderTargets;
+
 	std::unordered_map<std::wstring,ID3D12PipelineState*> m_PipelineMap;
 	std::unordered_map<std::wstring, D3D12_VERTEX_BUFFER_VIEW*> m_VertexViewMap;
 	std::unordered_map<std::wstring, D3D12_INDEX_BUFFER_VIEW*> m_IndexViewMap;
-	//std::unordered_map<D3D12_CPU_DESCRIPTOR_HANDLE, ID3D12Resource*> m_RenderTargetMap;
 	std::unordered_map<std::wstring, DescriptorHeapHelper*> m_RenderTargetHeaps;
+	std::unordered_map<std::wstring, std::vector<ID3D12CommandAllocator*>> m_CommandAllocatorMap;
 	std::unordered_map<std::wstring, ID3D12Resource*> m_DepthStencilBufferMap;
 
 };

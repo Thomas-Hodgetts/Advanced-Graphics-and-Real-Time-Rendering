@@ -120,23 +120,41 @@ DescriptorHeapHelper* GraphicsManager::CreateRenderTargetViews(D3D12_DESCRIPTOR_
 	HRESULT hr;
 
 	DescriptorHeapHelper* dHH =  new DescriptorHeapHelper(desc, m_Device, &hr);
-	//m_RenderTargetHeaps[name] = dHH;
+	m_RenderTargetHeaps[name] = dHH;
+
+	std::vector<ID3D12CommandAllocator*> commandAllcoators(desc.NumDescriptors);
 
 	for (int i = 0; i < desc.NumDescriptors; i++)
 	{
 		// first we get the n'th buffer in the swap chain and store it in the n'th
 		// position of our ID3D12Resource array
-		hr = swapChain->GetBuffer(i, IID_PPV_ARGS(&m_RenderTargetMap[m_RenderTargetHeaps[name]->CPUCurrentAddress()]));
+
+		CPU_DESC_CONTAINER* container = new CPU_DESC_CONTAINER(m_RenderTargetHeaps[name]->CPUCurrentAddress());
+
+		m_RenderTargets.push_back(nullptr);
+
+		hr = swapChain->GetBuffer(i, IID_PPV_ARGS(&m_RenderTargets[m_RenderTargets.size() - 1]));
 		if (FAILED(hr))
 		{
 			return nullptr;
 		}
 
 		// the we "create" a render target view which binds the swap chain buffer (ID3D12Resource[n]) to the rtv handle
-		m_Device->CreateRenderTargetView(m_RenderTargetMap[m_RenderTargetHeaps[name]->CPUCurrentAddress()], nullptr, m_RenderTargetHeaps[name]->CPUCurrentAddress());
+		m_Device->CreateRenderTargetView(m_RenderTargets[m_RenderTargets.size() - 1], nullptr, m_RenderTargetHeaps[name]->CPUCurrentAddress());
 
 		// we increment the rtv handle by the rtv descriptor size we got above
 		m_RenderTargetHeaps[name]->CPUOffset();
+
+
+		hr = m_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllcoators[commandAllcoators.size() - 1]));
+		if (FAILED(hr))
+		{
+			return nullptr;
+		}
+
 	}
+
+	m_CommandAllocatorMap[name] = commandAllcoators;
+
 	return dHH;
 }

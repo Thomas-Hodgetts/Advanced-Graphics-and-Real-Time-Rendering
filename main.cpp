@@ -323,13 +323,14 @@ bool InitD3D()
 
 	IDXGISwapChain* tempSwapChain;
 
-	hr = dxgiFactory->CreateSwapChain(
-		commandQueue, // the queue will be flushed once the swap chain is created
-		&swapChainDesc, // give it the swap chain description we created above
-		&tempSwapChain // store the created swap chain in a temp IDXGISwapChain interface
-		);
+	//hr = dxgiFactory->CreateSwapChain(
+	//	commandQueue, // the queue will be flushed once the swap chain is created
+	//	&swapChainDesc, // give it the swap chain description we created above
+	//	&tempSwapChain // store the created swap chain in a temp IDXGISwapChain interface
+	//	);
 
-	swapChain = static_cast<IDXGISwapChain3*>(tempSwapChain);
+
+	//swapChain = static_cast<IDXGISwapChain3*>(tempSwapChain);
 
 
 	// -- Create the Back Buffers (render target views) Descriptor Heap -- //
@@ -348,6 +349,10 @@ bool InitD3D()
 		Running = false;
 		return false;
 	}
+
+	GraphicsManager gm;
+	OutputManager output(&gm, swapChainDesc, rtvHeapDesc);
+
 
 	// get the size of a descriptor in this heap (this is a rtv heap, so only rtv descriptors should be stored in it.
 	// descriptor sizes may vary from device to device, which is why there is no set size and we must ask the 
@@ -531,11 +536,7 @@ bool InitD3D()
 	}
 
 
-	GraphicsManager gm;
 
-
-
-	OutputManager output(&gm, swapChainDesc, rtvHeapDesc);
 
 
 
