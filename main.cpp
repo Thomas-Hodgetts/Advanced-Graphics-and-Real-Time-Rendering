@@ -337,7 +337,7 @@ bool InitD3D()
 
 	// describe an rtv descriptor heap and create
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-	rtvHeapDesc.NumDescriptors = frameBufferCount + 3; // number of descriptors for this heap.
+	rtvHeapDesc.NumDescriptors = frameBufferCount;// + 3; // number of descriptors for this heap.
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV; // this heap is a render target view heap
 
 													   // This heap will not be directly referenced by the shaders (not shader visible), as this will store the output from the pipeline
@@ -353,132 +353,10 @@ bool InitD3D()
 	GraphicsManager gm;
 	OutputManager output(&gm, swapChainDesc, rtvHeapDesc);
 
-
-	// get the size of a descriptor in this heap (this is a rtv heap, so only rtv descriptors should be stored in it.
-	// descriptor sizes may vary from device to device, which is why there is no set size and we must ask the 
-	// device to give us the size. we will use this size to increment a descriptor handle offset
-	rtvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-	dsvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-	srvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-	// get a handle to the first descriptor in the descriptor heap. a handle is basically a pointer,
-	// but we cannot literally use it like a c++ pointer.
-	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-
-	// Create a RTV for each buffer (double buffering is two buffers, tripple buffering is 3).
-	for (int i = 0; i < frameBufferCount; i++)
-	{
-		// first we get the n'th buffer in the swap chain and store it in the n'th
-		// position of our ID3D12Resource array
-		hr = swapChain->GetBuffer(i, IID_PPV_ARGS(&renderTargets[i]));
-		if (FAILED(hr))
-		{
-			Running = false;
-			return false;
-		}
-
-		// the we "create" a render target view which binds the swap chain buffer (ID3D12Resource[n]) to the rtv handle
-		device->CreateRenderTargetView(renderTargets[i], nullptr, rtvHandle);
-
-		// we increment the rtv handle by the rtv descriptor size we got above
-		rtvHandle.Offset(1, rtvDescriptorSize);
-	}
-
-	// -- Create the Command Allocators -- //
-
-	for (int i = 0; i < frameBufferCount; i++)
-	{
-		hr = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator[i]));
-		if (FAILED(hr))
-		{
-			Running = false;
-			return false;
-		}
-	}
-
-	// -- Create a Command List -- //
-
-	// create the command list with the first allocator
-	hr = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator[frameIndex], NULL, IID_PPV_ARGS(&commandList));
-	if (FAILED(hr))
-	{
-		Running = false;
-		return false;
-	}
-
-	// -- Create a Fence & Fence Event -- //
-
-	// create the fences
-	for (int i = 0; i < frameBufferCount; i++)
-	{
-		hr = device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence[i]));
-		if (FAILED(hr))
-		{
-			Running = false;
-			return false;
-		}
-		fenceValue[i] = 0; // set the initial fence value to 0
-	}
-
-	// create a handle to a fence event
-	fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-	if (fenceEvent == nullptr)
-	{
-		Running = false;
-		return false;
-	}
-
-	// create root signature
-
-	//https://stackoverflow.com/questions/55628161/how-to-bind-textures-to-different-register-in-dx12 && book
-
-
-	enum RootParameterIndex
-	{
-		Texture1SRV,
-		Texture1Sampler,
-		Texture2SRV,
-		Texture2Sampler,
-		Texture3SRV,
-		Texture3Sampler,
-		Texture4SRV,
-		Texture4Sampler,
-		ConstantBuffer,
-		RootParameterCount
-	};
-
 	D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
-
-	CD3DX12_ROOT_PARAMETER rootParameters[RootParameterIndex::RootParameterCount] = {};
-	rootParameters[RootParameterIndex::ConstantBuffer].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_ALL);
-
-	//// Texture 1
-	CD3DX12_DESCRIPTOR_RANGE texture1Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
-	rootParameters[RootParameterIndex::Texture1SRV].InitAsDescriptorTable(1, &texture1Range, D3D12_SHADER_VISIBILITY_PIXEL);
-
-	//// Texture 2
-	CD3DX12_DESCRIPTOR_RANGE texture2Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);
-	rootParameters[RootParameterIndex::Texture2SRV].InitAsDescriptorTable(1, &texture2Range, D3D12_SHADER_VISIBILITY_PIXEL);
-
-	//// Texture 3
-	CD3DX12_DESCRIPTOR_RANGE texture3Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2);
-	rootParameters[RootParameterIndex::Texture3SRV].InitAsDescriptorTable(1, &texture3Range, D3D12_SHADER_VISIBILITY_PIXEL);
-	//// Texture 4
-	CD3DX12_DESCRIPTOR_RANGE texture4Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3);
-	rootParameters[RootParameterIndex::Texture4SRV].InitAsDescriptorTable(1, &texture4Range, D3D12_SHADER_VISIBILITY_PIXEL);
-
-
-
-
-	D3D12_ROOT_PARAMETER  rootParameter[5];
-	rootParameter[0] = rootParameters[ConstantBuffer];
-	rootParameter[1] = rootParameters[RootParameterIndex::Texture1SRV];
-	rootParameter[2] = rootParameters[RootParameterIndex::Texture2SRV];
-	rootParameter[3] = rootParameters[RootParameterIndex::Texture3SRV];
-	rootParameter[4] = rootParameters[RootParameterIndex::Texture4SRV];
 
 
 	// create a static sampler
@@ -497,43 +375,203 @@ bool InitD3D()
 	sampler.RegisterSpace = 0;
 	sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
-	//book
 	const CD3DX12_STATIC_SAMPLER_DESC shadow(
-		1, 
+		1,
 		D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT,
 		D3D12_TEXTURE_ADDRESS_MODE_BORDER,
 		D3D12_TEXTURE_ADDRESS_MODE_BORDER,
 		D3D12_TEXTURE_ADDRESS_MODE_BORDER,
-		0.0f,                             
-		16,                               
+		0.0f,
+		16,
 		D3D12_COMPARISON_FUNC_LESS_EQUAL,
 		D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK);
 
-	D3D12_STATIC_SAMPLER_DESC samArr[2] = { sampler , shadow };
+	D3D12_STATIC_SAMPLER_DESC samples[2]{ sampler , shadow };
 
-	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-	rootSignatureDesc.Init(_countof(rootParameter), // we have 2 root parameters
-		rootParameter, // a pointer to the beginning of our root parameters array
-		2, // we have one static sampler
-		samArr, // a pointer to our static sampler (array)
-		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT | // we can deny shader stages here for better performance
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS);
+
+	gm.CreateRootSignature(rootSignatureFlags, samples, 2, 5, 1, 4, L"TEST");
+
+
+	//// get the size of a descriptor in this heap (this is a rtv heap, so only rtv descriptors should be stored in it.
+	//// descriptor sizes may vary from device to device, which is why there is no set size and we must ask the 
+	//// device to give us the size. we will use this size to increment a descriptor handle offset
+	//rtvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	//dsvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+	//srvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	//// get a handle to the first descriptor in the descriptor heap. a handle is basically a pointer,
+	//// but we cannot literally use it like a c++ pointer.
+	//CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+
+	//// Create a RTV for each buffer (double buffering is two buffers, tripple buffering is 3).
+	//for (int i = 0; i < frameBufferCount; i++)
+	//{
+	//	// first we get the n'th buffer in the swap chain and store it in the n'th
+	//	// position of our ID3D12Resource array
+	//	hr = swapChain->GetBuffer(i, IID_PPV_ARGS(&renderTargets[i]));
+	//	if (FAILED(hr))
+	//	{
+	//		Running = false;
+	//		return false;
+	//	}
+
+	//	// the we "create" a render target view which binds the swap chain buffer (ID3D12Resource[n]) to the rtv handle
+	//	device->CreateRenderTargetView(renderTargets[i], nullptr, rtvHandle);
+
+	//	// we increment the rtv handle by the rtv descriptor size we got above
+	//	rtvHandle.Offset(1, rtvDescriptorSize);
+	//}
+
+	//// -- Create the Command Allocators -- //
+
+	//for (int i = 0; i < frameBufferCount; i++)
+	//{
+	//	hr = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator[i]));
+	//	if (FAILED(hr))
+	//	{
+	//		Running = false;
+	//		return false;
+	//	}
+	//}
+
+	//// -- Create a Command List -- //
+
+	//// create the command list with the first allocator
+	//hr = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator[frameIndex], NULL, IID_PPV_ARGS(&commandList));
+	//if (FAILED(hr))
+	//{
+	//	Running = false;
+	//	return false;
+	//}
+
+	//// -- Create a Fence & Fence Event -- //
+
+	//// create the fences
+	//for (int i = 0; i < frameBufferCount; i++)
+	//{
+	//	hr = device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence[i]));
+	//	if (FAILED(hr))
+	//	{
+	//		Running = false;
+	//		return false;
+	//	}
+	//	fenceValue[i] = 0; // set the initial fence value to 0
+	//}
+
+	//// create a handle to a fence event
+	//fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+	//if (fenceEvent == nullptr)
+	//{
+	//	Running = false;
+	//	return false;
+	//}
+
+	//// create root signature
+
+	//https://stackoverflow.com/questions/55628161/how-to-bind-textures-to-different-register-in-dx12 && book
+
+
+	//enum RootParameterIndex
+	//{
+	//	Texture1SRV,
+	//	Texture1Sampler,
+	//	Texture2SRV,
+	//	Texture2Sampler,
+	//	Texture3SRV,
+	//	Texture3Sampler,
+	//	Texture4SRV,
+	//	Texture4Sampler,
+	//	ConstantBuffer,
+	//	RootParameterCount
+	//};
+
+	//D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
+	//	D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
+	//	D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+	//	D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
+
+	//CD3DX12_ROOT_PARAMETER rootParameters[RootParameterIndex::RootParameterCount] = {};
+	//rootParameters[RootParameterIndex::ConstantBuffer].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_ALL);
+
+	////// Texture 1
+	//CD3DX12_DESCRIPTOR_RANGE texture1Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+	//rootParameters[RootParameterIndex::Texture1SRV].InitAsDescriptorTable(1, &texture1Range, D3D12_SHADER_VISIBILITY_PIXEL);
+
+	////// Texture 2
+	//CD3DX12_DESCRIPTOR_RANGE texture2Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);
+	//rootParameters[RootParameterIndex::Texture2SRV].InitAsDescriptorTable(1, &texture2Range, D3D12_SHADER_VISIBILITY_PIXEL);
+
+	////// Texture 3
+	//CD3DX12_DESCRIPTOR_RANGE texture3Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2);
+	//rootParameters[RootParameterIndex::Texture3SRV].InitAsDescriptorTable(1, &texture3Range, D3D12_SHADER_VISIBILITY_PIXEL);
+	////// Texture 4
+	//CD3DX12_DESCRIPTOR_RANGE texture4Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3);
+	//rootParameters[RootParameterIndex::Texture4SRV].InitAsDescriptorTable(1, &texture4Range, D3D12_SHADER_VISIBILITY_PIXEL);
+
+
+
+
+	//D3D12_ROOT_PARAMETER  rootParameter[5];
+	//rootParameter[0] = rootParameters[ConstantBuffer];
+	//rootParameter[1] = rootParameters[RootParameterIndex::Texture1SRV];
+	//rootParameter[2] = rootParameters[RootParameterIndex::Texture2SRV];
+	//rootParameter[3] = rootParameters[RootParameterIndex::Texture3SRV];
+	//rootParameter[4] = rootParameters[RootParameterIndex::Texture4SRV];
+
+
+	//// create a static sampler
+	//D3D12_STATIC_SAMPLER_DESC sampler = {};
+	//sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+	//sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	//sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	//sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	//sampler.MipLODBias = 0;
+	//sampler.MaxAnisotropy = 0;
+	//sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+	//sampler.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+	//sampler.MinLOD = 0.0f;
+	//sampler.MaxLOD = D3D12_FLOAT32_MAX;
+	//sampler.ShaderRegister = 0;
+	//sampler.RegisterSpace = 0;
+	//sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+	////book
+	//const CD3DX12_STATIC_SAMPLER_DESC shadow(
+	//	1, 
+	//	D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT,
+	//	D3D12_TEXTURE_ADDRESS_MODE_BORDER,
+	//	D3D12_TEXTURE_ADDRESS_MODE_BORDER,
+	//	D3D12_TEXTURE_ADDRESS_MODE_BORDER,
+	//	0.0f,                             
+	//	16,                               
+	//	D3D12_COMPARISON_FUNC_LESS_EQUAL,
+	//	D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK);
+
+	//D3D12_STATIC_SAMPLER_DESC samArr[2] = { sampler , shadow };
+
+	//CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
+	//rootSignatureDesc.Init(_countof(rootParameter), // we have 2 root parameters
+	//	rootParameter, // a pointer to the beginning of our root parameters array
+	//	2, // we have one static sampler
+	//	samArr, // a pointer to our static sampler (array)
+	//	D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT | // we can deny shader stages here for better performance
+	//	D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
+	//	D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS);
 
 	ID3DBlob* errorBuff; // a buffer holding the error data if any
 	ID3DBlob* signature;
-	hr = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &errorBuff);
-	if (FAILED(hr))
-	{
-		OutputDebugStringA((char*)errorBuff->GetBufferPointer());
-		return false;
-	}
+	//hr = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &errorBuff);
+	//if (FAILED(hr))
+	//{
+	//	OutputDebugStringA((char*)errorBuff->GetBufferPointer());
+	//	return false;
+	//}
 
-	hr = device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
-	if (FAILED(hr))
-	{
-		return false;
-	}
+	//hr = device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
+	//if (FAILED(hr))
+	//{
+	//	return false;
+	//}
 
 
 

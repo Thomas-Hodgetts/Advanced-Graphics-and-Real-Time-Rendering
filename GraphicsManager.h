@@ -47,6 +47,7 @@ public:
 
 	DescriptorHeapHelper* CreateRenderTargetViews(D3D12_DESCRIPTOR_HEAP_DESC desc, IDXGISwapChain3* swapChain, std::wstring name);
 
+	bool CreateRootSignature(D3D12_ROOT_SIGNATURE_FLAGS rootSigFlags, D3D12_STATIC_SAMPLER_DESC* samplers, int samplerCount, int rootParameterCount, int constantBufferCount, int textureCount, std::wstring name);
 
 	ID3D12Device* GetDevice() { return m_Device; };
 	ID3D12CommandQueue* GetCommandQueue() { return m_CommadQueue; };
@@ -63,6 +64,8 @@ private:
 	ID3D12Device* m_Device = nullptr;
 	ID3D12CommandQueue* m_CommadQueue = nullptr;
 	IDXGIFactory4* m_Factory = nullptr;
+	HANDLE m_FenceEventHandle;
+
 
 	std::vector<ID3D12Resource*> m_RenderTargets;
 
@@ -71,7 +74,11 @@ private:
 	std::unordered_map<std::wstring, D3D12_INDEX_BUFFER_VIEW*> m_IndexViewMap;
 	std::unordered_map<std::wstring, DescriptorHeapHelper*> m_RenderTargetHeaps;
 	std::unordered_map<std::wstring, std::vector<ID3D12CommandAllocator*>> m_CommandAllocatorMap;
+	std::unordered_map<std::wstring, std::vector<ID3D12Fence*>> m_FenceMap;
+	std::unordered_map<std::wstring, std::vector<UINT64>> m_FenceValueMap;
+	std::unordered_map<std::wstring, ID3D12CommandList*> m_CommandListMap;
 	std::unordered_map<std::wstring, ID3D12Resource*> m_DepthStencilBufferMap;
+	std::unordered_map<std::wstring, ID3D12RootSignature*> m_RootSignatureMap;
 
 };
 

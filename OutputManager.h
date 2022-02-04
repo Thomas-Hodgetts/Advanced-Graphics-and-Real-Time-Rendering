@@ -28,6 +28,6 @@ private:
 	IDXGISwapChain3* m_SwapChain;
 	BUFFER_MODE m_BufferMode;
 	DescriptorHeapHelper* m_RenderTargetHeap;
-
+	std::wstring m_Name = L"OutputManager";
 };
 

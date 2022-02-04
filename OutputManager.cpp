@@ -28,7 +28,7 @@ OutputManager::OutputManager(GraphicsManager* pGManager ,DXGI_SWAP_CHAIN_DESC sw
 	{
 		m_BufferMode = BUFFER_MODE::NO_BUFFER;
 	}
-	m_RenderTargetHeap = pGManager->CreateRenderTargetViews(descriptorHeap, m_SwapChain, L"OutputManagerSwapChain");
+	m_RenderTargetHeap = pGManager->CreateRenderTargetViews(descriptorHeap, m_SwapChain, m_Name);
 }
 
 OutputManager::~OutputManager()

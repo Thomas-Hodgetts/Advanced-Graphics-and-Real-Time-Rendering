@@ -123,12 +123,11 @@ DescriptorHeapHelper* GraphicsManager::CreateRenderTargetViews(D3D12_DESCRIPTOR_
 	m_RenderTargetHeaps[name] = dHH;
 
 	std::vector<ID3D12CommandAllocator*> commandAllcoators(desc.NumDescriptors);
+	std::vector<ID3D12Fence*> fence(desc.NumDescriptors);
+	std::vector<UINT64> fenceVal(desc.NumDescriptors);
 
 	for (int i = 0; i < desc.NumDescriptors; i++)
 	{
-		// first we get the n'th buffer in the swap chain and store it in the n'th
-		// position of our ID3D12Resource array
-
 		CPU_DESC_CONTAINER* container = new CPU_DESC_CONTAINER(m_RenderTargetHeaps[name]->CPUCurrentAddress());
 
 		m_RenderTargets.push_back(nullptr);
@@ -139,22 +138,83 @@ DescriptorHeapHelper* GraphicsManager::CreateRenderTargetViews(D3D12_DESCRIPTOR_
 			return nullptr;
 		}
 
-		// the we "create" a render target view which binds the swap chain buffer (ID3D12Resource[n]) to the rtv handle
 		m_Device->CreateRenderTargetView(m_RenderTargets[m_RenderTargets.size() - 1], nullptr, m_RenderTargetHeaps[name]->CPUCurrentAddress());
 
-		// we increment the rtv handle by the rtv descriptor size we got above
 		m_RenderTargetHeaps[name]->CPUOffset();
 
 
-		hr = m_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllcoators[commandAllcoators.size() - 1]));
+		hr = m_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllcoators[i]));
 		if (FAILED(hr))
 		{
 			return nullptr;
 		}
 
+
+		hr = m_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence[i]));
+		if (FAILED(hr))
+		{
+			return nullptr;
+		}
+		fenceVal[i] = 0;
 	}
 
 	m_CommandAllocatorMap[name] = commandAllcoators;
+	m_FenceMap[name] = fence;
+	m_FenceValueMap[name] = fenceVal;
+
+	hr = m_Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_CommandAllocatorMap[name][0], NULL, IID_PPV_ARGS(&m_CommandListMap[name]));
+	if (FAILED(hr))
+	{
+		return nullptr;
+	}
+
+	// create a handle to a fence event
+	m_FenceEventHandle = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+	if (m_FenceEventHandle == nullptr)
+	{
+		return nullptr;
+	}
+
+	m_RenderTargetHeaps[name]->CPUOffset();
 
 	return dHH;
+}
+
+bool GraphicsManager::CreateRootSignature(D3D12_ROOT_SIGNATURE_FLAGS rootSigFlags, D3D12_STATIC_SAMPLER_DESC* samplers, int samplerCount, int rootParameterCount, int constantBufferCount, int textureCount, std::wstring name)
+{
+	HRESULT hr;
+
+	std::vector<CD3DX12_ROOT_PARAMETER> rootParameters(rootParameterCount);
+
+	for (size_t i = 0; i < constantBufferCount; ++i)
+	{
+		rootParameters[i].InitAsConstantBufferView(0, i, D3D12_SHADER_VISIBILITY_ALL);
+	}
+
+	for (size_t i = 0; i < textureCount; ++i)
+	{
+		CD3DX12_DESCRIPTOR_RANGE textureRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, i);
+		rootParameters[i].InitAsDescriptorTable(1, &textureRange, D3D12_SHADER_VISIBILITY_PIXEL);
+	}
+
+
+	CD3DX12_ROOT_PARAMETER param[]{ rootParameters.data()[0], rootParameters.data()[1], rootParameters.data()[2], rootParameters.data()[3], rootParameters.data()[4] };
+
+	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
+	rootSignatureDesc.Init(rootParameters.size(), param, samplerCount, samplers, rootSigFlags);
+
+	ID3DBlob* errorBuff; // a buffer holding the error data if any
+	ID3DBlob* signature;
+	hr = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &errorBuff);
+	if (FAILED(hr))
+	{
+		OutputDebugStringA((char*)errorBuff->GetBufferPointer());
+		return false;
+	}
+
+	hr = m_Device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_RootSignatureMap[name]));
+	if (FAILED(hr))
+	{
+		return false;
+	}
 }

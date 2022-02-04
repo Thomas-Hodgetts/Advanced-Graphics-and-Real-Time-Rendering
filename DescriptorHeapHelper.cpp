@@ -18,25 +18,29 @@ DescriptorHeapHelper::~DescriptorHeapHelper()
 
 void DescriptorHeapHelper::CPUOffset()
 {
-	if (m_CPUActive <= m_Size)
+	if (m_CPUActive < m_Size)
 	{
 		m_CPUHandle.Offset(m_DescriptorSize);
+		++m_CPUActive;
 	}
 	else
 	{
 		m_CPUHandle.Offset(-m_DescriptorSize * m_Size);
+		m_CPUActive = 0;
 	}
 }
 
 void DescriptorHeapHelper::GPUOffset()
 {
-	if (m_GPUActive <= m_Size)
+	if (m_GPUActive < m_Size)
 	{
 		m_GPUHandle.Offset(m_DescriptorSize);
+		++m_GPUActive;
 	}
 	else
 	{
 		m_GPUHandle.Offset(-m_DescriptorSize * m_Size);
+		m_GPUActive = 0;
 	}
 }
 
