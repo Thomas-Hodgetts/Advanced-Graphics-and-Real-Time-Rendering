@@ -390,7 +390,9 @@ bool InitD3D()
 
 
 	gm.CreateRootSignature(rootSignatureFlags, samples, 2, 5, 1, 4, L"TEST");
-
+	gm.CompileVertexShader(L"Test", L"VertexShader.hlsl", "main");
+	gm.CompilePixelShader(L"Test", L"PixelShader.hlsl", "main");
+	gm.CompileGeomertyShader(L"Test", L"GeometryShader.hlsl", "main");
 
 	//// get the size of a descriptor in this heap (this is a rtv heap, so only rtv descriptors should be stored in it.
 	//// descriptor sizes may vary from device to device, which is why there is no set size and we must ask the 

@@ -6,7 +6,10 @@ DescriptorHeapHelper::DescriptorHeapHelper(D3D12_DESCRIPTOR_HEAP_DESC heapDesc, 
 	m_DescriptorSize = device->GetDescriptorHandleIncrementSize(m_DescriptorType);
 	*hr = device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_DescriptorHeap));
 	m_CPUHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_DescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-	m_GPUHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(m_DescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+	if (heapDesc.Flags == D3D12_DESCRIPTOR_HEAP_FLAGS::D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE)
+	{
+		m_GPUHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(m_DescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+	}
 	m_Size = heapDesc.NumDescriptors;
 	m_CPUActive = 0;
 	m_GPUActive = 0;

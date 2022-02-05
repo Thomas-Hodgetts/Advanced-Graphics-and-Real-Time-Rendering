@@ -115,6 +115,49 @@ HRESULT GraphicsManager::CreatePipeline(D3D12_GRAPHICS_PIPELINE_STATE_DESC pipeD
 	return hr;
 }
 
+HRESULT GraphicsManager::CreatePipeline(std::wstring name)
+{
+
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {}; // a structure to define a pso
+	psoDesc.InputLayout = inputLayoutDesc; // the structure describing our input layout
+	psoDesc.pRootSignature = rootSignature; // the root signature that describes the input data this pso needs
+
+
+	if (m_VertexBlobMap[name] == nullptr)
+	{
+		D3D12_SHADER_BYTECODE vertexShaderByteCode;
+		vertexShaderByteCode.BytecodeLength = m_VertexBlobMap[name]->GetBufferSize();
+		vertexShaderByteCode.pShaderBytecode = m_VertexBlobMap[name]->GetBufferPointer();
+		psoDesc.VS = vertexShaderByteCode;
+	}
+	if (m_PixelBlobMap[name] == nullptr)
+	{
+		D3D12_SHADER_BYTECODE pixelShaderBytecode;
+		pixelShaderBytecode.BytecodeLength = m_PixelBlobMap[name]->GetBufferSize();
+		pixelShaderBytecode.pShaderBytecode = m_PixelBlobMap[name]->GetBufferPointer();
+		psoDesc.PS = pixelShaderBytecode;
+	}
+	if (m_GeoBlobMap[name] == nullptr)
+	{
+		D3D12_SHADER_BYTECODE geoShaderByteCode;
+		geoShaderByteCode.BytecodeLength = m_GeoBlobMap[name]->GetBufferSize();
+		geoShaderByteCode.pShaderBytecode = m_GeoBlobMap[name]->GetBufferPointer();
+		psoDesc.GS = geoShaderByteCode;
+	}
+
+	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE; // type of topology we are drawing
+	psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM; // format of the render target
+	psoDesc.SampleDesc = sampleDesc; // must be the same sample description as the swapchain and depth/stencil buffer
+	psoDesc.SampleMask = 0xffffffff; // sample mask has to do with multi-sampling. 0xffffffff means point sampling is done
+	psoDesc.RasterizerState = rastDesc; // a default rasterizer state.
+	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT); // a default blent state.
+	psoDesc.NumRenderTargets = 1; // we are only binding one render target
+	psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT); // a default depth stencil state
+	psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+
+	return E_NOTIMPL;
+}
+
 DescriptorHeapHelper* GraphicsManager::CreateRenderTargetViews(D3D12_DESCRIPTOR_HEAP_DESC desc, IDXGISwapChain3* swapChain, std::wstring name)
 {
 	HRESULT hr;
@@ -186,35 +229,148 @@ bool GraphicsManager::CreateRootSignature(D3D12_ROOT_SIGNATURE_FLAGS rootSigFlag
 
 	std::vector<CD3DX12_ROOT_PARAMETER> rootParameters(rootParameterCount);
 
-	for (size_t i = 0; i < constantBufferCount; ++i)
+	//for (size_t i = 0; i < textureCount; ++i)
+	//{
+	//	CD3DX12_DESCRIPTOR_RANGE textureRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, i);
+	//	rootParameters[i].InitAsDescriptorTable(1, &textureRange, D3D12_SHADER_VISIBILITY_PIXEL);
+	//}
+
+	UINT cbCount = 0;
+	UINT texCount = 0;
+	for (size_t i = 0; i < rootParameterCount; ++i)
 	{
-		rootParameters[i].InitAsConstantBufferView(0, i, D3D12_SHADER_VISIBILITY_ALL);
+		if (cbCount < constantBufferCount)
+		{
+			rootParameters[i].InitAsConstantBufferView(0, cbCount, D3D12_SHADER_VISIBILITY_ALL);
+			++cbCount;
+		}
+		else if(texCount < textureCount)
+		{
+			//CD3DX12_DESCRIPTOR_RANGE textureRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, texCount);
+			//rootParameters[i].InitAsDescriptorTable(1, &textureRange, D3D12_SHADER_VISIBILITY_PIXEL);
+			
+			// Texture 1
+			CD3DX12_DESCRIPTOR_RANGE texture1Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+			rootParameters[1].InitAsDescriptorTable(1, &texture1Range, D3D12_SHADER_VISIBILITY_PIXEL);
+
+			//// Texture 2
+			CD3DX12_DESCRIPTOR_RANGE texture2Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);
+			rootParameters[2].InitAsDescriptorTable(1, &texture2Range, D3D12_SHADER_VISIBILITY_PIXEL);
+
+			//// Texture 3
+			CD3DX12_DESCRIPTOR_RANGE texture3Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2);
+			rootParameters[3].InitAsDescriptorTable(1, &texture3Range, D3D12_SHADER_VISIBILITY_PIXEL);
+			//// Texture 4
+			CD3DX12_DESCRIPTOR_RANGE texture4Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3);
+			rootParameters[4].InitAsDescriptorTable(1, &texture4Range, D3D12_SHADER_VISIBILITY_PIXEL);
+
+			++texCount;
+		}
 	}
 
-	for (size_t i = 0; i < textureCount; ++i)
+	enum RootParameterIndex
 	{
-		CD3DX12_DESCRIPTOR_RANGE textureRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, i);
-		rootParameters[i].InitAsDescriptorTable(1, &textureRange, D3D12_SHADER_VISIBILITY_PIXEL);
-	}
+		Texture1SRV,
+		Texture2SRV,
+		Texture3SRV,
+		Texture4SRV,
+		ConstantBuffer
+	};
 
+	D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
+		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
 
-	CD3DX12_ROOT_PARAMETER param[]{ rootParameters.data()[0], rootParameters.data()[1], rootParameters.data()[2], rootParameters.data()[3], rootParameters.data()[4] };
+	////// Texture 1
+	//CD3DX12_DESCRIPTOR_RANGE texture1Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+	//rootParameters[RootParameterIndex::Texture1SRV].InitAsDescriptorTable(1, &texture1Range, D3D12_SHADER_VISIBILITY_PIXEL);
+
+	////// Texture 2
+	//CD3DX12_DESCRIPTOR_RANGE texture2Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);
+	//rootParameters[RootParameterIndex::Texture2SRV].InitAsDescriptorTable(1, &texture2Range, D3D12_SHADER_VISIBILITY_PIXEL);
+
+	////// Texture 3
+	//CD3DX12_DESCRIPTOR_RANGE texture3Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2);
+	//rootParameters[RootParameterIndex::Texture3SRV].InitAsDescriptorTable(1, &texture3Range, D3D12_SHADER_VISIBILITY_PIXEL);
+	////// Texture 4
+	//CD3DX12_DESCRIPTOR_RANGE texture4Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3);
+	//rootParameters[RootParameterIndex::Texture4SRV].InitAsDescriptorTable(1, &texture4Range, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-	rootSignatureDesc.Init(rootParameters.size(), param, samplerCount, samplers, rootSigFlags);
+	rootSignatureDesc.Init(rootParameters.size(), rootParameters.data(), samplerCount, samplers, rootSigFlags);
 
-	ID3DBlob* errorBuff; // a buffer holding the error data if any
 	ID3DBlob* signature;
-	hr = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &errorBuff);
+	hr = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &m_ErrorBuff);
 	if (FAILED(hr))
 	{
-		OutputDebugStringA((char*)errorBuff->GetBufferPointer());
+		OutputDebugStringA((char*)m_ErrorBuff->GetBufferPointer());
 		return false;
 	}
 
 	hr = m_Device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_RootSignatureMap[name]));
 	if (FAILED(hr))
 	{
+		return false;
+	}
+}
+
+bool GraphicsManager::CompileVertexShader(std::wstring shaderName, std::wstring shaderFileLocation, const char* functionName)
+{
+	HRESULT hr;
+
+	// compile vertex shader
+	hr = D3DCompileFromFile(shaderFileLocation.c_str(),
+		nullptr,
+		nullptr,
+		functionName,
+		"vs_5_0",
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+		0,
+		&m_VertexBlobMap[shaderName],
+		&m_ErrorBuff);
+	if (FAILED(hr))
+	{
+		OutputDebugStringA((char*)m_ErrorBuff->GetBufferPointer());
+		return false;
+	}
+
+}
+
+bool GraphicsManager::CompilePixelShader(std::wstring shaderName, std::wstring shaderFileLocation, const char* functionName)
+{
+	HRESULT hr;
+	hr = D3DCompileFromFile(L"PixelShader.hlsl",
+		nullptr,
+		nullptr,
+		functionName,
+		"ps_5_0",
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+		0,
+		&m_PixelBlobMap[shaderName],
+		&m_ErrorBuff);
+	if (FAILED(hr))
+	{
+		OutputDebugStringA((char*)m_ErrorBuff->GetBufferPointer());
+		return false;
+	}
+}
+
+bool GraphicsManager::CompileGeomertyShader(std::wstring shaderName, std::wstring shaderFileLocation, const char* functionName)
+{
+	HRESULT hr;
+	hr = D3DCompileFromFile(L"GeometryShader.hlsl",
+		nullptr,
+		nullptr,
+		functionName,
+		"gs_5_0",
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+		0,
+		&m_GeoBlobMap[shaderName],
+		&m_ErrorBuff);
+	if (FAILED(hr))
+	{
+		OutputDebugStringA((char*)m_ErrorBuff->GetBufferPointer());
 		return false;
 	}
 }
