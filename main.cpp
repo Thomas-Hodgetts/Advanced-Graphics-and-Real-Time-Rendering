@@ -389,10 +389,113 @@ bool InitD3D()
 	D3D12_STATIC_SAMPLER_DESC samples[2]{ sampler , shadow };
 
 
-	gm.CreateRootSignature(rootSignatureFlags, samples, 2, 5, 1, 4, L"TEST");
-	gm.CompileVertexShader(L"Test", L"VertexShader.hlsl", "main");
-	gm.CompilePixelShader(L"Test", L"PixelShader.hlsl", "main");
-	gm.CompileGeomertyShader(L"Test", L"GeometryShader.hlsl", "main");
+	gm.CreateRootSignature(rootSignatureFlags, samples, 2, 5, 1, 4, L"Pipeline1");
+	gm.CompileVertexShader(L"Pipeline1", L"VertexShader.hlsl", "main");
+	gm.CompilePixelShader(L"Pipeline1", L"PixelShader.hlsl", "main");
+
+
+
+	D3D12_INPUT_ELEMENT_DESC inputLayout[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 44, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+	};
+
+	D3D12_INPUT_ELEMENT_DESC inputLayout2[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+	};
+
+
+	gm.AddFrameInputLayout(inputLayout, L"Pipeline1", 5);
+	gm.AddFrameInputLayout(inputLayout2, L"DefaultInput2", 2);
+
+	gm.CreatePipeline(L"Pipeline1");
+
+
+	std::vector<Vertex> vertexList(36);
+	vertexList[0] = { -0.5f,  0.5f, -0.5f, 0.0f, 0.0f }; //0;
+	vertexList[1] = { 0.5f, -0.5f, -0.5f, 1.0f, 1.0f }; //1;
+	vertexList[2] = { -0.5f, -0.5f, -0.5f, 0.0f, 1.0f }; //2;
+	vertexList[3] = { -0.5f,  0.5f, -0.5f, 0.0f, 0.0f }; //0;
+	vertexList[4] = { 0.5f,  0.5f, -0.5f, 1.0f, 0.0f }; //3;
+	vertexList[5] = { 0.5f, -0.5f, -0.5f, 1.0f, 1.0f }; //1;
+	vertexList[6] = { 0.5f, -0.5f, -0.5f, 0.0f, 1.0f }; //4;
+	vertexList[7] = { 0.5f,  0.5f,  0.5f, 1.0f, 0.0f }; //5;
+	vertexList[8] = { 0.5f, -0.5f,  0.5f, 1.0f, 1.0f }; //6;
+	vertexList[9] = { 0.5f, -0.5f, -0.5f, 0.0f, 1.0f }; //4;
+	vertexList[10] = { 0.5f,  0.5f, -0.5f, 0.0f, 0.0f }; //7;
+	vertexList[11] = { 0.5f,  0.5f,  0.5f, 1.0f, 0.0f }; //5;
+	vertexList[12] = { -0.5f,  0.5f,  0.5f, 0.0f, 0.0f }; //8;
+	vertexList[13] = { -0.5f, -0.5f, -0.5f, 1.0f, 1.0f }; //9;
+	vertexList[14] = { -0.5f, -0.5f,  0.5f, 0.0f, 1.0f }; //10;
+	vertexList[15] = { -0.5f,  0.5f,  0.5f, 0.0f, 0.0f }; //8;
+	vertexList[16] = { -0.5f,  0.5f, -0.5f, 1.0f, 0.0f }; //11;
+	vertexList[17] = { -0.5f, -0.5f, -0.5f, 1.0f, 1.0f }; //9;
+	vertexList[18] = { 0.5f,  0.5f,  0.5f, 0.0f, 0.0f }; //12;
+	vertexList[19] = { -0.5f, -0.5f,  0.5f, 1.0f, 1.0f }; //13;
+	vertexList[20] = { 0.5f, -0.5f,  0.5f, 0.0f, 1.0f }; //14;
+	vertexList[21] = { 0.5f,  0.5f,  0.5f, 0.0f, 0.0f }; //12;
+	vertexList[22] = { -0.5f,  0.5f,  0.5f, 1.0f, 0.0f }; //15;
+	vertexList[23] = { -0.5f, -0.5f,  0.5f, 1.0f, 1.0f }; //13;
+	vertexList[24] = { -0.5f,  0.5f, -0.5f, 0.0f, 1.0f }; //16;
+	vertexList[25] = { 0.5f,  0.5f,  0.5f, 1.0f, 0.0f }; //17;
+	vertexList[26] = { 0.5f,  0.5f, -0.5f, 1.0f, 1.0f }; //18;
+	vertexList[27] = { -0.5f,  0.5f, -0.5f, 0.0f, 1.0f }; //16;
+	vertexList[28] = { -0.5f,  0.5f,  0.5f, 0.0f, 0.0f }; //19;
+	vertexList[29] = { 0.5f,  0.5f,  0.5f, 1.0f, 0.0f }; //17;
+	vertexList[30] = { 0.5f, -0.5f,  0.5f, 0.0f, 0.0f }; //20;
+	vertexList[31] = { -0.5f, -0.5f, -0.5f, 1.0f, 1.0f }; //21;
+	vertexList[32] = { 0.5f, -0.5f, -0.5f, 0.0f, 1.0f }; //22;
+	vertexList[33] = { 0.5f, -0.5f,  0.5f, 0.0f, 0.0f }; //20;
+	vertexList[34] = { -0.5f, -0.5f,  0.5f, 1.0f, 0.0f }; //23;
+	vertexList[35] = { -0.5f, -0.5f, -0.5f, 1.0f, 1.0f }; //21
+
+	std::vector<DWORD> indexList(36);
+	indexList[0] = 0;
+	indexList[1] = 1;
+	indexList[2] = 2;
+	indexList[3] = 3;
+	indexList[4] = 4;
+	indexList[5] = 5;
+	indexList[6] = 6;
+	indexList[7] = 7;
+	indexList[8] = 8;
+	indexList[9] = 9;
+	indexList[10] = 10;
+	indexList[11] = 11;
+	indexList[12] = 12;
+	indexList[13] = 13;
+	indexList[14] = 14;
+	indexList[15] = 15;
+	indexList[16] = 16;
+	indexList[17] = 17;
+	indexList[18] = 18;
+	indexList[19] = 19;
+	indexList[20] = 20;
+	indexList[21] = 21;
+	indexList[22] = 22;
+	indexList[23] = 23;
+	indexList[24] = 24;
+	indexList[25] = 25;
+	indexList[26] = 26;
+	indexList[27] = 27;
+	indexList[28] = 28;
+	indexList[29] = 29;
+	indexList[30] = 30;
+	indexList[31] = 31;
+	indexList[32] = 32;
+	indexList[33] = 33;
+	indexList[34] = 34;
+	indexList[35] = 35;
+
+	gm.CreateGeomerty(vertexList.data(), vertexList.size(), indexList.data(), indexList.size(), L"TestGeomerty");
+	//gm.CreateGeomerty(vertexList.data(), vertexList.size(), indexList.data(), indexList.size(), L"TestGeomerty2");
+
 
 	//// get the size of a descriptor in this heap (this is a rtv heap, so only rtv descriptors should be stored in it.
 	//// descriptor sizes may vary from device to device, which is why there is no set size and we must ask the 
@@ -580,305 +683,307 @@ bool InitD3D()
 
 
 
-	// create vertex and pixel shaders
+	//// create vertex and pixel shaders
 
-	// when debugging, we can compile the shader files at runtime.
-	// but for release versions, we can compile the hlsl shaders
-	// with fxc.exe to create .cso files, which contain the shader
-	// bytecode. We can load the .cso files at runtime to get the
-	// shader bytecode, which of course is faster than compiling
-	// them at runtime
+	//// when debugging, we can compile the shader files at runtime.
+	//// but for release versions, we can compile the hlsl shaders
+	//// with fxc.exe to create .cso files, which contain the shader
+	//// bytecode. We can load the .cso files at runtime to get the
+	//// shader bytecode, which of course is faster than compiling
+	//// them at runtime
 
-	// compile vertex shader
-	ID3DBlob* vertexShader; // d3d blob for holding vertex shader bytecode
-	hr = D3DCompileFromFile(L"VertexShader.hlsl",
-		nullptr,
-		nullptr,
-		"main",
-		"vs_5_0",
-		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-		0,
-		&vertexShader,
-		&errorBuff);
-	if (FAILED(hr))
-	{
-		OutputDebugStringA((char*)errorBuff->GetBufferPointer());
-		Running = false;
-		return false;
-	}
+	//// compile vertex shader
+	//ID3DBlob* vertexShader; // d3d blob for holding vertex shader bytecode
+	//hr = D3DCompileFromFile(L"VertexShader.hlsl",
+	//	nullptr,
+	//	nullptr,
+	//	"main",
+	//	"vs_5_0",
+	//	D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+	//	0,
+	//	&vertexShader,
+	//	&errorBuff);
+	//if (FAILED(hr))
+	//{
+	//	OutputDebugStringA((char*)errorBuff->GetBufferPointer());
+	//	Running = false;
+	//	return false;
+	//}
 
-	// fill out a shader bytecode structure, which is basically just a pointer
-	// to the shader bytecode and the size of the shader bytecode
-	D3D12_SHADER_BYTECODE vertexShaderBytecode = {};
-	vertexShaderBytecode.BytecodeLength = vertexShader->GetBufferSize();
-	vertexShaderBytecode.pShaderBytecode = vertexShader->GetBufferPointer();
+	//// fill out a shader bytecode structure, which is basically just a pointer
+	//// to the shader bytecode and the size of the shader bytecode
+	//D3D12_SHADER_BYTECODE vertexShaderBytecode = {};
+	//vertexShaderBytecode.BytecodeLength = vertexShader->GetBufferSize();
+	//vertexShaderBytecode.pShaderBytecode = vertexShader->GetBufferPointer();
 
-	ID3DBlob* renderToTexVertexShader; // d3d blob for holding vertex shader bytecode
-	hr = D3DCompileFromFile(L"VertexShader.hlsl",
-		nullptr,
-		nullptr,
-		"renderToTexMain",
-		"vs_5_0",
-		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-		0,
-		&renderToTexVertexShader,
-		&errorBuff);
-	if (FAILED(hr))
-	{
-		OutputDebugStringA((char*)errorBuff->GetBufferPointer());
-		Running = false;
-		return false;
-	}
+	//ID3DBlob* renderToTexVertexShader; // d3d blob for holding vertex shader bytecode
+	//hr = D3DCompileFromFile(L"VertexShader.hlsl",
+	//	nullptr,
+	//	nullptr,
+	//	"renderToTexMain",
+	//	"vs_5_0",
+	//	D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+	//	0,
+	//	&renderToTexVertexShader,
+	//	&errorBuff);
+	//if (FAILED(hr))
+	//{
+	//	OutputDebugStringA((char*)errorBuff->GetBufferPointer());
+	//	Running = false;
+	//	return false;
+	//}
 
-	// fill out a shader bytecode structure, which is basically just a pointer
-	// to the shader bytecode and the size of the shader bytecode
-	D3D12_SHADER_BYTECODE vertexShaderBytecode2 = {};
-	vertexShaderBytecode2.BytecodeLength = renderToTexVertexShader->GetBufferSize();
-	vertexShaderBytecode2.pShaderBytecode = renderToTexVertexShader->GetBufferPointer();
+	//// fill out a shader bytecode structure, which is basically just a pointer
+	//// to the shader bytecode and the size of the shader bytecode
+	//D3D12_SHADER_BYTECODE vertexShaderBytecode2 = {};
+	//vertexShaderBytecode2.BytecodeLength = renderToTexVertexShader->GetBufferSize();
+	//vertexShaderBytecode2.pShaderBytecode = renderToTexVertexShader->GetBufferPointer();
 
-	ID3DBlob* ShadowVertexShader; // d3d blob for holding vertex shader bytecode
-	hr = D3DCompileFromFile(L"VertexShader.hlsl",
-		nullptr,
-		nullptr,
-		"shadowMain",
-		"vs_5_0",
-		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-		0,
-		&ShadowVertexShader,
-		&errorBuff);
-	if (FAILED(hr))
-	{
-		OutputDebugStringA((char*)errorBuff->GetBufferPointer());
-		Running = false;
-		return false;
-	}
+	//ID3DBlob* ShadowVertexShader; // d3d blob for holding vertex shader bytecode
+	//hr = D3DCompileFromFile(L"VertexShader.hlsl",
+	//	nullptr,
+	//	nullptr,
+	//	"shadowMain",
+	//	"vs_5_0",
+	//	D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+	//	0,
+	//	&ShadowVertexShader,
+	//	&errorBuff);
+	//if (FAILED(hr))
+	//{
+	//	OutputDebugStringA((char*)errorBuff->GetBufferPointer());
+	//	Running = false;
+	//	return false;
+	//}
 
-	// fill out a shader bytecode structure, which is basically just a pointer
-	// to the shader bytecode and the size of the shader bytecode
-	D3D12_SHADER_BYTECODE vertexShaderBytecode3 = {};
-	vertexShaderBytecode3.BytecodeLength = ShadowVertexShader->GetBufferSize();
-	vertexShaderBytecode3.pShaderBytecode = ShadowVertexShader->GetBufferPointer();
+	//// fill out a shader bytecode structure, which is basically just a pointer
+	//// to the shader bytecode and the size of the shader bytecode
+	//D3D12_SHADER_BYTECODE vertexShaderBytecode3 = {};
+	//vertexShaderBytecode3.BytecodeLength = ShadowVertexShader->GetBufferSize();
+	//vertexShaderBytecode3.pShaderBytecode = ShadowVertexShader->GetBufferPointer();
 
-	// compile pixel shader
-	ID3DBlob* pixelShader;
-	hr = D3DCompileFromFile(L"PixelShader.hlsl",
-		nullptr,
-		nullptr,
-		"main",
-		"ps_5_0",
-		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-		0,
-		&pixelShader,
-		&errorBuff);
-	if (FAILED(hr))
-	{
-		OutputDebugStringA((char*)errorBuff->GetBufferPointer());
-		Running = false;
-		return false;
-	}
+	//// compile pixel shader
+	//ID3DBlob* pixelShader;
+	//hr = D3DCompileFromFile(L"PixelShader.hlsl",
+	//	nullptr,
+	//	nullptr,
+	//	"main",
+	//	"ps_5_0",
+	//	D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+	//	0,
+	//	&pixelShader,
+	//	&errorBuff);
+	//if (FAILED(hr))
+	//{
+	//	OutputDebugStringA((char*)errorBuff->GetBufferPointer());
+	//	Running = false;
+	//	return false;
+	//}
 
-	// fill out shader bytecode structure for pixel shader
-	D3D12_SHADER_BYTECODE pixelShaderBytecode = {};
-	pixelShaderBytecode.BytecodeLength = pixelShader->GetBufferSize();
-	pixelShaderBytecode.pShaderBytecode = pixelShader->GetBufferPointer();
-
-
-	ID3DBlob* renderToTexPixelShader;
-	hr = D3DCompileFromFile(L"PixelShader.hlsl",
-		nullptr,
-		nullptr,
-		"mainRenderToTex",
-		"ps_5_0",
-		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-		0,
-		&renderToTexPixelShader,
-		&errorBuff);
-	if (FAILED(hr))
-	{
-		OutputDebugStringA((char*)errorBuff->GetBufferPointer());
-		Running = false;
-		return false;
-	}
-
-	// fill out shader bytecode structure for pixel shader
-	D3D12_SHADER_BYTECODE pixelShaderBytecode2 = {};
-	pixelShaderBytecode2.BytecodeLength = renderToTexPixelShader->GetBufferSize();
-	pixelShaderBytecode2.pShaderBytecode = renderToTexPixelShader->GetBufferPointer();
-
-	ID3DBlob* shadowPixelShader;
-	hr = D3DCompileFromFile(L"PixelShader.hlsl",
-		nullptr,
-		nullptr,
-		"shadowOuput",
-		"ps_5_0",
-		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-		0,
-		&shadowPixelShader,
-		&errorBuff);
-	if (FAILED(hr))
-	{
-		OutputDebugStringA((char*)errorBuff->GetBufferPointer());
-		Running = false;
-		return false;
-	}
-
-	// fill out shader bytecode structure for pixel shader
-	D3D12_SHADER_BYTECODE pixelShaderBytecode3 = {};
-	pixelShaderBytecode3.BytecodeLength = shadowPixelShader->GetBufferSize();
-	pixelShaderBytecode3.pShaderBytecode = shadowPixelShader->GetBufferPointer();
-
-	// compile vertex shader
-	ID3DBlob* geoShader; // d3d blob for holding vertex shader bytecode
-	hr = D3DCompileFromFile(L"GeometryShader.hlsl",
-		nullptr,
-		nullptr,
-		"main",
-		"gs_5_0",
-		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-		0,
-		&geoShader,
-		&errorBuff);
-	if (FAILED(hr))
-	{
-		OutputDebugStringA((char*)errorBuff->GetBufferPointer());
-		Running = false;
-		return false;
-	}
-
-	// fill out shader bytecode structure for pixel shader
-	D3D12_SHADER_BYTECODE geoShaderBytecode = {};
-	geoShaderBytecode.BytecodeLength = geoShader->GetBufferSize();
-	geoShaderBytecode.pShaderBytecode = geoShader->GetBufferPointer();
+	//// fill out shader bytecode structure for pixel shader
+	//D3D12_SHADER_BYTECODE pixelShaderBytecode = {};
+	//pixelShaderBytecode.BytecodeLength = pixelShader->GetBufferSize();
+	//pixelShaderBytecode.pShaderBytecode = pixelShader->GetBufferPointer();
 
 
-	// create input layout
+	//ID3DBlob* renderToTexPixelShader;
+	//hr = D3DCompileFromFile(L"PixelShader.hlsl",
+	//	nullptr,
+	//	nullptr,
+	//	"mainRenderToTex",
+	//	"ps_5_0",
+	//	D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+	//	0,
+	//	&renderToTexPixelShader,
+	//	&errorBuff);
+	//if (FAILED(hr))
+	//{
+	//	OutputDebugStringA((char*)errorBuff->GetBufferPointer());
+	//	Running = false;
+	//	return false;
+	//}
 
-	// The input layout is used by the Input Assembler so that it knows
-	// how to read the vertex data bound to it.
+	//// fill out shader bytecode structure for pixel shader
+	//D3D12_SHADER_BYTECODE pixelShaderBytecode2 = {};
+	//pixelShaderBytecode2.BytecodeLength = renderToTexPixelShader->GetBufferSize();
+	//pixelShaderBytecode2.pShaderBytecode = renderToTexPixelShader->GetBufferPointer();
 
-	int d = sizeof(Vertex);
+	//ID3DBlob* shadowPixelShader;
+	//hr = D3DCompileFromFile(L"PixelShader.hlsl",
+	//	nullptr,
+	//	nullptr,
+	//	"shadowOuput",
+	//	"ps_5_0",
+	//	D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+	//	0,
+	//	&shadowPixelShader,
+	//	&errorBuff);
+	//if (FAILED(hr))
+	//{
+	//	OutputDebugStringA((char*)errorBuff->GetBufferPointer());
+	//	Running = false;
+	//	return false;
+	//}
 
-	D3D12_INPUT_ELEMENT_DESC inputLayout[] =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 44, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	};
+	//// fill out shader bytecode structure for pixel shader
+	//D3D12_SHADER_BYTECODE pixelShaderBytecode3 = {};
+	//pixelShaderBytecode3.BytecodeLength = shadowPixelShader->GetBufferSize();
+	//pixelShaderBytecode3.pShaderBytecode = shadowPixelShader->GetBufferPointer();
 
-	D3D12_INPUT_ELEMENT_DESC inputLayout2[] =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	};
+	//// compile vertex shader
+	//ID3DBlob* geoShader; // d3d blob for holding vertex shader bytecode
+	//hr = D3DCompileFromFile(L"GeometryShader.hlsl",
+	//	nullptr,
+	//	nullptr,
+	//	"main",
+	//	"gs_5_0",
+	//	D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+	//	0,
+	//	&geoShader,
+	//	&errorBuff);
+	//if (FAILED(hr))
+	//{
+	//	OutputDebugStringA((char*)errorBuff->GetBufferPointer());
+	//	Running = false;
+	//	return false;
+	//}
 
-	// fill out an input layout description structure
-	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc = {};
-	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc2 = {};
-
-	// we can get the number of elements in an array by "sizeof(array) / sizeof(arrayElementType)"
-	inputLayoutDesc.NumElements = sizeof(inputLayout) / sizeof(D3D12_INPUT_ELEMENT_DESC);
-	inputLayoutDesc.pInputElementDescs = inputLayout;
-
-	inputLayoutDesc2.NumElements = sizeof(inputLayout2) / sizeof(D3D12_INPUT_ELEMENT_DESC);
-	inputLayoutDesc2.pInputElementDescs = inputLayout2;
-
-	//https://github.com/microsoft/DirectXTK12/wiki/Line-drawing-and-anti-aliasing
-
-	CD3DX12_RASTERIZER_DESC rastDesc(D3D12_FILL_MODE_SOLID,
-		D3D12_CULL_MODE_NONE, FALSE,
-		D3D12_DEFAULT_DEPTH_BIAS, D3D12_DEFAULT_DEPTH_BIAS_CLAMP,
-		D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS, TRUE, FALSE, TRUE,
-		0, D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF);
-
-	// create a pipeline state object (PSO)
-
-	// In a real application, you will have many pso's. for each different shader
-	// or different combinations of shaders, different blend states or different rasterizer states,
-	// different topology types (point, line, triangle, patch), or a different number
-	// of render targets you will need a pso
-
-	// VS is the only required shader for a pso. You might be wondering when a case would be where
-	// you only set the VS. It's possible that you have a pso that only outputs data with the stream
-	// output, and not on a render target, which means you would not need anything after the stream
-	// output.
-
-	CD3DX12_DEPTH_STENCIL_DESC desc = {};
-
-
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {}; // a structure to define a pso
-	psoDesc.InputLayout = inputLayoutDesc; // the structure describing our input layout
-	psoDesc.pRootSignature = rootSignature; // the root signature that describes the input data this pso needs
-	psoDesc.VS = vertexShaderBytecode; // structure describing where to find the vertex shader bytecode and how large it is
-	psoDesc.PS = pixelShaderBytecode; // same as VS but for pixel shader
-	//psoDesc.GS = geoShaderBytecode; // same as VS but for pixel shader
-	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE; // type of topology we are drawing
-	psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM; // format of the render target
-	psoDesc.SampleDesc = sampleDesc; // must be the same sample description as the swapchain and depth/stencil buffer
-	psoDesc.SampleMask = 0xffffffff; // sample mask has to do with multi-sampling. 0xffffffff means point sampling is done
-	psoDesc.RasterizerState = rastDesc; // a default rasterizer state.
-	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT); // a default blent state.
-	psoDesc.NumRenderTargets = 1; // we are only binding one render target
-	psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT); // a default depth stencil state
-	psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+	//// fill out shader bytecode structure for pixel shader
+	//D3D12_SHADER_BYTECODE geoShaderBytecode = {};
+	//geoShaderBytecode.BytecodeLength = geoShader->GetBufferSize();
+	//geoShaderBytecode.pShaderBytecode = geoShader->GetBufferPointer();
 
 
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc2 = psoDesc; // a structure to define a pso
-	psoDesc2.InputLayout = inputLayoutDesc2; // the structure describing our input layout
-	psoDesc2.pRootSignature = rootSignature; // the root signature that describes the input data this pso needseeds
-	psoDesc2.VS = vertexShaderBytecode2; // structure describing where to find the vertex shader bytecode and how large it isd how large it is
-	psoDesc2.PS = pixelShaderBytecode2; // same as VS but for pixel shader
-	psoDesc2.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE; // type of topology we are drawinging
-	psoDesc2.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM; // format of the render target
-	psoDesc2.SampleDesc = sampleDesc; // must be the same sample description as the swapchain and depth/stencil buffercil buffer
-	psoDesc2.SampleMask = 0xffffffff; // sample mask has to do with multi-sampling. 0xffffffff means point sampling is doneampling is done
-	psoDesc2.RasterizerState = rastDesc; // a default rasterizer state.
-	psoDesc2.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT); // a default blent state.
-	psoDesc2.NumRenderTargets = 1; // we are only binding one render target
-	psoDesc2.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT); // a default depth stencil state
-	psoDesc2.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	//// create input layout
 
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc3 = psoDesc2; // a structure to define a pso
-	psoDesc3.VS = vertexShaderBytecode3;
-	psoDesc3.PS = pixelShaderBytecode3;
-	psoDesc3.RTVFormats[0] = DXGI_FORMAT_UNKNOWN; // format of the render target
-	psoDesc3.RasterizerState.DepthBias = 100000;
-	psoDesc3.RasterizerState.DepthBiasClamp = 0.f;
-	psoDesc3.RasterizerState.SlopeScaledDepthBias = 1.f;
-	psoDesc3.NumRenderTargets = 0; // we are only binding one render target
+	//// The input layout is used by the Input Assembler so that it knows
+	//// how to read the vertex data bound to it.
 
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc4 = psoDesc2; // a structure to define a pso
-	psoDesc4.InputLayout = inputLayoutDesc2;
-	psoDesc4.GS = geoShaderBytecode; // same as VS but for pixel shader
+	//int d = sizeof(Vertex);
 
-	// create the pso
-	hr = device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pipelineStateObject));
-	if (FAILED(hr))
-	{
-		Running = false;
-		return false;
-	}
+	////D3D12_INPUT_ELEMENT_DESC inputLayout[] =
+	////{
+	////	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	////	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	////	{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	////	{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	////	{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 44, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+	////};
 
-	hr = device->CreateGraphicsPipelineState(&psoDesc2, IID_PPV_ARGS(&pipelineStateObject2));
-	if (FAILED(hr))
-	{
-		Running = false;
-		return false;
-	}
+	////D3D12_INPUT_ELEMENT_DESC inputLayout2[] =
+	////{
+	////	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	////	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+	////};
 
-	hr = device->CreateGraphicsPipelineState(&psoDesc3, IID_PPV_ARGS(&ShadowPipelineState));
-	if (FAILED(hr))
-	{
-		Running = false;
-		return false;
-	}
-	hr = device->CreateGraphicsPipelineState(&psoDesc4, IID_PPV_ARGS(&GeometryShaderPipeline));
-	if (FAILED(hr))
-	{
-		Running = false;
-		return false;
-	}
+	//// fill out an input layout description structure
+	//D3D12_INPUT_LAYOUT_DESC inputLayoutDesc = {};
+	//D3D12_INPUT_LAYOUT_DESC inputLayoutDesc2 = {};
+
+	//// we can get the number of elements in an array by "sizeof(array) / sizeof(arrayElementType)"
+	//inputLayoutDesc.NumElements = sizeof(inputLayout) / sizeof(D3D12_INPUT_ELEMENT_DESC);
+	//inputLayoutDesc.pInputElementDescs = inputLayout;
+
+	//inputLayoutDesc2.NumElements = sizeof(inputLayout2) / sizeof(D3D12_INPUT_ELEMENT_DESC);
+	//inputLayoutDesc2.pInputElementDescs = inputLayout2;
+
+	////https://github.com/microsoft/DirectXTK12/wiki/Line-drawing-and-anti-aliasing
+
+	//CD3DX12_RASTERIZER_DESC rastDesc(D3D12_FILL_MODE_SOLID,
+	//	D3D12_CULL_MODE_NONE, FALSE,
+	//	D3D12_DEFAULT_DEPTH_BIAS, D3D12_DEFAULT_DEPTH_BIAS_CLAMP,
+	//	D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS, TRUE, FALSE, TRUE,
+	//	0, D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF);
+
+	//// create a pipeline state object (PSO)
+
+	//// In a real application, you will have many pso's. for each different shader
+	//// or different combinations of shaders, different blend states or different rasterizer states,
+	//// different topology types (point, line, triangle, patch), or a different number
+	//// of render targets you will need a pso
+
+	//// VS is the only required shader for a pso. You might be wondering when a case would be where
+	//// you only set the VS. It's possible that you have a pso that only outputs data with the stream
+	//// output, and not on a render target, which means you would not need anything after the stream
+	//// output.
+
+	//CD3DX12_DEPTH_STENCIL_DESC desc = {};
+
+
+	//D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {}; // a structure to define a pso
+	//psoDesc.InputLayout = inputLayoutDesc; // the structure describing our input layout
+	//psoDesc.pRootSignature = rootSignature; // the root signature that describes the input data this pso needs
+	//psoDesc.VS = vertexShaderBytecode; // structure describing where to find the vertex shader bytecode and how large it is
+	//psoDesc.PS = pixelShaderBytecode; // same as VS but for pixel shader
+	////psoDesc.GS = geoShaderBytecode; // same as VS but for pixel shader
+	//psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE; // type of topology we are drawing
+	//psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM; // format of the render target
+	//psoDesc.SampleDesc = sampleDesc; // must be the same sample description as the swapchain and depth/stencil buffer
+	//psoDesc.SampleMask = 0xffffffff; // sample mask has to do with multi-sampling. 0xffffffff means point sampling is done
+	//psoDesc.RasterizerState = rastDesc; // a default rasterizer state.
+	//psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT); // a default blent state.
+	//psoDesc.NumRenderTargets = 1; // we are only binding one render target
+	//psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT); // a default depth stencil state
+	//psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+
+
+	//D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc2 = psoDesc; // a structure to define a pso
+	//psoDesc2.InputLayout = inputLayoutDesc2; // the structure describing our input layout
+	//psoDesc2.pRootSignature = rootSignature; // the root signature that describes the input data this pso needseeds
+	//psoDesc2.VS = vertexShaderBytecode2; // structure describing where to find the vertex shader bytecode and how large it isd how large it is
+	//psoDesc2.PS = pixelShaderBytecode2; // same as VS but for pixel shader
+	//psoDesc2.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE; // type of topology we are drawinging
+	//psoDesc2.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM; // format of the render target
+	//psoDesc2.SampleDesc = sampleDesc; // must be the same sample description as the swapchain and depth/stencil buffercil buffer
+	//psoDesc2.SampleMask = 0xffffffff; // sample mask has to do with multi-sampling. 0xffffffff means point sampling is doneampling is done
+	//psoDesc2.RasterizerState = rastDesc; // a default rasterizer state.
+	//psoDesc2.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT); // a default blent state.
+	//psoDesc2.NumRenderTargets = 1; // we are only binding one render target
+	//psoDesc2.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT); // a default depth stencil state
+	//psoDesc2.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+
+	//D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc3 = psoDesc2; // a structure to define a pso
+	//psoDesc3.VS = vertexShaderBytecode3;
+	//psoDesc3.PS = pixelShaderBytecode3;
+	//psoDesc3.RTVFormats[0] = DXGI_FORMAT_UNKNOWN; // format of the render target
+	//psoDesc3.RasterizerState.DepthBias = 100000;
+	//psoDesc3.RasterizerState.DepthBiasClamp = 0.f;
+	//psoDesc3.RasterizerState.SlopeScaledDepthBias = 1.f;
+	//psoDesc3.NumRenderTargets = 0; // we are only binding one render target
+
+	//D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc4 = psoDesc2; // a structure to define a pso
+	//psoDesc4.InputLayout = inputLayoutDesc2;
+	//psoDesc4.GS = geoShaderBytecode; // same as VS but for pixel shader
+
+	//// create the pso
+	//hr = device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pipelineStateObject));
+	//if (FAILED(hr))
+	//{
+	//	Running = false;
+	//	return false;
+	//}
+
+	//hr = device->CreateGraphicsPipelineState(&psoDesc2, IID_PPV_ARGS(&pipelineStateObject2));
+	//if (FAILED(hr))
+	//{
+	//	Running = false;
+	//	return false;
+	//}
+
+	//hr = device->CreateGraphicsPipelineState(&psoDesc3, IID_PPV_ARGS(&ShadowPipelineState));
+	//if (FAILED(hr))
+	//{
+	//	Running = false;
+	//	return false;
+	//}
+	//hr = device->CreateGraphicsPipelineState(&psoDesc4, IID_PPV_ARGS(&GeometryShaderPipeline));
+	//if (FAILED(hr))
+	//{
+	//	Running = false;
+	//	return false;
+	//}
+
+
 
 	m_Manager = new SystemManager();
 
@@ -892,59 +997,42 @@ bool InitD3D()
 	};
 
 	// a quad
+
 	Vertex vList[] = {
 		// front face
 		{ -0.5f,  0.5f, -0.5f, 0.0f, 0.0f }, //0
 		{  0.5f, -0.5f, -0.5f, 1.0f, 1.0f }, //1
 		{ -0.5f, -0.5f, -0.5f, 0.0f, 1.0f }, //2
-
-
 		{ -0.5f,  0.5f, -0.5f, 0.0f, 0.0f }, //0
 		{  0.5f,  0.5f, -0.5f, 1.0f, 0.0f }, //3
 		{  0.5f, -0.5f, -0.5f, 1.0f, 1.0f }, //1
-
-
-		// right side face
 		{  0.5f, -0.5f, -0.5f, 0.0f, 1.0f }, //4
 		{  0.5f,  0.5f,  0.5f, 1.0f, 0.0f }, //5
 		{  0.5f, -0.5f,  0.5f, 1.0f, 1.0f }, //6
-
 		{  0.5f, -0.5f, -0.5f, 0.0f, 1.0f }, //4
 		{  0.5f,  0.5f, -0.5f, 0.0f, 0.0f }, //7
 		{  0.5f,  0.5f,  0.5f, 1.0f, 0.0f }, //5
-
-		// left side face
 		{ -0.5f,  0.5f,  0.5f, 0.0f, 0.0f }, //8
 		{ -0.5f, -0.5f, -0.5f, 1.0f, 1.0f }, //9
 		{ -0.5f, -0.5f,  0.5f, 0.0f, 1.0f }, //10
-
 		{ -0.5f,  0.5f,  0.5f, 0.0f, 0.0f }, //8
 		{ -0.5f,  0.5f, -0.5f, 1.0f, 0.0f }, //11
 		{ -0.5f, -0.5f, -0.5f, 1.0f, 1.0f }, //9
-
-		// back face
 		{  0.5f,  0.5f,  0.5f, 0.0f, 0.0f }, //12
 		{ -0.5f, -0.5f,  0.5f, 1.0f, 1.0f }, //13
 		{  0.5f, -0.5f,  0.5f, 0.0f, 1.0f }, //14
-
 		{  0.5f,  0.5f,  0.5f, 0.0f, 0.0f }, //12
 		{ -0.5f,  0.5f,  0.5f, 1.0f, 0.0f }, //15
 		{ -0.5f, -0.5f,  0.5f, 1.0f, 1.0f }, //13
-
-		// top face
 		{ -0.5f,  0.5f, -0.5f, 0.0f, 1.0f }, //16
 		{  0.5f,  0.5f,  0.5f, 1.0f, 0.0f }, //17
 		{  0.5f,  0.5f, -0.5f, 1.0f, 1.0f }, //18
-
 		{ -0.5f,  0.5f, -0.5f, 0.0f, 1.0f }, //16
 		{ -0.5f,  0.5f,  0.5f, 0.0f, 0.0f }, //19
 		{  0.5f,  0.5f,  0.5f, 1.0f, 0.0f }, //17
-
-		// bottom face
 		{  0.5f, -0.5f,  0.5f, 0.0f, 0.0f }, //20
 		{ -0.5f, -0.5f, -0.5f, 1.0f, 1.0f }, //21
 		{  0.5f, -0.5f, -0.5f, 0.0f, 1.0f }, //22
-
 		{  0.5f, -0.5f,  0.5f, 0.0f, 0.0f }, //20
 		{ -0.5f, -0.5f,  0.5f, 1.0f, 0.0f }, //23
 		{ -0.5f, -0.5f, -0.5f, 1.0f, 1.0f }, //21
@@ -983,6 +1071,7 @@ bool InitD3D()
 		0, 3, 2, // second triangle
 		0, 1, 3, // thrid triangle
 	};
+
 
 	int iBufferSize = sizeof(iList);
 	int iBufferSize2 = sizeof(iList2);
@@ -1537,7 +1626,7 @@ bool InitD3D()
 		if (m_TextureSetUp && i == 3)
 		{
 
-			D3D12_RESOURCE_DESC textureDesc;
+			D3D12_RESOURCE_DESC S;
 			textureDesc = {};
 			textureDesc.MipLevels = 1;
 			textureDesc.Height = Height;

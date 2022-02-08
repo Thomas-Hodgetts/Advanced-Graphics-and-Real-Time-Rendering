@@ -10,6 +10,7 @@
 
 #include "Debug.h"
 #include "DescriptorHeapHelper.h"
+#include "NormalCalculations.h"
 
 enum class PIPELINE_SHADER_ENUM_TYPE
 {
@@ -43,11 +44,15 @@ public:
 	GraphicsManager();
 	~GraphicsManager();
 
+	void ExecuteCommands();
+
+
+	//Pipeline functions
+
+
 	HRESULT CreatePipeline(D3D12_GRAPHICS_PIPELINE_STATE_DESC pipeDesc, std::wstring name);
 
 	HRESULT CreatePipeline(std::wstring name);
-
-	DescriptorHeapHelper* CreateRenderTargetViews(D3D12_DESCRIPTOR_HEAP_DESC desc, IDXGISwapChain3* swapChain, std::wstring name);
 
 	bool CreateRootSignature(D3D12_ROOT_SIGNATURE_FLAGS rootSigFlags, D3D12_STATIC_SAMPLER_DESC* samplers, int samplerCount, int rootParameterCount, int constantBufferCount, int textureCount, std::wstring name);
 
@@ -56,6 +61,25 @@ public:
 	bool CompilePixelShader(std::wstring shaderName, std::wstring shaderFileLocation, const char* functionName);
 
 	bool CompileGeomertyShader(std::wstring shaderName, std::wstring shaderFileLocation, const char* functionName);
+
+	void AddFrameSampleDescription(DXGI_SAMPLE_DESC desc, std::wstring identifier) { m_SampleDescMap[identifier] = desc; };
+
+	void AddFrameInputLayout(D3D12_INPUT_ELEMENT_DESC* desc, std::wstring identifier, int size);
+
+
+	//RenderTargets
+
+	DescriptorHeapHelper* CreateRenderTargetViews(D3D12_DESCRIPTOR_HEAP_DESC desc, IDXGISwapChain3* swapChain, std::wstring name);
+
+
+	//Game Objects
+
+	bool CreateGeomerty(const char* fileLoation, std::wstring geomertyIdentifier);
+
+
+	bool CreateGeomerty(Vertex* vertexList, int vertexCount, DWORD* iList, int indexCount, std::wstring geomertyIdentifier);
+
+	//Getter functions
 
 
 	ID3D12Device* GetDevice() { return m_Device; };
@@ -68,8 +92,6 @@ private:
 #ifdef _DEBUG
 	ID3D12Debug* m_DebugLayer;
 #endif // _DEBUG
-
-
 
 	ID3D12Device* m_Device = nullptr;
 	ID3D12CommandQueue* m_CommadQueue = nullptr;
@@ -87,16 +109,22 @@ private:
 	std::unordered_map<std::wstring, ID3DBlob*> m_PixelBlobMap;
 	std::unordered_map<std::wstring, ID3DBlob*> m_GeoBlobMap;
 	std::unordered_map<std::wstring, ID3D12RootSignature*> m_RootSignatureMap;
+	std::unordered_map<std::wstring, std::vector<D3D12_INPUT_ELEMENT_DESC>> m_InputLayoutMap;
+	std::unordered_map<std::wstring, DXGI_SAMPLE_DESC> m_SampleDescMap;
+	std::unordered_map<std::wstring, D3D12_RASTERIZER_DESC> m_RasterDescription;
 
 	//Objects data
 	std::unordered_map<std::wstring, D3D12_VERTEX_BUFFER_VIEW*> m_VertexViewMap;
 	std::unordered_map<std::wstring, D3D12_INDEX_BUFFER_VIEW*> m_IndexViewMap;
+	std::unordered_map<std::wstring, ID3D12Resource*> m_VertexMap;
+	std::unordered_map<std::wstring, ID3D12Resource*> m_IndexMap;
 
 	//Core Data
 	std::unordered_map<std::wstring, DescriptorHeapHelper*> m_RenderTargetHeaps;
 	std::unordered_map<std::wstring, std::vector<ID3D12CommandAllocator*>> m_CommandAllocatorMap;
 	std::unordered_map<std::wstring, std::vector<ID3D12Fence*>> m_FenceMap;
 	std::unordered_map<std::wstring, std::vector<UINT64>> m_FenceValueMap;
+	std::unordered_map<std::wstring, ID3D12GraphicsCommandList*> m_GraphicsCommandListMap;
 	std::unordered_map<std::wstring, ID3D12CommandList*> m_CommandListMap;
 	std::unordered_map<std::wstring, ID3D12Resource*> m_DepthStencilBufferMap;
 

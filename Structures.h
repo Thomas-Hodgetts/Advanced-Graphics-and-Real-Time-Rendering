@@ -29,6 +29,12 @@ struct Vertex
 	};
 };
 
+struct WindowData
+{
+	int m_Height = 0;
+	int m_Width = 0;
+};
+
 enum class ObjectType
 {
 	GameObj,

@@ -11,6 +11,7 @@ OutputManager::OutputManager(GraphicsManager* pGManager ,DXGI_SWAP_CHAIN_DESC sw
 	IDXGISwapChain* tempSwapChain;
 	HRESULT hr;
 	hr = pGManager->GetFactory()->CreateSwapChain(pGManager->GetCommandQueue(), &swapChaindesc, &tempSwapChain);
+	pGManager->AddFrameSampleDescription(swapChaindesc.SampleDesc, m_Name);
 	m_SwapChain = static_cast<IDXGISwapChain3*>(tempSwapChain);
 	if (swapChaindesc.BufferCount == 1)
 	{

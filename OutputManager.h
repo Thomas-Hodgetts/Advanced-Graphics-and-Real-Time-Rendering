@@ -21,6 +21,8 @@ public:
 
 	BUFFER_MODE GetBufferMode() { return m_BufferMode; }
 
+	WindowData GetWindowData() { return m_WindowData; };
+
 private:
 
 	ID3D12Device* m_Device = nullptr;
@@ -29,5 +31,6 @@ private:
 	BUFFER_MODE m_BufferMode;
 	DescriptorHeapHelper* m_RenderTargetHeap;
 	std::wstring m_Name = L"OutputManager";
+	WindowData m_WindowData;
 };
 
