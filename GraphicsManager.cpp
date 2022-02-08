@@ -405,6 +405,9 @@ bool GraphicsManager::CreateRootSignature(D3D12_ROOT_SIGNATURE_FLAGS rootSigFlag
 
 	UINT cbCount = 0;
 	UINT texCount = 0;
+
+	std::vector<CD3DX12_DESCRIPTOR_RANGE>ranges(textureCount) ;
+
 	for (size_t i = 0; i < rootParameterCount; ++i)
 	{
 		if (cbCount < constantBufferCount)
@@ -414,26 +417,40 @@ bool GraphicsManager::CreateRootSignature(D3D12_ROOT_SIGNATURE_FLAGS rootSigFlag
 		}
 		else if(texCount < textureCount)
 		{
-			//CD3DX12_DESCRIPTOR_RANGE textureRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, texCount);
-			//rootParameters[i].InitAsDescriptorTable(1, &textureRange, D3D12_SHADER_VISIBILITY_PIXEL);
-			
-			// Texture 1
-			CD3DX12_DESCRIPTOR_RANGE texture1Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
-			rootParameters[1].InitAsDescriptorTable(1, &texture1Range, D3D12_SHADER_VISIBILITY_PIXEL);
+			ranges[texCount] = CD3DX12_DESCRIPTOR_RANGE(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, texCount);
+			rootParameters[i].InitAsDescriptorTable(1, &ranges[texCount], D3D12_SHADER_VISIBILITY_PIXEL);
 
-			//// Texture 2
-			CD3DX12_DESCRIPTOR_RANGE texture2Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);
-			rootParameters[2].InitAsDescriptorTable(1, &texture2Range, D3D12_SHADER_VISIBILITY_PIXEL);
+			///// Texture 1
+			//CD3DX12_DESCRIPTOR_RANGE texture1Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+			//rootParameters[1].InitAsDescriptorTable(1, &texture1Range, D3D12_SHADER_VISIBILITY_PIXEL);
 
-			//// Texture 3
-			CD3DX12_DESCRIPTOR_RANGE texture3Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2);
-			rootParameters[3].InitAsDescriptorTable(1, &texture3Range, D3D12_SHADER_VISIBILITY_PIXEL);
-			//// Texture 4
-			CD3DX12_DESCRIPTOR_RANGE texture4Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3);
-			rootParameters[4].InitAsDescriptorTable(1, &texture4Range, D3D12_SHADER_VISIBILITY_PIXEL);
+			////// Texture 2
+			//CD3DX12_DESCRIPTOR_RANGE texture2Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);
+			//rootParameters[2].InitAsDescriptorTable(1, &texture2Range, D3D12_SHADER_VISIBILITY_PIXEL);
+
+			////// Texture 3
+			//CD3DX12_DESCRIPTOR_RANGE texture3Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2);
+			//rootParameters[3].InitAsDescriptorTable(1, &texture3Range, D3D12_SHADER_VISIBILITY_PIXEL);
+			////// Texture 4
+			//CD3DX12_DESCRIPTOR_RANGE texture4Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3);
+			//rootParameters[4].InitAsDescriptorTable(1, &texture4Range, D3D12_SHADER_VISIBILITY_PIXEL);
 
 			++texCount;
 		}
+	}
+
+	CD3DX12_ROOT_PARAMETER test = rootParameters[2];
+	CD3DX12_ROOT_PARAMETER test2 = rootParameters[1];
+	test.DescriptorTable.pDescriptorRanges->RegisterSpace;
+	test2.DescriptorTable.pDescriptorRanges->RegisterSpace;
+
+	if (test.DescriptorTable.pDescriptorRanges->RegisterSpace == test2.DescriptorTable.pDescriptorRanges->RegisterSpace)
+	{
+		int i = 0;
+	}
+	if (test.DescriptorTable.pDescriptorRanges->BaseShaderRegister == test2.DescriptorTable.pDescriptorRanges->BaseShaderRegister)
+	{
+		int i = 0;
 	}
 
 	enum RootParameterIndex
