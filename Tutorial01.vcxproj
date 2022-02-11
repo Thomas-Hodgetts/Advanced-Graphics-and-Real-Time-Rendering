@@ -158,6 +158,7 @@
   <ItemGroup>
     <ClCompile Include="Apperance.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="ConstantBufferHelper.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />
     <ClCompile Include="Debug.cpp" />
     <ClCompile Include="DescriptorHeapHelper.cpp" />
@@ -181,6 +182,7 @@
   <ItemGroup>
     <ClInclude Include="Apperance.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="ConstantBufferHelper.h" />
     <ClInclude Include="DDSTextureLoader.h" />
     <ClInclude Include="Debug.h" />
     <ClInclude Include="DescriptorHeapHelper.h" />

@@ -5,12 +5,24 @@
 #include <D3Dcompiler.h>
 #include <DirectXMath.h>
 #include <directxcollision.h>
+#include <wincodec.h>
+
+#include <windows.h>
+#include <d3d12.h>
+#include <dxgi1_4.h>
+#include <D3Dcompiler.h>
+#include <DirectXMath.h>
+#include <directxcollision.h>
+#include <string>
+#include <wincodec.h>
+
 
 #include <unordered_map>
 
 #include "Debug.h"
 #include "DescriptorHeapHelper.h"
 #include "NormalCalculations.h"
+#include "ConstantBufferHelper.h"
 
 enum class PIPELINE_SHADER_ENUM_TYPE
 {
@@ -41,7 +53,7 @@ private:
 class GraphicsManager
 {
 public:
-	GraphicsManager();
+	GraphicsManager(int width, int height);
 	~GraphicsManager();
 
 	void ExecuteCommands();
@@ -66,6 +78,7 @@ public:
 
 	void AddFrameInputLayout(D3D12_INPUT_ELEMENT_DESC* desc, std::wstring identifier, int size);
 
+	bool CreateStencilDepthView(std::wstring name, int size, D3D12_DEPTH_STENCIL_VIEW_DESC* depthStencilDesc, D3D12_CLEAR_VALUE* depthOptimizedClearValue);
 
 	//RenderTargets
 
@@ -76,8 +89,11 @@ public:
 
 	bool CreateGeomerty(const char* fileLoation, std::wstring geomertyIdentifier);
 
+	bool CreateConstantBuffer(std::wstring name, int blockCount, int classSize, int objectCount);
 
 	bool CreateGeomerty(Vertex* vertexList, int vertexCount, DWORD* iList, int indexCount, std::wstring geomertyIdentifier);
+
+	bool CreateTextureHeap(LPCWSTR* textureLocations, int texCount, std::wstring name);
 
 	//Getter functions
 
@@ -88,10 +104,25 @@ public:
 
 private:
 
+	int GetDXGIFormatBitsPerPixel(DXGI_FORMAT& dxgiFormat);
+
+	DXGI_FORMAT GetDXGIFormatFromWICFormat(WICPixelFormatGUID& wicFormatGUID);
+
+	WICPixelFormatGUID GetConvertToWICFormat(WICPixelFormatGUID& wicFormatGUID);
+
+	int LoadImageDataFromFile(BYTE** imageData, D3D12_RESOURCE_DESC& resourceDescription, LPCWSTR filename, int& bytesPerRow);
+
+
+
+
+
 
 #ifdef _DEBUG
 	ID3D12Debug* m_DebugLayer;
 #endif // _DEBUG
+
+
+	int m_Height = 0, m_Width = 0;
 
 	ID3D12Device* m_Device = nullptr;
 	ID3D12CommandQueue* m_CommadQueue = nullptr;
@@ -118,10 +149,15 @@ private:
 	std::unordered_map<std::wstring, D3D12_INDEX_BUFFER_VIEW*> m_IndexViewMap;
 	std::unordered_map<std::wstring, ID3D12Resource*> m_VertexMap;
 	std::unordered_map<std::wstring, ID3D12Resource*> m_IndexMap;
+	std::unordered_map<std::wstring, ConstantBufferHelper*> m_ConstantBufferMap;
+	std::unordered_map<std::wstring, DescriptorHeapHelper*> m_TextureHeapMap;
+
 
 	//Core Data
 	std::unordered_map<std::wstring, DescriptorHeapHelper*> m_RenderTargetHeaps;
+	std::unordered_map<std::wstring, DescriptorHeapHelper*> m_DepthStencilHeapDescription;
 	std::unordered_map<std::wstring, std::vector<ID3D12CommandAllocator*>> m_CommandAllocatorMap;
+	std::unordered_map<std::wstring, std::vector<ID3D12Resource*>> m_DepthBufferMap;
 	std::unordered_map<std::wstring, std::vector<ID3D12Fence*>> m_FenceMap;
 	std::unordered_map<std::wstring, std::vector<UINT64>> m_FenceValueMap;
 	std::unordered_map<std::wstring, ID3D12GraphicsCommandList*> m_GraphicsCommandListMap;

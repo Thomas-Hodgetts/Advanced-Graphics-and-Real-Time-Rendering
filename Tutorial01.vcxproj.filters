@@ -54,13 +54,16 @@
       <Filter>Loader\DDS</Filter>
     </ClCompile>
     <ClCompile Include="ShadowMaps.cpp" />
-    <ClCompile Include="GraphicsManager.cpp">
-      <Filter>Managers\Graphic Manager</Filter>
-    </ClCompile>
     <ClCompile Include="OutputManager.cpp">
       <Filter>Managers\OutputManager</Filter>
     </ClCompile>
     <ClCompile Include="DescriptorHeapHelper.cpp">
+      <Filter>Managers\Graphic Manager\ManagerHelpers</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsManager.cpp">
+      <Filter>Managers\Graphic Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="ConstantBufferHelper.cpp">
       <Filter>Managers\Graphic Manager\ManagerHelpers</Filter>
     </ClCompile>
   </ItemGroup>
@@ -119,13 +122,16 @@
     </ClInclude>
     <ClInclude Include="NormalCalculations.h" />
     <ClInclude Include="ShadowMaps.h" />
-    <ClInclude Include="GraphicsManager.h">
-      <Filter>Managers\Graphic Manager</Filter>
-    </ClInclude>
     <ClInclude Include="OutputManager.h">
       <Filter>Managers\OutputManager</Filter>
     </ClInclude>
     <ClInclude Include="DescriptorHeapHelper.h">
+      <Filter>Managers\Graphic Manager\ManagerHelpers</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsManager.h">
+      <Filter>Managers\Graphic Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="ConstantBufferHelper.h">
       <Filter>Managers\Graphic Manager\ManagerHelpers</Filter>
     </ClInclude>
   </ItemGroup>

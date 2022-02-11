@@ -11,7 +11,6 @@
 #include <vector>
 #include <string>
 
-
 using namespace DirectX;
 struct Vertex
 {
@@ -244,4 +243,24 @@ struct ObjectStruct
 	XMFLOAT3 Pos;
 	MeshData MD;
 	ID3D11ShaderResourceView* Tex;
+};
+
+// this is the structure of our constant buffer.
+struct ConstantBufferPerObject
+{
+	XMFLOAT4X4 wvpMat;
+	XMFLOAT4X4 worldPos;
+	XMFLOAT4X4 projection;
+	XMFLOAT4X4 shadowTransform;
+	Material Mat;
+	Light point;
+	XMFLOAT3 EyePosW;
+	int mode = 0;
+};
+
+struct ConstantBufferLighting
+{
+	Material Mat;
+	Light point;
+	XMFLOAT3 EyePosW;
 };

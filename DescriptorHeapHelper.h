@@ -23,11 +23,18 @@ public:
 
 	D3D12_GPU_DESCRIPTOR_HANDLE GPUCurrentAddress();
 
+	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUAddress(int pos);
+
+	D3D12_GPU_DESCRIPTOR_HANDLE GetGPUAddress(int pos);
+
 	int ReturnSize() { return m_Size; };
 
 	D3D12_CPU_DESCRIPTOR_HANDLE& DescriptorHeapHelper::operator=(const D3D12_CPU_DESCRIPTOR_HANDLE& vec);
 
 	D3D12_GPU_DESCRIPTOR_HANDLE& DescriptorHeapHelper::operator=(const D3D12_GPU_DESCRIPTOR_HANDLE& vec);
+
+	void SetName(std::wstring name) { m_DescriptorHeap->SetName(name.c_str()); };
+
 private:
 
 	int m_DescriptorSize;

@@ -62,6 +62,28 @@ D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHeapHelper::GPUCurrentAddress()
 	return D3D12_GPU_DESCRIPTOR_HANDLE();
 }
 
+D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeapHelper::GetCPUAddress(int pos)
+{
+	if (pos >! m_Size)
+	{
+		CD3DX12_CPU_DESCRIPTOR_HANDLE tempHandle(m_DescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+		tempHandle.Offset(pos);
+		return tempHandle;
+	}
+	return D3D12_CPU_DESCRIPTOR_HANDLE();
+}
+
+D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHeapHelper::GetGPUAddress(int pos)
+{
+	if (pos > !m_Size)
+	{
+		CD3DX12_GPU_DESCRIPTOR_HANDLE tempHandle(m_DescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+		tempHandle.Offset(pos);
+		return tempHandle;
+	}
+	return D3D12_GPU_DESCRIPTOR_HANDLE();
+}
+
 D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeapHelper::CPUStartAddress()
 {
 	return m_DescriptorHeap->GetCPUDescriptorHandleForHeapStart();

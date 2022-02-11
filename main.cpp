@@ -350,7 +350,7 @@ bool InitD3D()
 		return false;
 	}
 
-	GraphicsManager gm;
+	GraphicsManager gm(1920, 1080);
 	OutputManager output(&gm, swapChainDesc, rtvHeapDesc);
 
 	D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
@@ -494,497 +494,6 @@ bool InitD3D()
 	indexList[35] = 35;
 
 	gm.CreateGeomerty(vertexList.data(), vertexList.size(), indexList.data(), indexList.size(), L"TestGeomerty");
-	//gm.CreateGeomerty(vertexList.data(), vertexList.size(), indexList.data(), indexList.size(), L"TestGeomerty2");
-
-
-	//// get the size of a descriptor in this heap (this is a rtv heap, so only rtv descriptors should be stored in it.
-	//// descriptor sizes may vary from device to device, which is why there is no set size and we must ask the 
-	//// device to give us the size. we will use this size to increment a descriptor handle offset
-	//rtvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-	//dsvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-	//srvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-	//// get a handle to the first descriptor in the descriptor heap. a handle is basically a pointer,
-	//// but we cannot literally use it like a c++ pointer.
-	//CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-
-	//// Create a RTV for each buffer (double buffering is two buffers, tripple buffering is 3).
-	//for (int i = 0; i < frameBufferCount; i++)
-	//{
-	//	// first we get the n'th buffer in the swap chain and store it in the n'th
-	//	// position of our ID3D12Resource array
-	//	hr = swapChain->GetBuffer(i, IID_PPV_ARGS(&renderTargets[i]));
-	//	if (FAILED(hr))
-	//	{
-	//		Running = false;
-	//		return false;
-	//	}
-
-	//	// the we "create" a render target view which binds the swap chain buffer (ID3D12Resource[n]) to the rtv handle
-	//	device->CreateRenderTargetView(renderTargets[i], nullptr, rtvHandle);
-
-	//	// we increment the rtv handle by the rtv descriptor size we got above
-	//	rtvHandle.Offset(1, rtvDescriptorSize);
-	//}
-
-	//// -- Create the Command Allocators -- //
-
-	//for (int i = 0; i < frameBufferCount; i++)
-	//{
-	//	hr = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator[i]));
-	//	if (FAILED(hr))
-	//	{
-	//		Running = false;
-	//		return false;
-	//	}
-	//}
-
-	//// -- Create a Command List -- //
-
-	//// create the command list with the first allocator
-	//hr = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator[frameIndex], NULL, IID_PPV_ARGS(&commandList));
-	//if (FAILED(hr))
-	//{
-	//	Running = false;
-	//	return false;
-	//}
-
-	//// -- Create a Fence & Fence Event -- //
-
-	//// create the fences
-	//for (int i = 0; i < frameBufferCount; i++)
-	//{
-	//	hr = device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence[i]));
-	//	if (FAILED(hr))
-	//	{
-	//		Running = false;
-	//		return false;
-	//	}
-	//	fenceValue[i] = 0; // set the initial fence value to 0
-	//}
-
-	//// create a handle to a fence event
-	//fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-	//if (fenceEvent == nullptr)
-	//{
-	//	Running = false;
-	//	return false;
-	//}
-
-	//// create root signature
-
-	//https://stackoverflow.com/questions/55628161/how-to-bind-textures-to-different-register-in-dx12 && book
-
-
-	//enum RootParameterIndex
-	//{
-	//	Texture1SRV,
-	//	Texture1Sampler,
-	//	Texture2SRV,
-	//	Texture2Sampler,
-	//	Texture3SRV,
-	//	Texture3Sampler,
-	//	Texture4SRV,
-	//	Texture4Sampler,
-	//	ConstantBuffer,
-	//	RootParameterCount
-	//};
-
-	//D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
-	//	D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
-	//	D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-	//	D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
-
-	//CD3DX12_ROOT_PARAMETER rootParameters[RootParameterIndex::RootParameterCount] = {};
-	//rootParameters[RootParameterIndex::ConstantBuffer].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_ALL);
-
-	////// Texture 1
-	//CD3DX12_DESCRIPTOR_RANGE texture1Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
-	//rootParameters[RootParameterIndex::Texture1SRV].InitAsDescriptorTable(1, &texture1Range, D3D12_SHADER_VISIBILITY_PIXEL);
-
-	////// Texture 2
-	//CD3DX12_DESCRIPTOR_RANGE texture2Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);
-	//rootParameters[RootParameterIndex::Texture2SRV].InitAsDescriptorTable(1, &texture2Range, D3D12_SHADER_VISIBILITY_PIXEL);
-
-	////// Texture 3
-	//CD3DX12_DESCRIPTOR_RANGE texture3Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2);
-	//rootParameters[RootParameterIndex::Texture3SRV].InitAsDescriptorTable(1, &texture3Range, D3D12_SHADER_VISIBILITY_PIXEL);
-	////// Texture 4
-	//CD3DX12_DESCRIPTOR_RANGE texture4Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3);
-	//rootParameters[RootParameterIndex::Texture4SRV].InitAsDescriptorTable(1, &texture4Range, D3D12_SHADER_VISIBILITY_PIXEL);
-
-
-
-
-	//D3D12_ROOT_PARAMETER  rootParameter[5];
-	//rootParameter[0] = rootParameters[ConstantBuffer];
-	//rootParameter[1] = rootParameters[RootParameterIndex::Texture1SRV];
-	//rootParameter[2] = rootParameters[RootParameterIndex::Texture2SRV];
-	//rootParameter[3] = rootParameters[RootParameterIndex::Texture3SRV];
-	//rootParameter[4] = rootParameters[RootParameterIndex::Texture4SRV];
-
-
-	//// create a static sampler
-	//D3D12_STATIC_SAMPLER_DESC sampler = {};
-	//sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
-	//sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	//sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	//sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	//sampler.MipLODBias = 0;
-	//sampler.MaxAnisotropy = 0;
-	//sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-	//sampler.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
-	//sampler.MinLOD = 0.0f;
-	//sampler.MaxLOD = D3D12_FLOAT32_MAX;
-	//sampler.ShaderRegister = 0;
-	//sampler.RegisterSpace = 0;
-	//sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-
-	////book
-	//const CD3DX12_STATIC_SAMPLER_DESC shadow(
-	//	1, 
-	//	D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT,
-	//	D3D12_TEXTURE_ADDRESS_MODE_BORDER,
-	//	D3D12_TEXTURE_ADDRESS_MODE_BORDER,
-	//	D3D12_TEXTURE_ADDRESS_MODE_BORDER,
-	//	0.0f,                             
-	//	16,                               
-	//	D3D12_COMPARISON_FUNC_LESS_EQUAL,
-	//	D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK);
-
-	//D3D12_STATIC_SAMPLER_DESC samArr[2] = { sampler , shadow };
-
-	//CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-	//rootSignatureDesc.Init(_countof(rootParameter), // we have 2 root parameters
-	//	rootParameter, // a pointer to the beginning of our root parameters array
-	//	2, // we have one static sampler
-	//	samArr, // a pointer to our static sampler (array)
-	//	D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT | // we can deny shader stages here for better performance
-	//	D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-	//	D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS);
-
-	ID3DBlob* errorBuff; // a buffer holding the error data if any
-	ID3DBlob* signature;
-	//hr = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &errorBuff);
-	//if (FAILED(hr))
-	//{
-	//	OutputDebugStringA((char*)errorBuff->GetBufferPointer());
-	//	return false;
-	//}
-
-	//hr = device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
-	//if (FAILED(hr))
-	//{
-	//	return false;
-	//}
-
-
-
-
-
-
-	//// create vertex and pixel shaders
-
-	//// when debugging, we can compile the shader files at runtime.
-	//// but for release versions, we can compile the hlsl shaders
-	//// with fxc.exe to create .cso files, which contain the shader
-	//// bytecode. We can load the .cso files at runtime to get the
-	//// shader bytecode, which of course is faster than compiling
-	//// them at runtime
-
-	//// compile vertex shader
-	//ID3DBlob* vertexShader; // d3d blob for holding vertex shader bytecode
-	//hr = D3DCompileFromFile(L"VertexShader.hlsl",
-	//	nullptr,
-	//	nullptr,
-	//	"main",
-	//	"vs_5_0",
-	//	D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-	//	0,
-	//	&vertexShader,
-	//	&errorBuff);
-	//if (FAILED(hr))
-	//{
-	//	OutputDebugStringA((char*)errorBuff->GetBufferPointer());
-	//	Running = false;
-	//	return false;
-	//}
-
-	//// fill out a shader bytecode structure, which is basically just a pointer
-	//// to the shader bytecode and the size of the shader bytecode
-	//D3D12_SHADER_BYTECODE vertexShaderBytecode = {};
-	//vertexShaderBytecode.BytecodeLength = vertexShader->GetBufferSize();
-	//vertexShaderBytecode.pShaderBytecode = vertexShader->GetBufferPointer();
-
-	//ID3DBlob* renderToTexVertexShader; // d3d blob for holding vertex shader bytecode
-	//hr = D3DCompileFromFile(L"VertexShader.hlsl",
-	//	nullptr,
-	//	nullptr,
-	//	"renderToTexMain",
-	//	"vs_5_0",
-	//	D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-	//	0,
-	//	&renderToTexVertexShader,
-	//	&errorBuff);
-	//if (FAILED(hr))
-	//{
-	//	OutputDebugStringA((char*)errorBuff->GetBufferPointer());
-	//	Running = false;
-	//	return false;
-	//}
-
-	//// fill out a shader bytecode structure, which is basically just a pointer
-	//// to the shader bytecode and the size of the shader bytecode
-	//D3D12_SHADER_BYTECODE vertexShaderBytecode2 = {};
-	//vertexShaderBytecode2.BytecodeLength = renderToTexVertexShader->GetBufferSize();
-	//vertexShaderBytecode2.pShaderBytecode = renderToTexVertexShader->GetBufferPointer();
-
-	//ID3DBlob* ShadowVertexShader; // d3d blob for holding vertex shader bytecode
-	//hr = D3DCompileFromFile(L"VertexShader.hlsl",
-	//	nullptr,
-	//	nullptr,
-	//	"shadowMain",
-	//	"vs_5_0",
-	//	D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-	//	0,
-	//	&ShadowVertexShader,
-	//	&errorBuff);
-	//if (FAILED(hr))
-	//{
-	//	OutputDebugStringA((char*)errorBuff->GetBufferPointer());
-	//	Running = false;
-	//	return false;
-	//}
-
-	//// fill out a shader bytecode structure, which is basically just a pointer
-	//// to the shader bytecode and the size of the shader bytecode
-	//D3D12_SHADER_BYTECODE vertexShaderBytecode3 = {};
-	//vertexShaderBytecode3.BytecodeLength = ShadowVertexShader->GetBufferSize();
-	//vertexShaderBytecode3.pShaderBytecode = ShadowVertexShader->GetBufferPointer();
-
-	//// compile pixel shader
-	//ID3DBlob* pixelShader;
-	//hr = D3DCompileFromFile(L"PixelShader.hlsl",
-	//	nullptr,
-	//	nullptr,
-	//	"main",
-	//	"ps_5_0",
-	//	D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-	//	0,
-	//	&pixelShader,
-	//	&errorBuff);
-	//if (FAILED(hr))
-	//{
-	//	OutputDebugStringA((char*)errorBuff->GetBufferPointer());
-	//	Running = false;
-	//	return false;
-	//}
-
-	//// fill out shader bytecode structure for pixel shader
-	//D3D12_SHADER_BYTECODE pixelShaderBytecode = {};
-	//pixelShaderBytecode.BytecodeLength = pixelShader->GetBufferSize();
-	//pixelShaderBytecode.pShaderBytecode = pixelShader->GetBufferPointer();
-
-
-	//ID3DBlob* renderToTexPixelShader;
-	//hr = D3DCompileFromFile(L"PixelShader.hlsl",
-	//	nullptr,
-	//	nullptr,
-	//	"mainRenderToTex",
-	//	"ps_5_0",
-	//	D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-	//	0,
-	//	&renderToTexPixelShader,
-	//	&errorBuff);
-	//if (FAILED(hr))
-	//{
-	//	OutputDebugStringA((char*)errorBuff->GetBufferPointer());
-	//	Running = false;
-	//	return false;
-	//}
-
-	//// fill out shader bytecode structure for pixel shader
-	//D3D12_SHADER_BYTECODE pixelShaderBytecode2 = {};
-	//pixelShaderBytecode2.BytecodeLength = renderToTexPixelShader->GetBufferSize();
-	//pixelShaderBytecode2.pShaderBytecode = renderToTexPixelShader->GetBufferPointer();
-
-	//ID3DBlob* shadowPixelShader;
-	//hr = D3DCompileFromFile(L"PixelShader.hlsl",
-	//	nullptr,
-	//	nullptr,
-	//	"shadowOuput",
-	//	"ps_5_0",
-	//	D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-	//	0,
-	//	&shadowPixelShader,
-	//	&errorBuff);
-	//if (FAILED(hr))
-	//{
-	//	OutputDebugStringA((char*)errorBuff->GetBufferPointer());
-	//	Running = false;
-	//	return false;
-	//}
-
-	//// fill out shader bytecode structure for pixel shader
-	//D3D12_SHADER_BYTECODE pixelShaderBytecode3 = {};
-	//pixelShaderBytecode3.BytecodeLength = shadowPixelShader->GetBufferSize();
-	//pixelShaderBytecode3.pShaderBytecode = shadowPixelShader->GetBufferPointer();
-
-	//// compile vertex shader
-	//ID3DBlob* geoShader; // d3d blob for holding vertex shader bytecode
-	//hr = D3DCompileFromFile(L"GeometryShader.hlsl",
-	//	nullptr,
-	//	nullptr,
-	//	"main",
-	//	"gs_5_0",
-	//	D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-	//	0,
-	//	&geoShader,
-	//	&errorBuff);
-	//if (FAILED(hr))
-	//{
-	//	OutputDebugStringA((char*)errorBuff->GetBufferPointer());
-	//	Running = false;
-	//	return false;
-	//}
-
-	//// fill out shader bytecode structure for pixel shader
-	//D3D12_SHADER_BYTECODE geoShaderBytecode = {};
-	//geoShaderBytecode.BytecodeLength = geoShader->GetBufferSize();
-	//geoShaderBytecode.pShaderBytecode = geoShader->GetBufferPointer();
-
-
-	//// create input layout
-
-	//// The input layout is used by the Input Assembler so that it knows
-	//// how to read the vertex data bound to it.
-
-	//int d = sizeof(Vertex);
-
-	////D3D12_INPUT_ELEMENT_DESC inputLayout[] =
-	////{
-	////	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	////	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	////	{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	////	{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	////	{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 44, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	////};
-
-	////D3D12_INPUT_ELEMENT_DESC inputLayout2[] =
-	////{
-	////	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	////	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	////};
-
-	//// fill out an input layout description structure
-	//D3D12_INPUT_LAYOUT_DESC inputLayoutDesc = {};
-	//D3D12_INPUT_LAYOUT_DESC inputLayoutDesc2 = {};
-
-	//// we can get the number of elements in an array by "sizeof(array) / sizeof(arrayElementType)"
-	//inputLayoutDesc.NumElements = sizeof(inputLayout) / sizeof(D3D12_INPUT_ELEMENT_DESC);
-	//inputLayoutDesc.pInputElementDescs = inputLayout;
-
-	//inputLayoutDesc2.NumElements = sizeof(inputLayout2) / sizeof(D3D12_INPUT_ELEMENT_DESC);
-	//inputLayoutDesc2.pInputElementDescs = inputLayout2;
-
-	////https://github.com/microsoft/DirectXTK12/wiki/Line-drawing-and-anti-aliasing
-
-	//CD3DX12_RASTERIZER_DESC rastDesc(D3D12_FILL_MODE_SOLID,
-	//	D3D12_CULL_MODE_NONE, FALSE,
-	//	D3D12_DEFAULT_DEPTH_BIAS, D3D12_DEFAULT_DEPTH_BIAS_CLAMP,
-	//	D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS, TRUE, FALSE, TRUE,
-	//	0, D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF);
-
-	//// create a pipeline state object (PSO)
-
-	//// In a real application, you will have many pso's. for each different shader
-	//// or different combinations of shaders, different blend states or different rasterizer states,
-	//// different topology types (point, line, triangle, patch), or a different number
-	//// of render targets you will need a pso
-
-	//// VS is the only required shader for a pso. You might be wondering when a case would be where
-	//// you only set the VS. It's possible that you have a pso that only outputs data with the stream
-	//// output, and not on a render target, which means you would not need anything after the stream
-	//// output.
-
-	//CD3DX12_DEPTH_STENCIL_DESC desc = {};
-
-
-	//D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {}; // a structure to define a pso
-	//psoDesc.InputLayout = inputLayoutDesc; // the structure describing our input layout
-	//psoDesc.pRootSignature = rootSignature; // the root signature that describes the input data this pso needs
-	//psoDesc.VS = vertexShaderBytecode; // structure describing where to find the vertex shader bytecode and how large it is
-	//psoDesc.PS = pixelShaderBytecode; // same as VS but for pixel shader
-	////psoDesc.GS = geoShaderBytecode; // same as VS but for pixel shader
-	//psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE; // type of topology we are drawing
-	//psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM; // format of the render target
-	//psoDesc.SampleDesc = sampleDesc; // must be the same sample description as the swapchain and depth/stencil buffer
-	//psoDesc.SampleMask = 0xffffffff; // sample mask has to do with multi-sampling. 0xffffffff means point sampling is done
-	//psoDesc.RasterizerState = rastDesc; // a default rasterizer state.
-	//psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT); // a default blent state.
-	//psoDesc.NumRenderTargets = 1; // we are only binding one render target
-	//psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT); // a default depth stencil state
-	//psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-
-
-	//D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc2 = psoDesc; // a structure to define a pso
-	//psoDesc2.InputLayout = inputLayoutDesc2; // the structure describing our input layout
-	//psoDesc2.pRootSignature = rootSignature; // the root signature that describes the input data this pso needseeds
-	//psoDesc2.VS = vertexShaderBytecode2; // structure describing where to find the vertex shader bytecode and how large it isd how large it is
-	//psoDesc2.PS = pixelShaderBytecode2; // same as VS but for pixel shader
-	//psoDesc2.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE; // type of topology we are drawinging
-	//psoDesc2.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM; // format of the render target
-	//psoDesc2.SampleDesc = sampleDesc; // must be the same sample description as the swapchain and depth/stencil buffercil buffer
-	//psoDesc2.SampleMask = 0xffffffff; // sample mask has to do with multi-sampling. 0xffffffff means point sampling is doneampling is done
-	//psoDesc2.RasterizerState = rastDesc; // a default rasterizer state.
-	//psoDesc2.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT); // a default blent state.
-	//psoDesc2.NumRenderTargets = 1; // we are only binding one render target
-	//psoDesc2.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT); // a default depth stencil state
-	//psoDesc2.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
-
-	//D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc3 = psoDesc2; // a structure to define a pso
-	//psoDesc3.VS = vertexShaderBytecode3;
-	//psoDesc3.PS = pixelShaderBytecode3;
-	//psoDesc3.RTVFormats[0] = DXGI_FORMAT_UNKNOWN; // format of the render target
-	//psoDesc3.RasterizerState.DepthBias = 100000;
-	//psoDesc3.RasterizerState.DepthBiasClamp = 0.f;
-	//psoDesc3.RasterizerState.SlopeScaledDepthBias = 1.f;
-	//psoDesc3.NumRenderTargets = 0; // we are only binding one render target
-
-	//D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc4 = psoDesc2; // a structure to define a pso
-	//psoDesc4.InputLayout = inputLayoutDesc2;
-	//psoDesc4.GS = geoShaderBytecode; // same as VS but for pixel shader
-
-	//// create the pso
-	//hr = device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pipelineStateObject));
-	//if (FAILED(hr))
-	//{
-	//	Running = false;
-	//	return false;
-	//}
-
-	//hr = device->CreateGraphicsPipelineState(&psoDesc2, IID_PPV_ARGS(&pipelineStateObject2));
-	//if (FAILED(hr))
-	//{
-	//	Running = false;
-	//	return false;
-	//}
-
-	//hr = device->CreateGraphicsPipelineState(&psoDesc3, IID_PPV_ARGS(&ShadowPipelineState));
-	//if (FAILED(hr))
-	//{
-	//	Running = false;
-	//	return false;
-	//}
-	//hr = device->CreateGraphicsPipelineState(&psoDesc4, IID_PPV_ARGS(&GeometryShaderPipeline));
-	//if (FAILED(hr))
-	//{
-	//	Running = false;
-	//	return false;
-	//}
-
-
-
 	m_Manager = new SystemManager();
 
 	// Create vertex buffer
@@ -1090,348 +599,6 @@ bool InitD3D()
 	int vBufferSize = sizeof(vList);
 	int vBufferSize2 = sizeof(vList2);
 
-	// create default heap
-	// default heap is memory on the GPU. Only the GPU has access to this memory
-	// To get data into this heap, we will have to upload the data using
-	// an upload heap
-	hr = device->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), // a default heap
-		D3D12_HEAP_FLAG_NONE, // no flags
-		&CD3DX12_RESOURCE_DESC::Buffer(vBufferSize), // resource description for a buffer
-		D3D12_RESOURCE_STATE_COPY_DEST, // we will start this heap in the copy destination state since we will copy data
-										// from the upload heap to this heap
-		nullptr, // optimized clear value must be null for this type of resource. used for render targets and depth/stencil buffers
-		IID_PPV_ARGS(&vertexBuffer));
-	if (FAILED(hr))
-	{
-		Running = false;
-		return false;
-	}
-
-	// we can give resource heaps a name so when we debug with the graphics debugger we know what resource we are looking at
-	vertexBuffer->SetName(L"Vertex Buffer Resource Heap");
-
-	// create upload heap
-	// upload heaps are used to upload data to the GPU. CPU can write to it, GPU can read from it
-	// We will upload the vertex buffer using this heap to the default heap
-	ID3D12Resource* vBufferUploadHeap;
-	hr = device->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), // upload heap
-		D3D12_HEAP_FLAG_NONE, // no flags
-		&CD3DX12_RESOURCE_DESC::Buffer(vBufferSize), // resource description for a buffer
-		D3D12_RESOURCE_STATE_GENERIC_READ, // GPU will read from this buffer and copy its contents to the default heap
-		nullptr,
-		IID_PPV_ARGS(&vBufferUploadHeap));
-	if (FAILED(hr))
-	{
-		Running = false;
-		return false;
-	}
-	vBufferUploadHeap->SetName(L"Vertex Buffer Upload Resource Heap");
-
-	// store vertex buffer in upload heap
-	D3D12_SUBRESOURCE_DATA vertexData = {};
-	vertexData.pData = reinterpret_cast<BYTE*>(vList); // pointer to our vertex array
-	vertexData.RowPitch = vBufferSize; // size of all our triangle vertex data
-	vertexData.SlicePitch = vBufferSize; // also the size of our triangle vertex data
-
-	// we are now creating a command with the command list to copy the data from
-	// the upload heap to the default heap
-	UpdateSubresources(commandList, vertexBuffer, vBufferUploadHeap, 0, 0, 1, &vertexData);
-
-	// transition the vertex buffer data from copy destination state to vertex buffer state
-	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(vertexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
-
-
-	// Create index buffer
-
-
-	// create default heap to hold index buffer
-	hr = device->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), // a default heap
-		D3D12_HEAP_FLAG_NONE, // no flags
-		&CD3DX12_RESOURCE_DESC::Buffer(iBufferSize), // resource description for a buffer
-		D3D12_RESOURCE_STATE_COPY_DEST, // start in the copy destination state
-		nullptr, // optimized clear value must be null for this type of resource
-		IID_PPV_ARGS(&indexBuffer));
-	if (FAILED(hr))
-	{
-		Running = false;
-		return false;
-	}
-
-	// we can give resource heaps a name so when we debug with the graphics debugger we know what resource we are looking at
-	vertexBuffer->SetName(L"Index Buffer Resource Heap");
-
-	// create upload heap to upload index buffer
-	ID3D12Resource* iBufferUploadHeap;
-	hr = device->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), // upload heap
-		D3D12_HEAP_FLAG_NONE, // no flags
-		&CD3DX12_RESOURCE_DESC::Buffer(vBufferSize), // resource description for a buffer
-		D3D12_RESOURCE_STATE_GENERIC_READ, // GPU will read from this buffer and copy its contents to the default heap
-		nullptr,
-		IID_PPV_ARGS(&iBufferUploadHeap));
-	if (FAILED(hr))
-	{
-		Running = false;
-		return false;
-	}
-	vBufferUploadHeap->SetName(L"Index Buffer Upload Resource Heap");
-
-	// store vertex buffer in upload heap
-	D3D12_SUBRESOURCE_DATA indexData = {};
-	indexData.pData = reinterpret_cast<BYTE*>(iList); // pointer to our index array
-	indexData.RowPitch = iBufferSize; // size of all our index buffer
-	indexData.SlicePitch = iBufferSize; // also the size of our index buffer
-
-	// we are now creating a command with the command list to copy the data from
-	// the upload heap to the default heap
-	UpdateSubresources(commandList, indexBuffer, iBufferUploadHeap, 0, 0, 1, &indexData);
-
-	// transition the vertex buffer data from copy destination state to vertex buffer state
-	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(indexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
-	
-
-
-	m_BillboardVertex = vector<ID3D12Resource*>(m_BillboardCount);
-	m_BillboardIndex = vector<ID3D12Resource*>(m_BillboardCount);
-
-	if (m_RenderToTexture)
-	{
-		hr = device->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &CD3DX12_RESOURCE_DESC::Buffer(vBufferSize2), D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&m_ScreenQuadVertexBuffer));
-		if (FAILED(hr))
-		{
-			Running = false;
-			return false;
-		}
-
-		// we can give resource heaps a name so when we debug with the graphics debugger we know what resource we are looking at
-		m_ScreenQuadVertexBuffer->SetName(L"Vertex Buffer Resource Heap");
-
-		// create upload heap
-		// upload heaps are used to upload data to the GPU. CPU can write to it, GPU can read from it
-		// We will upload the vertex buffer using this heap to the default heap
-		ID3D12Resource* vBufferUploadHeap;
-		hr = device->CreateCommittedResource(
-			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), // upload heap
-			D3D12_HEAP_FLAG_NONE, // no flags
-			&CD3DX12_RESOURCE_DESC::Buffer(vBufferSize2), // resource description for a buffer
-			D3D12_RESOURCE_STATE_GENERIC_READ, // GPU will read from this buffer and copy its contents to the default heap
-			nullptr,
-			IID_PPV_ARGS(&vBufferUploadHeap));
-		if (FAILED(hr))
-		{
-			Running = false;
-			return false;
-		}
-		vBufferUploadHeap->SetName(L"Vertex Buffer Upload Resource Heap");
-
-		// store vertex buffer in upload heap
-		D3D12_SUBRESOURCE_DATA vertexData = {};
-		vertexData.pData = reinterpret_cast<BYTE*>(vList2); // pointer to our vertex array
-		vertexData.RowPitch = vBufferSize2; // size of all our triangle vertex data
-		vertexData.SlicePitch = vBufferSize2; // also the size of our triangle vertex data
-
-		// we are now creating a command with the command list to copy the data from
-		// the upload heap to the default heap
-		UpdateSubresources(commandList, m_ScreenQuadVertexBuffer, vBufferUploadHeap, 0, 0, 1, &vertexData);
-
-		// transition the vertex buffer data from copy destination state to vertex buffer state
-		commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_ScreenQuadVertexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
-
-
-		// Create index buffer
-
-
-		// create default heap to hold index buffer
-		hr = device->CreateCommittedResource(
-			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), // a default heap
-			D3D12_HEAP_FLAG_NONE, // no flags
-			&CD3DX12_RESOURCE_DESC::Buffer(iBufferSize2), // resource description for a buffer
-			D3D12_RESOURCE_STATE_COPY_DEST, // start in the copy destination state
-			nullptr, // optimized clear value must be null for this type of resource
-			IID_PPV_ARGS(&m_ScreenQuadIndexBuffer));
-		if (FAILED(hr))
-		{
-			Running = false;
-			return false;
-		}
-
-		// we can give resource heaps a name so when we debug with the graphics debugger we know what resource we are looking at
-		vertexBuffer->SetName(L"Index Buffer Resource Heap");
-
-		// create upload heap to upload index buffer
-		ID3D12Resource* iBufferUploadHeap;
-		hr = device->CreateCommittedResource(
-			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), // upload heap
-			D3D12_HEAP_FLAG_NONE, // no flags
-			&CD3DX12_RESOURCE_DESC::Buffer(vBufferSize2), // resource description for a buffer
-			D3D12_RESOURCE_STATE_GENERIC_READ, // GPU will read from this buffer and copy its contents to the default heap
-			nullptr,
-			IID_PPV_ARGS(&iBufferUploadHeap));
-		if (FAILED(hr))
-		{
-			Running = false;
-			return false;
-		}
-		vBufferUploadHeap->SetName(L"Index Buffer Upload Resource Heap");
-
-		// store vertex buffer in upload heap
-		D3D12_SUBRESOURCE_DATA indexData = {};
-		indexData.pData = reinterpret_cast<BYTE*>(iList2); // pointer to our index array
-		indexData.RowPitch = iBufferSize2; // size of all our index buffer
-		indexData.SlicePitch = iBufferSize2; // also the size of our index buffer
-
-		// we are now creating a command with the command list to copy the data from
-		// the upload heap to the default heap
-		UpdateSubresources(commandList, m_ScreenQuadIndexBuffer, iBufferUploadHeap, 0, 0, 1, &indexData);
-
-		// transition the vertex buffer data from copy destination state to vertex buffer state
-		commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_ScreenQuadIndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
-	}
-
-
-
-	for (size_t i = m_BillboardCount; i--;)
-	{
-		hr = device->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &CD3DX12_RESOURCE_DESC::Buffer(vBufferSize2), D3D12_RESOURCE_STATE_COPY_DEST,  nullptr, IID_PPV_ARGS(&m_BillboardVertex[i]));
-		if (FAILED(hr))
-		{
-			Running = false;
-			return false;
-		}
-
-		// we can give resource heaps a name so when we debug with the graphics debugger we know what resource we are looking at
-		m_BillboardVertex[i]->SetName(L"Vertex Buffer Resource Heap");
-
-		// create upload heap
-		// upload heaps are used to upload data to the GPU. CPU can write to it, GPU can read from it
-		// We will upload the vertex buffer using this heap to the default heap
-		ID3D12Resource* vBufferUploadHeap;
-		hr = device->CreateCommittedResource(
-			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), // upload heap
-			D3D12_HEAP_FLAG_NONE, // no flags
-			&CD3DX12_RESOURCE_DESC::Buffer(vBufferSize2), // resource description for a buffer
-			D3D12_RESOURCE_STATE_GENERIC_READ, // GPU will read from this buffer and copy its contents to the default heap
-			nullptr,
-			IID_PPV_ARGS(&vBufferUploadHeap));
-		if (FAILED(hr))
-		{
-			Running = false;
-			return false;
-		}
-		vBufferUploadHeap->SetName(L"Vertex Buffer Upload Resource Heap");
-
-		// store vertex buffer in upload heap
-		D3D12_SUBRESOURCE_DATA vertexData = {};
-		vertexData.pData = reinterpret_cast<BYTE*>(vList2); // pointer to our vertex array
-		vertexData.RowPitch = vBufferSize2; // size of all our triangle vertex data
-		vertexData.SlicePitch = vBufferSize2; // also the size of our triangle vertex data
-
-		// we are now creating a command with the command list to copy the data from
-		// the upload heap to the default heap
-		UpdateSubresources(commandList, m_BillboardVertex[i], vBufferUploadHeap, 0, 0, 1, &vertexData);
-
-		// transition the vertex buffer data from copy destination state to vertex buffer state
-		commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_BillboardVertex[i], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
-
-
-		// Create index buffer
-
-
-		// create default heap to hold index buffer
-		hr = device->CreateCommittedResource(
-			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), // a default heap
-			D3D12_HEAP_FLAG_NONE, // no flags
-			&CD3DX12_RESOURCE_DESC::Buffer(iBufferSize2), // resource description for a buffer
-			D3D12_RESOURCE_STATE_COPY_DEST, // start in the copy destination state
-			nullptr, // optimized clear value must be null for this type of resource
-			IID_PPV_ARGS(&m_BillboardIndex[i]));
-		if (FAILED(hr))
-		{
-			Running = false;
-			return false;
-		}
-
-		// we can give resource heaps a name so when we debug with the graphics debugger we know what resource we are looking at
-		vertexBuffer->SetName(L"Index Buffer Resource Heap");
-
-		// create upload heap to upload index buffer
-		ID3D12Resource* iBufferUploadHeap;
-		hr = device->CreateCommittedResource(
-			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), // upload heap
-			D3D12_HEAP_FLAG_NONE, // no flags
-			&CD3DX12_RESOURCE_DESC::Buffer(vBufferSize2), // resource description for a buffer
-			D3D12_RESOURCE_STATE_GENERIC_READ, // GPU will read from this buffer and copy its contents to the default heap
-			nullptr,
-			IID_PPV_ARGS(&iBufferUploadHeap));
-		if (FAILED(hr))
-		{
-			Running = false;
-			return false;
-		}
-		vBufferUploadHeap->SetName(L"Index Buffer Upload Resource Heap");
-
-		// store vertex buffer in upload heap
-		D3D12_SUBRESOURCE_DATA indexData = {};
-		indexData.pData = reinterpret_cast<BYTE*>(iList); // pointer to our index array
-		indexData.RowPitch = iBufferSize2; // size of all our index buffer
-		indexData.SlicePitch = iBufferSize2; // also the size of our index buffer
-
-		// we are now creating a command with the command list to copy the data from
-		// the upload heap to the default heap
-		UpdateSubresources(commandList, m_BillboardIndex[i], iBufferUploadHeap, 0, 0, 1, &indexData);
-
-		// transition the vertex buffer data from copy destination state to vertex buffer state
-		commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_BillboardIndex[i], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
-
-	}
-
-
-
-
-
-
-	std::vector<Vertex> verts;
-	std::vector<DWORD> indies;
-	std::vector<Vertex> verts2;
-	std::vector<DWORD> indies2;
-
-	for (const Vertex &v : vList)
-	{
-		verts.push_back(v);
-	}
-
-	for (const DWORD& v : iList)
-	{
-		indies.push_back(v);
-	}
-	for (const Vertex& v : vList2)
-	{
-		verts2.push_back(v);
-	}
-
-	for (const DWORD& v : iList2)
-	{
-		indies2.push_back(v);
-	}
-
-
-	// Create the depth/stencil buffer
-
-	// create a depth stencil descriptor heap so we can get a pointer to the depth stencil buffer
-	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
-	dsvHeapDesc.NumDescriptors = 3;
-	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-	dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	hr = device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&dsDescriptorHeap));
-	if (FAILED(hr))
-	{
-		Running = false;
-		return false;
-	}
-
 	D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilDesc = {};
 	depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
 	depthStencilDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
@@ -1442,24 +609,9 @@ bool InitD3D()
 	depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
 	depthOptimizedClearValue.DepthStencil.Stencil = 0;
 
+	bool test = gm.CreateStencilDepthView(L"Default Depth Stencil", 1,&depthStencilDesc, &depthOptimizedClearValue);
 
-	hr = device->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-		D3D12_HEAP_FLAG_NONE,
-		&CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, Width, Height, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
-		D3D12_RESOURCE_STATE_DEPTH_WRITE,
-		&depthOptimizedClearValue,
-		IID_PPV_ARGS(&depthStencilBuffer)
-		);
-	if (FAILED(hr))
-	{
-		Running = false;
-		return false;
-	}
-	dsDescriptorHeap->SetName(L"Depth/Stencil Resource Heap");
-
-	device->CreateDepthStencilView(depthStencilBuffer, &depthStencilDesc, dsDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-
+	test = gm.CreateConstantBuffer(L"Test", 1024, sizeof(ConstantBufferPerObject), 4);
 	// create the constant buffer resource heap
 	// We will update the constant buffer one or more times per frame, so we will use only an upload heap
 	// unlike previously we used an upload heap to upload the vertex and index data, and then copied over
@@ -1839,77 +991,77 @@ bool InitD3D()
 	scissorRect.right = Width;
 	scissorRect.bottom = Height;
 
-	// build projection and view matrix
-	XMMATRIX tmpMat = XMMatrixPerspectiveFovLH(45.0f*(3.14f/180.0f), (float)Width / (float)Height, 0.1f, 1000.0f);
-	XMStoreFloat4x4(&cameraProjMat, tmpMat);
+	//// build projection and view matrix
+	//XMMATRIX tmpMat = XMMatrixPerspectiveFovLH(45.0f*(3.14f/180.0f), (float)Width / (float)Height, 0.1f, 1000.0f);
+	//XMStoreFloat4x4(&cameraProjMat, tmpMat);
 
-	// set starting camera state
-	cameraPosition = XMFLOAT4(0.0f, 0.0f, -6.0f, 0.0f);
-	cameraTarget = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
-	cameraUp = XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f);
+	//// set starting camera state
+	//cameraPosition = XMFLOAT4(0.0f, 0.0f, -6.0f, 0.0f);
+	//cameraTarget = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
+	//cameraUp = XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f);
 
-	// set starting cubes position
-	// first cube
-	cube1Position = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f); // set cube 1's position
-	XMVECTOR posVec = XMLoadFloat4(&cube1Position); // create xmvector for cube1's position
+	//// set starting cubes position
+	//// first cube
+	//cube1Position = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f); // set cube 1's position
+	//XMVECTOR posVec = XMLoadFloat4(&cube1Position); // create xmvector for cube1's position
 
-	tmpMat = XMMatrixTranslationFromVector(posVec); // create translation matrix from cube1's position vector
-	XMStoreFloat4x4(&cube1RotMat, XMMatrixIdentity()); // initialize cube1's rotation matrix to identity matrix
-	XMStoreFloat4x4(&cube1WorldMat, tmpMat); // store cube1's world matrix
+	//tmpMat = XMMatrixTranslationFromVector(posVec); // create translation matrix from cube1's position vector
+	//XMStoreFloat4x4(&cube1RotMat, XMMatrixIdentity()); // initialize cube1's rotation matrix to identity matrix
+	//XMStoreFloat4x4(&cube1WorldMat, tmpMat); // store cube1's world matrix
 
-	// second cube
-	cube2PositionOffset = XMFLOAT4(1.5f, 0.0f, 0.0f, 0.0f);
-	posVec = XMLoadFloat4(&cube2PositionOffset) + XMLoadFloat4(&cube1Position); // create xmvector for cube2's position
-																				// we are rotating around cube1 here, so add cube2's position to cube1
+	//// second cube
+	//cube2PositionOffset = XMFLOAT4(1.5f, 0.0f, 0.0f, 0.0f);
+	//posVec = XMLoadFloat4(&cube2PositionOffset) + XMLoadFloat4(&cube1Position); // create xmvector for cube2's position
+	//																			// we are rotating around cube1 here, so add cube2's position to cube1
 
-	tmpMat = XMMatrixTranslationFromVector(posVec); // create translation matrix from cube2's position offset vector
-	XMStoreFloat4x4(&cube2RotMat, XMMatrixIdentity()); // initialize cube2's rotation matrix to identity matrix
-	XMStoreFloat4x4(&cube2WorldMat, tmpMat); // store cube2's world matrix
+	//tmpMat = XMMatrixTranslationFromVector(posVec); // create translation matrix from cube2's position offset vector
+	//XMStoreFloat4x4(&cube2RotMat, XMMatrixIdentity()); // initialize cube2's rotation matrix to identity matrix
+	//XMStoreFloat4x4(&cube2WorldMat, tmpMat); // store cube2's world matrix
 
-	m_Manager = new SystemManager();
-	m_Manager->SetUpCamera(cameraPosition, cameraTarget, cameraUp, Width, Height, 0.1, 1000);
-	m_Manager->ReturnCamera()->Update();
+	//m_Manager = new SystemManager();
+	//m_Manager->SetUpCamera(cameraPosition, cameraTarget, cameraUp, Width, Height, 0.1, 1000);
+	//m_Manager->ReturnCamera()->Update();
 
-	Transform* transform = new Transform(Vector3D(0.0f, 0.0f, 0.0f), Vector3D(0.0f, 0.0f, 0.0f), Vector3D(2.0f, 2.0f, 2.0f));
-	XMStoreFloat4x4(&transform->RotationalMatrix, XMMatrixIdentity());
-	CreateObjectStruct COS(device, commandList, "Obj1", ObjectType::GameObj, verts, indies, 1, ConstantBufferPerObjectAlignedSize, transform);
-	m_Manager->BuildObject(COS);
+	//Transform* transform = new Transform(Vector3D(0.0f, 0.0f, 0.0f), Vector3D(0.0f, 0.0f, 0.0f), Vector3D(2.0f, 2.0f, 2.0f));
+	//XMStoreFloat4x4(&transform->RotationalMatrix, XMMatrixIdentity());
+	//CreateObjectStruct COS(device, commandList, "Obj1", ObjectType::GameObj, verts, indies, 1, ConstantBufferPerObjectAlignedSize, transform);
+	//m_Manager->BuildObject(COS);
 
-	transform = new Transform(Vector3D(1.5f, 0.0f, 0.0f), Vector3D(0.0f, 00.0f, 0.0f), Vector3D(0.5f, 0.5f, 0.5f));
-	XMStoreFloat4x4(&transform->RotationalMatrix, XMMatrixIdentity());
-	COS = CreateObjectStruct(device, commandList, "Obj2", ObjectType::GameObj, verts, indies, 2, ConstantBufferPerObjectAlignedSize, transform);
-	m_Manager->BuildObject(COS);	
-	GameObject* GO = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(0));
-	GameObject* GO2 = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(1));
-	GO2->m_Particle->SetParentTransform(GO->m_Transform);
+	//transform = new Transform(Vector3D(1.5f, 0.0f, 0.0f), Vector3D(0.0f, 00.0f, 0.0f), Vector3D(0.5f, 0.5f, 0.5f));
+	//XMStoreFloat4x4(&transform->RotationalMatrix, XMMatrixIdentity());
+	//COS = CreateObjectStruct(device, commandList, "Obj2", ObjectType::GameObj, verts, indies, 2, ConstantBufferPerObjectAlignedSize, transform);
+	//m_Manager->BuildObject(COS);	
+	//GameObject* GO = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(0));
+	//GameObject* GO2 = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(1));
+	//GO2->m_Particle->SetParentTransform(GO->m_Transform);
 
-	transform = new Transform(Vector3D(0.0f, 0.0f ,5.0f), Vector3D(0.0f, 0.0f, 0.0f), Vector3D(5.0f, 5.0f, 1.0f));
-	XMStoreFloat4x4(&transform->RotationalMatrix, XMMatrixIdentity());
-	COS = CreateObjectStruct(device, commandList, "Obj3", ObjectType::GameObj, verts, indies, 3, ConstantBufferPerObjectAlignedSize, transform);
-	m_Manager->BuildObject(COS);
+	//transform = new Transform(Vector3D(0.0f, 0.0f ,5.0f), Vector3D(0.0f, 0.0f, 0.0f), Vector3D(5.0f, 5.0f, 1.0f));
+	//XMStoreFloat4x4(&transform->RotationalMatrix, XMMatrixIdentity());
+	//COS = CreateObjectStruct(device, commandList, "Obj3", ObjectType::GameObj, verts, indies, 3, ConstantBufferPerObjectAlignedSize, transform);
+	//m_Manager->BuildObject(COS);
 
 
-	//Thing to note: Constant buffer aligned size didn't increase on billboard creation
-	for (size_t i = m_BillboardCount; i--;)
-	{
-		float x = GenerateRandomNumber(0,10);
-		float y = GenerateRandomNumber(0,10);
-		float z = GenerateRandomNumber(5,15);
-		if (GenerateRandomNumber(1,2) % 2)
-		{
-			x = -x;
-		}
-		if (GenerateRandomNumber(1, 2) % 2)
-		{
-			y = -y;
-		}
+	////Thing to note: Constant buffer aligned size didn't increase on billboard creation
+	//for (size_t i = m_BillboardCount; i--;)
+	//{
+	//	float x = GenerateRandomNumber(0,10);
+	//	float y = GenerateRandomNumber(0,10);
+	//	float z = GenerateRandomNumber(5,15);
+	//	if (GenerateRandomNumber(1,2) % 2)
+	//	{
+	//		x = -x;
+	//	}
+	//	if (GenerateRandomNumber(1, 2) % 2)
+	//	{
+	//		y = -y;
+	//	}
 
-		transform = new Transform(Vector3D(x, y, z), Vector3D(0.0f, 0.0f, 0.0f), Vector3D(1.0f, 1.0f, 1.0f));
-		XMStoreFloat4x4(&transform->RotationalMatrix, XMMatrixIdentity());
-		COS = CreateObjectStruct(device, commandList, std::to_string(i), ObjectType::GameObj, verts2, indies2, 3 + i, ConstantBufferPerObjectAlignedSize, transform);
-		m_Manager->BuildObject(COS);
+	//	transform = new Transform(Vector3D(x, y, z), Vector3D(0.0f, 0.0f, 0.0f), Vector3D(1.0f, 1.0f, 1.0f));
+	//	XMStoreFloat4x4(&transform->RotationalMatrix, XMMatrixIdentity());
+	//	COS = CreateObjectStruct(device, commandList, std::to_string(i), ObjectType::GameObj, verts2, indies2, 3 + i, ConstantBufferPerObjectAlignedSize, transform);
+	//	m_Manager->BuildObject(COS);
 
-	}
+	//}
 
 
 	m_DrawObjectStructs.commandAllocator = *commandAllocator;

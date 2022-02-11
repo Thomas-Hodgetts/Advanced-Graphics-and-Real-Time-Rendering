@@ -143,25 +143,6 @@ ID3D12Resource* depthStencilBuffer2; // This is the memory for our depth buffer.
 
 ID3D12DescriptorHeap* dsDescriptorHeap; // This is a heap for our depth/stencil buffer descriptor
 
-// this is the structure of our constant buffer.
-struct ConstantBufferPerObject 
-{
-	XMFLOAT4X4 wvpMat;
-	XMFLOAT4X4 worldPos;
-	XMFLOAT4X4 projection;
-	XMFLOAT4X4 shadowTransform;
-	Material Mat;
-	Light point;
-	XMFLOAT3 EyePosW;
-	int mode = 0;
-};
-
-struct ConstantBufferLighting 
-{
-	Material Mat;
-	Light point;
-	XMFLOAT3 EyePosW;
-};
 
 struct Screen_Vertex
 {
