@@ -611,7 +611,18 @@ bool InitD3D()
 
 	bool test = gm.CreateStencilDepthView(L"Default Depth Stencil", 1,&depthStencilDesc, &depthOptimizedClearValue);
 
-	test = gm.CreateConstantBuffer(L"Test", 1024, sizeof(ConstantBufferPerObject), 4);
+
+	test = gm.CreateConstantBuffer(L"TestGeomerty", 1024, sizeof(ConstantBufferPerObject), 4);
+
+
+	LPCWSTR filename[4] = { L"color.jpg" ,L"normals.jpg" ,L"displacement.jpg" ,L"dx12.jpg" };
+	int objectCount = sizeof(filename) / sizeof(LPCWSTR);
+
+	gm.CreateTextureHeap(filename, objectCount, L"TestGeomerty");
+
+
+	gm.FlushCommandList(L"Default");
+
 	// create the constant buffer resource heap
 	// We will update the constant buffer one or more times per frame, so we will use only an upload heap
 	// unlike previously we used an upload heap to upload the vertex and index data, and then copied over
@@ -626,351 +637,355 @@ bool InitD3D()
 	// 16 floats in one constant buffer, and we will store 2 constant buffers in each
 	// heap, one for each cube, thats only 64x2 bits, or 128 bits we are using for each
 	// resource, and each resource must be at least 64KB (65536 bits)
-	for (int i = 0; i < frameBufferCount; ++i)
-	{
-		// create resource for cube 1
-		hr = device->CreateCommittedResource(
-			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), // this heap will be used to upload the constant buffer data
-			D3D12_HEAP_FLAG_NONE, // no flags
-			&CD3DX12_RESOURCE_DESC::Buffer(2048 * 64), // size of the resource heap. Must be a multiple of 64KB for single-textures and constant buffers
-			D3D12_RESOURCE_STATE_GENERIC_READ, // will be data that is read from so we keep it in the generic read state
-			nullptr, // we do not have use an optimized clear value for constant buffers
-			IID_PPV_ARGS(&constantBufferUploadHeaps[i]));
-		if (FAILED(hr))
-		{
-			Running = false;
-			return false;
-		}
-		constantBufferUploadHeaps[i]->SetName(L"Constant Buffer Upload Resource Heap");
+	//for (int i = 0; i < frameBufferCount; ++i)
+	//{
+	//	// create resource for cube 1
+	//	hr = device->CreateCommittedResource(
+	//		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), // this heap will be used to upload the constant buffer data
+	//		D3D12_HEAP_FLAG_NONE, // no flags
+	//		&CD3DX12_RESOURCE_DESC::Buffer(2048 * 64), // size of the resource heap. Must be a multiple of 64KB for single-textures and constant buffers
+	//		D3D12_RESOURCE_STATE_GENERIC_READ, // will be data that is read from so we keep it in the generic read state
+	//		nullptr, // we do not have use an optimized clear value for constant buffers
+	//		IID_PPV_ARGS(&constantBufferUploadHeaps[i]));
+	//	if (FAILED(hr))
+	//	{
+	//		Running = false;
+	//		return false;
+	//	}
+	//	constantBufferUploadHeaps[i]->SetName(L"Constant Buffer Upload Resource Heap");
 
-		// create resource for cube 1
-		hr = device->CreateCommittedResource(
-			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), // this heap will be used to upload the constant buffer data
-			D3D12_HEAP_FLAG_NONE, // no flags
-			&CD3DX12_RESOURCE_DESC::Buffer((2048 * 64) * m_BillboardCount), // size of the resource heap. Must be a multiple of 64KB for single-textures and constant buffers
-			D3D12_RESOURCE_STATE_GENERIC_READ, // will be data that is read from so we keep it in the generic read state
-			nullptr, // we do not have use an optimized clear value for constant buffers
-			IID_PPV_ARGS(&m_BillboardConstantBufferUploadHeaps[i]));
-		if (FAILED(hr))
-		{
-			Running = false;
-			return false;
-		}
-		m_BillboardConstantBufferUploadHeaps[i]->SetName(L"Constant Buffer Upload Resource Heap");
+	//	// create resource for cube 1
+	//	hr = device->CreateCommittedResource(
+	//		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), // this heap will be used to upload the constant buffer data
+	//		D3D12_HEAP_FLAG_NONE, // no flags
+	//		&CD3DX12_RESOURCE_DESC::Buffer((2048 * 64) * m_BillboardCount), // size of the resource heap. Must be a multiple of 64KB for single-textures and constant buffers
+	//		D3D12_RESOURCE_STATE_GENERIC_READ, // will be data that is read from so we keep it in the generic read state
+	//		nullptr, // we do not have use an optimized clear value for constant buffers
+	//		IID_PPV_ARGS(&m_BillboardConstantBufferUploadHeaps[i]));
+	//	if (FAILED(hr))
+	//	{
+	//		Running = false;
+	//		return false;
+	//	}
+	//	m_BillboardConstantBufferUploadHeaps[i]->SetName(L"Constant Buffer Upload Resource Heap");
 
-		ZeroMemory(&cbPerObject, sizeof(cbPerObject));
+	//	ZeroMemory(&cbPerObject, sizeof(cbPerObject));
 
-		CD3DX12_RANGE readRange(0, 0);	// We do not intend to read from this resource on the CPU. (so end is less than or equal to begin)
-		
-		// map the resource heap to get a gpu virtual address to the beginning of the heap
-		hr = constantBufferUploadHeaps[i]->Map(0, &readRange, reinterpret_cast<void**>(&cbvGPUAddress[i]));
-		hr = m_BillboardConstantBufferUploadHeaps[i]->Map(0, &readRange, reinterpret_cast<void**>(&m_BillboardGPUAddress[i]));
+	//	CD3DX12_RANGE readRange(0, 0);	// We do not intend to read from this resource on the CPU. (so end is less than or equal to begin)
+	//	
+	//	// map the resource heap to get a gpu virtual address to the beginning of the heap
+	//	hr = constantBufferUploadHeaps[i]->Map(0, &readRange, reinterpret_cast<void**>(&cbvGPUAddress[i]));
+	//	hr = m_BillboardConstantBufferUploadHeaps[i]->Map(0, &readRange, reinterpret_cast<void**>(&m_BillboardGPUAddress[i]));
 
-		// Because of the constant read alignment requirements, constant buffer views must be 256 bit aligned. Our buffers are smaller than 256 bits,
-		// so we need to add spacing between the two buffers, so that the second buffer starts at 256 bits from the beginning of the resource heap.
-		memcpy(cbvGPUAddress[i], &cbPerObject, sizeof(cbPerObject)); // cube1's constant buffer data
-		memcpy(cbvGPUAddress[i] + ConstantBufferPerObjectAlignedSize, &cbPerObject, sizeof(cbPerObject)); // cube2's constant buffer data
-		memcpy(cbvGPUAddress[i] + ConstantBufferPerObjectAlignedSize + ConstantBufferPerObjectAlignedSize, &cbPerObject, sizeof(cbPerObject)); // cube3s constant buffer data
+	//	// Because of the constant read alignment requirements, constant buffer views must be 256 bit aligned. Our buffers are smaller than 256 bits,
+	//	// so we need to add spacing between the two buffers, so that the second buffer starts at 256 bits from the beginning of the resource heap.
+	//	memcpy(cbvGPUAddress[i], &cbPerObject, sizeof(cbPerObject)); // cube1's constant buffer data
+	//	memcpy(cbvGPUAddress[i] + ConstantBufferPerObjectAlignedSize, &cbPerObject, sizeof(cbPerObject)); // cube2's constant buffer data
+	//	memcpy(cbvGPUAddress[i] + ConstantBufferPerObjectAlignedSize + ConstantBufferPerObjectAlignedSize, &cbPerObject, sizeof(cbPerObject)); // cube3s constant buffer data
 
-		if (m_ShadowMapping)
-		{
-			memcpy(cbvGPUAddress[i] + ConstantBufferPerObjectAlignedSize + ConstantBufferPerObjectAlignedSize + ConstantBufferPerObjectAlignedSize, &cbPerObject, sizeof(cbPerObject)); // cube3s constant buffer data
-			memcpy(cbvGPUAddress[i] + ConstantBufferPerObjectAlignedSize + ConstantBufferPerObjectAlignedSize + ConstantBufferPerObjectAlignedSize + ConstantBufferPerObjectAlignedSize, &cbPerObject, sizeof(cbPerObject)); // cube3s constant buffer data
-		}
+	//	if (m_ShadowMapping)
+	//	{
+	//		memcpy(cbvGPUAddress[i] + ConstantBufferPerObjectAlignedSize + ConstantBufferPerObjectAlignedSize + ConstantBufferPerObjectAlignedSize, &cbPerObject, sizeof(cbPerObject)); // cube3s constant buffer data
+	//		memcpy(cbvGPUAddress[i] + ConstantBufferPerObjectAlignedSize + ConstantBufferPerObjectAlignedSize + ConstantBufferPerObjectAlignedSize + ConstantBufferPerObjectAlignedSize, &cbPerObject, sizeof(cbPerObject)); // cube3s constant buffer data
+	//	}
 
-		for (size_t j = 0; j < m_BillboardCount; j++)
-		{
-			memcpy(m_BillboardGPUAddress[i] + (ConstantBufferPerObjectAlignedSize * j), &cbPerObject, sizeof(cbPerObject));
-		}
-	}
+	//	for (size_t j = 0; j < m_BillboardCount; j++)
+	//	{
+	//		memcpy(m_BillboardGPUAddress[i] + (ConstantBufferPerObjectAlignedSize * j), &cbPerObject, sizeof(cbPerObject));
+	//	}
+	//}
 
-	// load the image, create a texture resource and descriptor heap
+	//// load the image, create a texture resource and descriptor heap
 
-	// create the descriptor heap that will store our srv
-    D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
-	heapDesc.NumDescriptors = 5;
-	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	hr = device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&mainDescriptorHeap));
-	if (FAILED(hr))
-	{
-		Running = false;
-	}
-
-
-	buffOffset = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-	// Load the image from file
-	D3D12_RESOURCE_DESC textureDesc;
-	int imageBytesPerRow;
-
-	LPCWSTR filename[4] = { L"color.jpg" ,L"normals.jpg" ,L"displacement.jpg" ,L"dx12.jpg" };
-	int objectCount = sizeof(filename) / sizeof(LPCWSTR);
-
-	CD3DX12_CPU_DESCRIPTOR_HANDLE hdescriptor(mainDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-	CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(dsDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-
-	for (size_t i = 0; i < objectCount; i++)
-	{
-		int imageSize = LoadImageDataFromFile(&imageData, textureDesc, filename[i], imageBytesPerRow);
-		// make sure we have data
-		if (imageSize <= 0)
-		{
-			Running = false;
-			return false;
-		}
-
-		// create a default heap where the upload heap will copy its contents into (contents being the texture)
-		hr = device->CreateCommittedResource(
-			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), // a default heap
-			D3D12_HEAP_FLAG_NONE, // no flags
-			&textureDesc, // the description of our texture
-			D3D12_RESOURCE_STATE_COPY_DEST, // We will copy the texture from the upload heap to here, so we start it out in a copy dest state
-			nullptr, // used for render targets and depth/stencil buffers
-			IID_PPV_ARGS(&textureBuffer[i]));
-		if (FAILED(hr))
-		{
-			Running = false;
-			return false;
-		}
-		textureBuffer[i]->SetName(L"Texture Buffer Resource Heap");
-
-		UINT64 textureUploadBufferSize;
-		device->GetCopyableFootprints(&textureDesc, 0, 1, 0, nullptr, nullptr, nullptr, &textureUploadBufferSize);
-
-		// now we create an upload heap to upload our texture to the GPU
-		hr = device->CreateCommittedResource(
-			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), // upload heap
-			D3D12_HEAP_FLAG_NONE, // no flags
-			&CD3DX12_RESOURCE_DESC::Buffer(textureUploadBufferSize), // resource description for a buffer (storing the image data in this heap just to copy to the default heap)
-			D3D12_RESOURCE_STATE_GENERIC_READ, // We will copy the contents from this heap to the default heap above
-			nullptr,
-			IID_PPV_ARGS(&textureBufferUploadHeap[i]));
-		if (FAILED(hr))
-		{
-			Running = false;
-			return false;
-		}
-		textureBufferUploadHeap[i]->SetName(L"Texture Buffer Upload Resource Heap");
-
-		// store vertex buffer in upload heap
-		D3D12_SUBRESOURCE_DATA textureData = {};
-		textureData.pData = &imageData[0]; // pointer to our image data
-		textureData.RowPitch = imageBytesPerRow; // size of all our triangle vertex data
-		textureData.SlicePitch = imageBytesPerRow * textureDesc.Height; // also the size of our triangle vertex data
-		// Now we copy the upload buffer contents to the default heap
-		UpdateSubresources(commandList, textureBuffer[i], textureBufferUploadHeap[i], 0, 0, 1, &textureData);
-		// transition the texture default heap to a pixel shader resource (we will be sampling from this heap in the pixel shader to get the color of pixels)
-		commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(textureBuffer[i], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
-
-		//BOOK
-
-		// now we create a shader resource view (descriptor that points to the texture and describes it)
-		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-		srvDesc.Format = textureDesc.Format;
-		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-		srvDesc.Texture2D.MipLevels = 1;
-
-		device->CreateShaderResourceView(textureBuffer[i], &srvDesc, hdescriptor);
-		hdescriptor.Offset(1, buffOffset);
-
-		if (m_TextureSetUp && i == 3)
-		{
-
-			D3D12_RESOURCE_DESC S;
-			textureDesc = {};
-			textureDesc.MipLevels = 1;
-			textureDesc.Height = Height;
-			textureDesc.Width = Width;
-			textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-			textureDesc.DepthOrArraySize = 1;
-			textureDesc.SampleDesc.Count = 1;
-			textureDesc.SampleDesc.Quality = 0;
-			textureDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-			textureDesc.Alignment = 0;
-			textureDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-			textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	//// create the descriptor heap that will store our srv
+ //   D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
+	//heapDesc.NumDescriptors = 5;
+	//heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	//heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	//hr = device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&mainDescriptorHeap));
+	//if (FAILED(hr))
+	//{
+	//	Running = false;
+	//}
 
 
-			 //create a default heap where the upload heap will copy its contents into (contents being the texture)
-			hr = device->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES, &textureDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, nullptr, IID_PPV_ARGS(&textureBuffer[4]));
-			if (FAILED(hr))
-			{
-				hr = device->GetDeviceRemovedReason();
-				Running = false;
-				return false;
-			}
-			textureBuffer[4]->SetName(L"Texture Buffer Resource Heap");
-
-			UINT64 textureUploadBufferSize;
-			device->GetCopyableFootprints(&textureDesc, 0, 1, 0, nullptr, nullptr, nullptr, &textureUploadBufferSize);
-
-			// now we create an upload heap to upload our texture to the GPU
-			hr = device->CreateCommittedResource(
-				&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), // upload heap
-				D3D12_HEAP_FLAG_NONE, // no flags
-				&CD3DX12_RESOURCE_DESC::Buffer(textureUploadBufferSize), // resource description for a buffer (storing the image data in this heap just to copy to the default heap)
-				D3D12_RESOURCE_STATE_GENERIC_READ, // We will copy the contents from this heap to the default heap above
-				nullptr,
-				IID_PPV_ARGS(&textureBufferUploadHeap[4]));
-			if (FAILED(hr))
-			{
-				Running = false;
-				return false;
-			}
-			textureBufferUploadHeap[4]->SetName(L"Texture Buffer Upload Resource Heap");
-
-			//BOOK
-
-			// now we create a shader resource view (descriptor that points to the texture and describes it)
-			D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-			srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-			srvDesc.Format = textureDesc.Format;
-			srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMS;
-			srvDesc.Texture2D.MipLevels = 1;
-
-			D3D12_SUBRESOURCE_DATA textureData = {};
-			textureData.pData = &imageData[0]; // pointer to our image data
-			textureData.RowPitch = imageBytesPerRow; // size of all our triangle vertex data
-			textureData.SlicePitch = imageBytesPerRow * textureDesc.Height; // also the size of our triangle vertex data
-			// Now we copy the upload buffer contents to the default heap
-			UpdateSubresources(commandList, textureBuffer[i], textureBufferUploadHeap[i], 0, 0, 1, &textureData);
-			// transition the texture default heap to a pixel shader resource (we will be sampling from this heap in the pixel shader to get the color of pixels)
-			commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(textureBuffer[i], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
-
-			CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-			rtvHandle.Offset(3, rtvDescriptorSize);
-
-			device->CreateRenderTargetView(textureBuffer[4], nullptr, rtvHandle);
-			rtvHandle.Offset(1, rtvDescriptorSize);
-
-			device->CreateShaderResourceView(textureBuffer[4], &srvDesc, hdescriptor);
-			hdescriptor.Offset(1, buffOffset);
+	//buffOffset = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 
-			// Create the MSAA depth/stencil buffer.
-			auto depthStencilDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-				DXGI_FORMAT_D32_FLOAT,
-				static_cast<UINT>(Width),
-				static_cast<UINT>(Height),
-				1,
-				1,
-				4,
-				0
-			);
-			depthStencilDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
-			D3D12_CLEAR_VALUE depthOptimizedClearValue = {};
-			depthOptimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
-			depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
-			depthOptimizedClearValue.DepthStencil.Stencil = 0;
+	//// Load the image from file
+	//D3D12_RESOURCE_DESC textureDesc;
+	//int imageBytesPerRow;
 
-			hr = device->CreateCommittedResource(
-				&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-				D3D12_HEAP_FLAG_NONE,
-				&depthStencilDesc,
-				D3D12_RESOURCE_STATE_DEPTH_WRITE,
-				&depthOptimizedClearValue,
-				IID_PPV_ARGS(&depthStencilBuffer2));
+	//LPCWSTR filename[4] = { L"color.jpg" ,L"normals.jpg" ,L"displacement.jpg" ,L"dx12.jpg" };
+	//int objectCount = sizeof(filename) / sizeof(LPCWSTR);
 
-			if (FAILED(hr))
-			{
-				Running = false;
-				return false;
-			}
+	//gm.CreateTextureHeap(filename, objectCount, L"TestGeomerty");
 
-			D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-			dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
-			dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMS;
+	//CD3DX12_CPU_DESCRIPTOR_HANDLE hdescriptor(mainDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+	//CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(dsDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
-			dsvHandle.Offset(1, dsvDescriptorSize);
+	//for (size_t i = 0; i < objectCount; i++)
+	//{
+	//	int imageSize = LoadImageDataFromFile(&imageData, textureDesc, filename[i], imageBytesPerRow);
+	//	// make sure we have data
+	//	if (imageSize <= 0)
+	//	{
+	//		Running = false;
+	//		return false;
+	//	}
 
-			device->CreateDepthStencilView(depthStencilBuffer2, &dsvDesc, dsvHandle);
+	//	// create a default heap where the upload heap will copy its contents into (contents being the texture)
+	//	hr = device->CreateCommittedResource(
+	//		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), // a default heap
+	//		D3D12_HEAP_FLAG_NONE, // no flags
+	//		&textureDesc, // the description of our texture
+	//		D3D12_RESOURCE_STATE_COPY_DEST, // We will copy the texture from the upload heap to here, so we start it out in a copy dest state
+	//		nullptr, // used for render targets and depth/stencil buffers
+	//		IID_PPV_ARGS(&textureBuffer[i]));
+	//	if (FAILED(hr))
+	//	{
+	//		Running = false;
+	//		return false;
+	//	}
+	//	textureBuffer[i]->SetName(L"Texture Buffer Resource Heap");
 
-			auto msaaRTDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-				DXGI_FORMAT_R8G8B8A8_UNORM,
-				static_cast<UINT>(Width),
-				static_cast<UINT>(Height),
-				1, // This render target view has only one texture.
-				1, // Use a single mipmap level
-				4,
-				0
-			);
-			msaaRTDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-			msaaRTDesc.SampleDesc.Count = 4;
-			msaaRTDesc.SampleDesc.Quality = 0;
+	//	UINT64 textureUploadBufferSize;
+	//	device->GetCopyableFootprints(&textureDesc, 0, 1, 0, nullptr, nullptr, nullptr, &textureUploadBufferSize);
+
+	//	// now we create an upload heap to upload our texture to the GPU
+	//	hr = device->CreateCommittedResource(
+	//		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), // upload heap
+	//		D3D12_HEAP_FLAG_NONE, // no flags
+	//		&CD3DX12_RESOURCE_DESC::Buffer(textureUploadBufferSize), // resource description for a buffer (storing the image data in this heap just to copy to the default heap)
+	//		D3D12_RESOURCE_STATE_GENERIC_READ, // We will copy the contents from this heap to the default heap above
+	//		nullptr,
+	//		IID_PPV_ARGS(&textureBufferUploadHeap[i]));
+	//	if (FAILED(hr))
+	//	{
+	//		Running = false;
+	//		return false;
+	//	}
+	//	textureBufferUploadHeap[i]->SetName(L"Texture Buffer Upload Resource Heap");
+
+	//	// store vertex buffer in upload heap
+	//	D3D12_SUBRESOURCE_DATA textureData = {};
+	//	textureData.pData = &imageData[0]; // pointer to our image data
+	//	textureData.RowPitch = imageBytesPerRow; // size of all our triangle vertex data
+	//	textureData.SlicePitch = imageBytesPerRow * textureDesc.Height; // also the size of our triangle vertex data
+	//	// Now we copy the upload buffer contents to the default heap
+	//	UpdateSubresources(commandList, textureBuffer[i], textureBufferUploadHeap[i], 0, 0, 1, &textureData);
+	//	// transition the texture default heap to a pixel shader resource (we will be sampling from this heap in the pixel shader to get the color of pixels)
+	//	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(textureBuffer[i], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+
+	//	//BOOK
+
+	//	// now we create a shader resource view (descriptor that points to the texture and describes it)
+	//	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	//	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	//	srvDesc.Format = textureDesc.Format;
+	//	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	//	srvDesc.Texture2D.MipLevels = 1;
+
+	//	device->CreateShaderResourceView(textureBuffer[i], &srvDesc, hdescriptor);
+	//	hdescriptor.Offset(1, buffOffset);
+
+	//	if (m_TextureSetUp && i == 3)
+	//	{
+
+	//		D3D12_RESOURCE_DESC S;
+	//		textureDesc = {};
+	//		textureDesc.MipLevels = 1;
+	//		textureDesc.Height = Height;
+	//		textureDesc.Width = Width;
+	//		textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	//		textureDesc.DepthOrArraySize = 1;
+	//		textureDesc.SampleDesc.Count = 1;
+	//		textureDesc.SampleDesc.Quality = 0;
+	//		textureDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+	//		textureDesc.Alignment = 0;
+	//		textureDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+	//		textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 
 
-			FLOAT f[4] = { 0,0,0,0 };
-			D3D12_CLEAR_VALUE msaaOptimizedClearValue = {};
-			msaaOptimizedClearValue.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-			memcpy(msaaOptimizedClearValue.Color, f, sizeof(float) * 4);
+	//		 //create a default heap where the upload heap will copy its contents into (contents being the texture)
+	//		hr = device->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES, &textureDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, nullptr, IID_PPV_ARGS(&textureBuffer[4]));
+	//		if (FAILED(hr))
+	//		{
+	//			hr = device->GetDeviceRemovedReason();
+	//			Running = false;
+	//			return false;
+	//		}
+	//		textureBuffer[4]->SetName(L"Texture Buffer Resource Heap");
 
-			hr = device->CreateCommittedResource(
-				&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-				D3D12_HEAP_FLAG_NONE,
-				&msaaRTDesc,
-				D3D12_RESOURCE_STATE_RESOLVE_SOURCE,
-				&msaaOptimizedClearValue,
-				IID_PPV_ARGS(&MSAA_RenderTarget));
+	//		UINT64 textureUploadBufferSize;
+	//		device->GetCopyableFootprints(&textureDesc, 0, 1, 0, nullptr, nullptr, nullptr, &textureUploadBufferSize);
 
-			device->CreateRenderTargetView(MSAA_RenderTarget, nullptr, rtvHandle);
+	//		// now we create an upload heap to upload our texture to the GPU
+	//		hr = device->CreateCommittedResource(
+	//			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), // upload heap
+	//			D3D12_HEAP_FLAG_NONE, // no flags
+	//			&CD3DX12_RESOURCE_DESC::Buffer(textureUploadBufferSize), // resource description for a buffer (storing the image data in this heap just to copy to the default heap)
+	//			D3D12_RESOURCE_STATE_GENERIC_READ, // We will copy the contents from this heap to the default heap above
+	//			nullptr,
+	//			IID_PPV_ARGS(&textureBufferUploadHeap[4]));
+	//		if (FAILED(hr))
+	//		{
+	//			Running = false;
+	//			return false;
+	//		}
+	//		textureBufferUploadHeap[4]->SetName(L"Texture Buffer Upload Resource Heap");
 
-			svQuad[0].pos = XMFLOAT3(-1.0f, 1.0f, 0.0f);
-			svQuad[0].tex = XMFLOAT2(0.0f, 0.0f);
+	//		//BOOK
 
-			svQuad[1].pos = XMFLOAT3(1.0f, 1.0f, 0.0f);
-			svQuad[1].tex = XMFLOAT2(1.0f, 0.0f);
+	//		// now we create a shader resource view (descriptor that points to the texture and describes it)
+	//		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	//		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	//		srvDesc.Format = textureDesc.Format;
+	//		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMS;
+	//		srvDesc.Texture2D.MipLevels = 1;
 
-			svQuad[2].pos = XMFLOAT3(-1.0f, -1.0f, 0.0f);
-			svQuad[2].tex = XMFLOAT2(0.0f, 1.0f);
+	//		D3D12_SUBRESOURCE_DATA textureData = {};
+	//		textureData.pData = &imageData[0]; // pointer to our image data
+	//		textureData.RowPitch = imageBytesPerRow; // size of all our triangle vertex data
+	//		textureData.SlicePitch = imageBytesPerRow * textureDesc.Height; // also the size of our triangle vertex data
+	//		// Now we copy the upload buffer contents to the default heap
+	//		UpdateSubresources(commandList, textureBuffer[i], textureBufferUploadHeap[i], 0, 0, 1, &textureData);
+	//		// transition the texture default heap to a pixel shader resource (we will be sampling from this heap in the pixel shader to get the color of pixels)
+	//		commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(textureBuffer[i], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
 
-			svQuad[3].pos = XMFLOAT3(1.0f, -1.0f, 0.0f);
-			svQuad[3].tex = XMFLOAT2(1.0f, 1.0f);
+	//		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+	//		rtvHandle.Offset(3, rtvDescriptorSize);
+
+	//		device->CreateRenderTargetView(textureBuffer[4], nullptr, rtvHandle);
+	//		rtvHandle.Offset(1, rtvDescriptorSize);
+
+	//		device->CreateShaderResourceView(textureBuffer[4], &srvDesc, hdescriptor);
+	//		hdescriptor.Offset(1, buffOffset);
 
 
-			m_TextureSetUp = false;
+	//		// Create the MSAA depth/stencil buffer.
+	//		auto depthStencilDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+	//			DXGI_FORMAT_D32_FLOAT,
+	//			static_cast<UINT>(Width),
+	//			static_cast<UINT>(Height),
+	//			1,
+	//			1,
+	//			4,
+	//			0
+	//		);
+	//		depthStencilDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
-		}
+	//		D3D12_CLEAR_VALUE depthOptimizedClearValue = {};
+	//		depthOptimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
+	//		depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
+	//		depthOptimizedClearValue.DepthStencil.Stencil = 0;
 
-	}
-	// create a vertex buffer view for the triangle. We get the GPU memory address to the vertex pointer using the GetGPUVirtualAddress() method
-	vertexBufferView.BufferLocation = vertexBuffer->GetGPUVirtualAddress();
-	vertexBufferView.StrideInBytes = sizeof(Vertex);
-	vertexBufferView.SizeInBytes = vBufferSize;
+	//		hr = device->CreateCommittedResource(
+	//			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+	//			D3D12_HEAP_FLAG_NONE,
+	//			&depthStencilDesc,
+	//			D3D12_RESOURCE_STATE_DEPTH_WRITE,
+	//			&depthOptimizedClearValue,
+	//			IID_PPV_ARGS(&depthStencilBuffer2));
 
-	// create a vertex buffer view for the triangle. We get the GPU memory address to the vertex pointer using the GetGPUVirtualAddress() method
-	indexBufferView.BufferLocation = indexBuffer->GetGPUVirtualAddress();
-	indexBufferView.Format = DXGI_FORMAT_R32_UINT; // 32-bit unsigned integer (this is what a dword is, double word, a word is 2 bytes)
-	indexBufferView.SizeInBytes = iBufferSize;
+	//		if (FAILED(hr))
+	//		{
+	//			Running = false;
+	//			return false;
+	//		}
 
-	m_BillboardVertexView = std::vector<D3D12_VERTEX_BUFFER_VIEW>(m_BillboardCount);
-	m_BillboardIndexView = std::vector<D3D12_INDEX_BUFFER_VIEW>(m_BillboardCount);
+	//		D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+	//		dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	//		dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMS;
 
-	if (m_RenderToTexture)
-	{
-		m_ScreenQuadVertexView.BufferLocation = m_ScreenQuadVertexBuffer->GetGPUVirtualAddress();
-		m_ScreenQuadVertexView.StrideInBytes = sizeof(Vertex);
-		m_ScreenQuadVertexView.SizeInBytes = vBufferSize2;
-		m_ScreenQuadIndexView.BufferLocation = m_ScreenQuadIndexBuffer->GetGPUVirtualAddress();
-		m_ScreenQuadIndexView.Format = DXGI_FORMAT_R32_UINT; // 32-bit unsigned integer (this is what a dword is, double word, a word is 2 bytes)
-		m_ScreenQuadIndexView.SizeInBytes = iBufferSize2;
-	}
+	//		dsvHandle.Offset(1, dsvDescriptorSize);
 
-	for (size_t i = m_BillboardCount; i--;)
-	{
+	//		device->CreateDepthStencilView(depthStencilBuffer2, &dsvDesc, dsvHandle);
 
-		// create a vertex buffer view for the triangle. We get the GPU memory address to the vertex pointer using the GetGPUVirtualAddress() method
-		m_BillboardVertexView[i].BufferLocation = m_BillboardVertex[i]->GetGPUVirtualAddress();
-		m_BillboardVertexView[i].StrideInBytes = sizeof(Vertex);
-		m_BillboardVertexView[i].SizeInBytes = vBufferSize2;
+	//		auto msaaRTDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+	//			DXGI_FORMAT_R8G8B8A8_UNORM,
+	//			static_cast<UINT>(Width),
+	//			static_cast<UINT>(Height),
+	//			1, // This render target view has only one texture.
+	//			1, // Use a single mipmap level
+	//			4,
+	//			0
+	//		);
+	//		msaaRTDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+	//		msaaRTDesc.SampleDesc.Count = 4;
+	//		msaaRTDesc.SampleDesc.Quality = 0;
 
-		// create a vertex buffer view for the triangle. We get the GPU memory address to the vertex pointer using the GetGPUVirtualAddress() method
-		m_BillboardIndexView[i].BufferLocation = m_BillboardIndex[i]->GetGPUVirtualAddress();
-		m_BillboardIndexView[i].Format = DXGI_FORMAT_R32_UINT; // 32-bit unsigned integer (this is what a dword is, double word, a word is 2 bytes)
-		m_BillboardIndexView[i].SizeInBytes = iBufferSize2;
-	}
+
+	//		FLOAT f[4] = { 0,0,0,0 };
+	//		D3D12_CLEAR_VALUE msaaOptimizedClearValue = {};
+	//		msaaOptimizedClearValue.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	//		memcpy(msaaOptimizedClearValue.Color, f, sizeof(float) * 4);
+
+	//		hr = device->CreateCommittedResource(
+	//			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+	//			D3D12_HEAP_FLAG_NONE,
+	//			&msaaRTDesc,
+	//			D3D12_RESOURCE_STATE_RESOLVE_SOURCE,
+	//			&msaaOptimizedClearValue,
+	//			IID_PPV_ARGS(&MSAA_RenderTarget));
+
+	//		device->CreateRenderTargetView(MSAA_RenderTarget, nullptr, rtvHandle);
+
+	//		svQuad[0].pos = XMFLOAT3(-1.0f, 1.0f, 0.0f);
+	//		svQuad[0].tex = XMFLOAT2(0.0f, 0.0f);
+
+	//		svQuad[1].pos = XMFLOAT3(1.0f, 1.0f, 0.0f);
+	//		svQuad[1].tex = XMFLOAT2(1.0f, 0.0f);
+
+	//		svQuad[2].pos = XMFLOAT3(-1.0f, -1.0f, 0.0f);
+	//		svQuad[2].tex = XMFLOAT2(0.0f, 1.0f);
+
+	//		svQuad[3].pos = XMFLOAT3(1.0f, -1.0f, 0.0f);
+	//		svQuad[3].tex = XMFLOAT2(1.0f, 1.0f);
+
+
+	//		m_TextureSetUp = false;
+
+	//	}
+
+	//}
+	//// create a vertex buffer view for the triangle. We get the GPU memory address to the vertex pointer using the GetGPUVirtualAddress() method
+	//vertexBufferView.BufferLocation = vertexBuffer->GetGPUVirtualAddress();
+	//vertexBufferView.StrideInBytes = sizeof(Vertex);
+	//vertexBufferView.SizeInBytes = vBufferSize;
+
+	//// create a vertex buffer view for the triangle. We get the GPU memory address to the vertex pointer using the GetGPUVirtualAddress() method
+	//indexBufferView.BufferLocation = indexBuffer->GetGPUVirtualAddress();
+	//indexBufferView.Format = DXGI_FORMAT_R32_UINT; // 32-bit unsigned integer (this is what a dword is, double word, a word is 2 bytes)
+	//indexBufferView.SizeInBytes = iBufferSize;
+
+	//m_BillboardVertexView = std::vector<D3D12_VERTEX_BUFFER_VIEW>(m_BillboardCount);
+	//m_BillboardIndexView = std::vector<D3D12_INDEX_BUFFER_VIEW>(m_BillboardCount);
+
+	//if (m_RenderToTexture)
+	//{
+	//	m_ScreenQuadVertexView.BufferLocation = m_ScreenQuadVertexBuffer->GetGPUVirtualAddress();
+	//	m_ScreenQuadVertexView.StrideInBytes = sizeof(Vertex);
+	//	m_ScreenQuadVertexView.SizeInBytes = vBufferSize2;
+	//	m_ScreenQuadIndexView.BufferLocation = m_ScreenQuadIndexBuffer->GetGPUVirtualAddress();
+	//	m_ScreenQuadIndexView.Format = DXGI_FORMAT_R32_UINT; // 32-bit unsigned integer (this is what a dword is, double word, a word is 2 bytes)
+	//	m_ScreenQuadIndexView.SizeInBytes = iBufferSize2;
+	//}
+
+	//for (size_t i = m_BillboardCount; i--;)
+	//{
+
+	//	// create a vertex buffer view for the triangle. We get the GPU memory address to the vertex pointer using the GetGPUVirtualAddress() method
+	//	m_BillboardVertexView[i].BufferLocation = m_BillboardVertex[i]->GetGPUVirtualAddress();
+	//	m_BillboardVertexView[i].StrideInBytes = sizeof(Vertex);
+	//	m_BillboardVertexView[i].SizeInBytes = vBufferSize2;
+
+	//	// create a vertex buffer view for the triangle. We get the GPU memory address to the vertex pointer using the GetGPUVirtualAddress() method
+	//	m_BillboardIndexView[i].BufferLocation = m_BillboardIndex[i]->GetGPUVirtualAddress();
+	//	m_BillboardIndexView[i].Format = DXGI_FORMAT_R32_UINT; // 32-bit unsigned integer (this is what a dword is, double word, a word is 2 bytes)
+	//	m_BillboardIndexView[i].SizeInBytes = iBufferSize2;
+	//}
 
 
 
@@ -991,14 +1006,14 @@ bool InitD3D()
 	scissorRect.right = Width;
 	scissorRect.bottom = Height;
 
-	//// build projection and view matrix
-	//XMMATRIX tmpMat = XMMatrixPerspectiveFovLH(45.0f*(3.14f/180.0f), (float)Width / (float)Height, 0.1f, 1000.0f);
-	//XMStoreFloat4x4(&cameraProjMat, tmpMat);
+	// build projection and view matrix
+	XMMATRIX tmpMat = XMMatrixPerspectiveFovLH(45.0f*(3.14f/180.0f), (float)Width / (float)Height, 0.1f, 1000.0f);
+	XMStoreFloat4x4(&cameraProjMat, tmpMat);
 
-	//// set starting camera state
-	//cameraPosition = XMFLOAT4(0.0f, 0.0f, -6.0f, 0.0f);
-	//cameraTarget = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
-	//cameraUp = XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f);
+	// set starting camera state
+	cameraPosition = XMFLOAT4(0.0f, 0.0f, -6.0f, 0.0f);
+	cameraTarget = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
+	cameraUp = XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f);
 
 	//// set starting cubes position
 	//// first cube
@@ -1018,26 +1033,18 @@ bool InitD3D()
 	//XMStoreFloat4x4(&cube2RotMat, XMMatrixIdentity()); // initialize cube2's rotation matrix to identity matrix
 	//XMStoreFloat4x4(&cube2WorldMat, tmpMat); // store cube2's world matrix
 
-	//m_Manager = new SystemManager();
-	//m_Manager->SetUpCamera(cameraPosition, cameraTarget, cameraUp, Width, Height, 0.1, 1000);
-	//m_Manager->ReturnCamera()->Update();
+	m_Manager = new SystemManager();
+	m_Manager->SetUpCamera(cameraPosition, cameraTarget, cameraUp, Width, Height, 0.1, 1000);
+	m_Manager->ReturnCamera()->Update();
 
 	//Transform* transform = new Transform(Vector3D(0.0f, 0.0f, 0.0f), Vector3D(0.0f, 0.0f, 0.0f), Vector3D(2.0f, 2.0f, 2.0f));
 	//XMStoreFloat4x4(&transform->RotationalMatrix, XMMatrixIdentity());
-	//CreateObjectStruct COS(device, commandList, "Obj1", ObjectType::GameObj, verts, indies, 1, ConstantBufferPerObjectAlignedSize, transform);
+	//CreateObjectStruct COS(device, commandList, "Obj1", ObjectType::GameObj, vertexList, indexList, 1, ConstantBufferPerObjectAlignedSize, transform);
 	//m_Manager->BuildObject(COS);
 
 	//transform = new Transform(Vector3D(1.5f, 0.0f, 0.0f), Vector3D(0.0f, 00.0f, 0.0f), Vector3D(0.5f, 0.5f, 0.5f));
 	//XMStoreFloat4x4(&transform->RotationalMatrix, XMMatrixIdentity());
-	//COS = CreateObjectStruct(device, commandList, "Obj2", ObjectType::GameObj, verts, indies, 2, ConstantBufferPerObjectAlignedSize, transform);
-	//m_Manager->BuildObject(COS);	
-	//GameObject* GO = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(0));
-	//GameObject* GO2 = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(1));
-	//GO2->m_Particle->SetParentTransform(GO->m_Transform);
-
-	//transform = new Transform(Vector3D(0.0f, 0.0f ,5.0f), Vector3D(0.0f, 0.0f, 0.0f), Vector3D(5.0f, 5.0f, 1.0f));
-	//XMStoreFloat4x4(&transform->RotationalMatrix, XMMatrixIdentity());
-	//COS = CreateObjectStruct(device, commandList, "Obj3", ObjectType::GameObj, verts, indies, 3, ConstantBufferPerObjectAlignedSize, transform);
+	//COS = CreateObjectStruct(device, commandList, "Obj2", ObjectType::GameObj, vertexList, indexList, 2, ConstantBufferPerObjectAlignedSize, transform);
 	//m_Manager->BuildObject(COS);
 
 
@@ -1063,21 +1070,6 @@ bool InitD3D()
 
 	//}
 
-
-	m_DrawObjectStructs.commandAllocator = *commandAllocator;
-	m_DrawObjectStructs.commandList = commandList;
-	m_DrawObjectStructs.constantBufferUploadHeaps = *constantBufferUploadHeaps;
-	m_DrawObjectStructs.depthAndStencilResourceHeap = dsDescriptorHeap;
-	m_DrawObjectStructs.depthStencilBuffer = depthStencilBuffer;
-	m_DrawObjectStructs.renderTargetResourceHeap = rtvDescriptorHeap;
-	m_DrawObjectStructs.renderTargets = *renderTargets;
-	m_DrawObjectStructs.sisRect = &scissorRect;
-	m_DrawObjectStructs.viewport = &viewport;
-	m_DrawObjectStructs.renderTargetDescriptorSize = rtvDescriptorSize;
-	m_DrawObjectStructs.root = rootSignature;
-	m_DrawObjectStructs.mainDescriptorHeap = mainDescriptorHeap;
-	m_DrawObjectStructs.pipelineStateObject = pipelineStateObject;
-
 	shinyMaterial.AmbientMtrl = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
 	shinyMaterial.DiffuseMtrl = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	shinyMaterial.SpecularMtrl = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
@@ -1097,35 +1089,36 @@ bool InitD3D()
 
 	if (m_ShadowMapping)
 	{
-		m_SM = ShadowMap(device, 2048, 2048);
-		m_BS.Center = { 0.f, 0.f, 0.f };
-		m_BS.Radius = sqrtf(10.f * 10.f + 15.f * 15.f);
+		//m_SM = ShadowMap(device, 2048, 2048);
+		//m_BS.Center = { 0.f, 0.f, 0.f };
+		//m_BS.Radius = sqrtf(10.f * 10.f + 15.f * 15.f);
 
-		dsvHandle.Offset(1, dsvDescriptorSize);
+		//dsvHandle.Offset(1, dsvDescriptorSize);
 
-		m_SM.BuildDescriptors(
-			hdescriptor,
-			CD3DX12_GPU_DESCRIPTOR_HANDLE(mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), 0, srvDescriptorSize),
-			dsvHandle);
+		//m_SM.BuildDescriptors(
+		//	hdescriptor,
+		//	CD3DX12_GPU_DESCRIPTOR_HANDLE(mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), 0, srvDescriptorSize),
+		//	dsvHandle);
 	}
 
 	// Now we execute the command list to upload the initial assets (triangle data)
-	commandList->Close();
-	ID3D12CommandList* ppCommandLists[] = { commandList };
-	commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+	//commandList->Close();
+	//ID3D12CommandList* ppCommandLists[] = { commandList };
+	//commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
-	// increment the fence value now, otherwise the buffer might not be uploaded by the time we start drawing
-	fenceValue[frameIndex]++;
-	hr = commandQueue->Signal(fence[frameIndex], fenceValue[frameIndex]);
-	if (FAILED(hr))
-	{
-		Running = false;
-		return false;
-	}
+	//// increment the fence value now, otherwise the buffer might not be uploaded by the time we start drawing
+	//fenceValue[frameIndex]++;
+	//hr = commandQueue->Signal(fence[frameIndex], fenceValue[frameIndex]);
+	//if (FAILED(hr))
+	//{
+	//	Running = false;
+	//	return false;
+	//}
 
-	// we are done with image data now that we've uploaded it to the gpu, so free it up
-	delete[] imageData;
+	//// we are done with image data now that we've uploaded it to the gpu, so free it up
+	//delete[] imageData;
 
+	m_GameManager = gm;
 
 	return true;
 }
@@ -1133,9 +1126,9 @@ bool InitD3D()
 void Update()
 {
 
-	GameObject* GO = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(0));
-	GameObject* GO2 = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(1));
-	GameObject* GO3 = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(2));
+	//GameObject* GO = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(0));
+	//GameObject* GO2 = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(1));
+	//GameObject* GO3 = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(2));
 
 
 	m_Time++;
@@ -1152,20 +1145,20 @@ void Update()
 		m_Manager->ReturnCamera()->Strafe(0.005f);
 	if (GetAsyncKeyState('E') & 0x8000)
 	{
-		Vector3D rot = GO->m_Transform->ReturnRot();
-		GO->m_Transform->SetRot(Vector3D(rot.ReturnX(), rot.ReturnY() + 0.005f, rot.ReturnZ()));
+		//Vector3D rot = GO->m_Transform->ReturnRot();
+		//GO->m_Transform->SetRot(Vector3D(rot.ReturnX(), rot.ReturnY() + 0.005f, rot.ReturnZ()));
 
-		rot = GO2->m_Transform->ReturnRot();
-		GO2->m_Transform->SetRot(Vector3D(rot.ReturnX() + 0.0003f, rot.ReturnY() + 0.000420f, rot.ReturnZ() + 0.00069f));
+		//rot = GO2->m_Transform->ReturnRot();
+		//GO2->m_Transform->SetRot(Vector3D(rot.ReturnX() + 0.0003f, rot.ReturnY() + 0.000420f, rot.ReturnZ() + 0.00069f));
 	}
 
 	if (GetAsyncKeyState('Q') & 0x8000)
 	{
-		Vector3D rot = GO->m_Transform->ReturnRot();
+		/*Vector3D rot = GO->m_Transform->ReturnRot();
 		GO->m_Transform->SetRot(Vector3D(rot.ReturnX(), rot.ReturnY() - 0.00005f, rot.ReturnZ()));
 
 		rot = GO2->m_Transform->ReturnRot();
-		GO2->m_Transform->SetRot(Vector3D(rot.ReturnX() - 0.0003f, rot.ReturnY() - 0.000420f, rot.ReturnZ() - 0.00069f));
+		GO2->m_Transform->SetRot(Vector3D(rot.ReturnX() - 0.0003f, rot.ReturnY() - 0.000420f, rot.ReturnZ() - 0.00069f));*/
 	}
 
 	if (GetAsyncKeyState(0x26) & 0x8000)
@@ -1186,17 +1179,17 @@ void Update()
 
 	if (m_Rotate)
 	{
-		Vector3D rot = GO->m_Transform->ReturnRot();
+		/*Vector3D rot = GO->m_Transform->ReturnRot();
 		GO->m_Transform->SetRot(Vector3D(rot.ReturnX(), rot.ReturnY() + 0.00005f, rot.ReturnZ()));
 
 		rot = GO2->m_Transform->ReturnRot();
-		GO2->m_Transform->SetRot(Vector3D(rot.ReturnX() + 0.0003f, rot.ReturnY() + 0.000420f, rot.ReturnZ() + 0.00069f));
+		GO2->m_Transform->SetRot(Vector3D(rot.ReturnX() + 0.0003f, rot.ReturnY() + 0.000420f, rot.ReturnZ() + 0.00069f));*/
 	}
 
 
-	GO->Update(0.f);
-	GO2->Update(0.f);
-	GO3->Update(0.f);
+	//GO->Update(0.f);
+	//GO2->Update(0.f);
+	//GO3->Update(0.f);
 
 	// update constant buffer for cube1
 	// create the wvp matrix and store in constant buffer
@@ -1226,112 +1219,115 @@ void Update()
 	cbPerObject.Mat = shinyMaterial;
 	cbPerObject.projection = m_Manager->ReturnCamera()->ReturnViewPlusProjection().m_projection;
 
-	XMMATRIX wvpMat = GO->m_Particle->ReturnWorldMatrix() * viewMat * projMat; // create wvp matrix
-	XMMATRIX transposed = XMMatrixTranspose(wvpMat); // must transpose wvp matrix for the gpu
-	XMStoreFloat4x4(&cbPerObject.wvpMat, transposed); // store transposed wvp matrix in constant buffer
-	XMStoreFloat4x4(&cbPerObject.worldPos,GO->m_Particle->ReturnWorldMatrix());
+	//XMMATRIX wvpMat = GO->m_Particle->ReturnWorldMatrix() * viewMat * projMat; // create wvp matrix
+	//XMMATRIX transposed = XMMatrixTranspose(wvpMat); // must transpose wvp matrix for the gpu
+	//XMStoreFloat4x4(&cbPerObject.wvpMat, transposed); // store transposed wvp matrix in constant buffer
+	//XMStoreFloat4x4(&cbPerObject.worldPos,GO->m_Particle->ReturnWorldMatrix());
 
-	// copy our ConstantBuffer instance to the mapped constant buffer resource
-	memcpy(cbvGPUAddress[frameIndex], &cbPerObject, sizeof(cbPerObject));
-
-
-	wvpMat = GO2->m_Particle->ReturnWorldMatrix() * viewMat * projMat; // create wvp matrix
-	transposed = XMMatrixTranspose(wvpMat); // must transpose wvp matrix for the gpu
-	XMStoreFloat4x4(&cbPerObject.wvpMat, transposed); // store transposed wvp matrix in constant buffer
-	XMStoreFloat4x4(&cbPerObject.worldPos, GO2->m_Particle->ReturnWorldMatrix());
+	m_GameManager.UpdateObjectConstantBuffer(cbPerObject, L"TestGeomerty", 0);
 
 
 	// copy our ConstantBuffer instance to the mapped constant buffer resource
-	memcpy(cbvGPUAddress[frameIndex] + ConstantBufferPerObjectAlignedSize, &cbPerObject, sizeof(cbPerObject));
-
-	if (m_ShadowMapping)
-	{
-		cbShadow = cbPerObject;
-		XMFLOAT3 dir(0,0,1);
-		XMVECTOR lightDir = XMLoadFloat3(&dir);
-		XMVECTOR lightPos = XMLoadFloat3(&dir) *-2.0 * m_BS.Radius;
-		//XMVECTOR lightPos = -2.0 * m_BS.Radius * lightDir;
-		XMVECTOR targetPos = XMLoadFloat3(&m_BS.Center);
-		XMVECTOR lightUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-		XMMATRIX lightView = XMMatrixLookAtLH(lightPos, targetPos, lightUp);
-
-		// Transform bounding sphere to light space.
-		XMFLOAT3 sphereCenterLS;
-		XMStoreFloat3(&sphereCenterLS, XMVector3TransformCoord(targetPos, lightView));
-
-		// Ortho frustum in light space encloses scene.
-		float l = sphereCenterLS.x - m_BS.Radius;
-		float b = sphereCenterLS.y - m_BS.Radius;
-		float n = sphereCenterLS.z - m_BS.Radius;
-		float r = sphereCenterLS.x + m_BS.Radius;
-		float t = sphereCenterLS.y + m_BS.Radius;
-		float f = sphereCenterLS.z + m_BS.Radius;
+	//memcpy(cbvGPUAddress[frameIndex], &cbPerObject, sizeof(cbPerObject));
 
 
-		XMMATRIX lightProj = XMMatrixOrthographicOffCenterLH(l,r,b,t,n,f);
-		XMMATRIX T(
-			0.5f, 0.f, 0.f, 0.f,
-			0.f, -0.5f, 0.f, 0.f,
-			0.f, 0.f, 1.f, 0.f,
-			0.5f, 0.5f, 0.f, 1.0f
-		);
+	////wvpMat = GO2->m_Particle->ReturnWorldMatrix() * viewMat * projMat; // create wvp matrix
+	//transposed = XMMatrixTranspose(wvpMat); // must transpose wvp matrix for the gpu
+	//XMStoreFloat4x4(&cbPerObject.wvpMat, transposed); // store transposed wvp matrix in constant buffer
+	//XMStoreFloat4x4(&cbPerObject.worldPos, GO2->m_Particle->ReturnWorldMatrix());
 
-		XMMATRIX S = lightView * lightProj * T;
+	// copy our ConstantBuffer instance to the mapped constant buffer resource
+	//memcpy(cbvGPUAddress[frameIndex] + ConstantBufferPerObjectAlignedSize, &cbPerObject, sizeof(cbPerObject));
+	m_GameManager.UpdateObjectConstantBuffer(cbPerObject, L"TestGeomerty", 1);
 
-		XMStoreFloat4x4(&m_ShadowTransform, S);
-		XMStoreFloat4x4(&m_LightProj, lightProj);
-		XMStoreFloat4x4(&m_LightView, lightView);
+	//if (m_ShadowMapping)
+	//{
+	//	cbShadow = cbPerObject;
+	//	XMFLOAT3 dir(0,0,1);
+	//	XMVECTOR lightDir = XMLoadFloat3(&dir);
+	//	XMVECTOR lightPos = XMLoadFloat3(&dir) *-2.0 * m_BS.Radius;
+	//	//XMVECTOR lightPos = -2.0 * m_BS.Radius * lightDir;
+	//	XMVECTOR targetPos = XMLoadFloat3(&m_BS.Center);
+	//	XMVECTOR lightUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	//	XMMATRIX lightView = XMMatrixLookAtLH(lightPos, targetPos, lightUp);
 
-		wvpMat = GO3->m_Particle->ReturnWorldMatrix() * viewMat * projMat; // create wvp matrix
-		transposed = XMMatrixTranspose(wvpMat); // must transpose wvp matrix for the gpu
-		XMStoreFloat4x4(&cbPerObject.wvpMat, transposed); // store transposed wvp matrix in constant buffer
-		cbPerObject.projection = m_Manager->ReturnCamera()->ReturnViewPlusProjection().m_projection;
-		XMStoreFloat4x4(&cbPerObject.worldPos, GO3->m_Particle->ReturnWorldMatrix());
-		cbPerObject.shadowTransform = m_ShadowTransform;
-		cbPerObject.mode = 3;
-		cbPerObject.point = basicLight;
-		cbPerObject.Mat = shinyMaterial;
-		memcpy(cbvGPUAddress[frameIndex] + ConstantBufferPerObjectAlignedSize + ConstantBufferPerObjectAlignedSize, &cbPerObject, sizeof(cbPerObject));
+	//	// Transform bounding sphere to light space.
+	//	XMFLOAT3 sphereCenterLS;
+	//	XMStoreFloat3(&sphereCenterLS, XMVector3TransformCoord(targetPos, lightView));
+
+	//	// Ortho frustum in light space encloses scene.
+	//	float l = sphereCenterLS.x - m_BS.Radius;
+	//	float b = sphereCenterLS.y - m_BS.Radius;
+	//	float n = sphereCenterLS.z - m_BS.Radius;
+	//	float r = sphereCenterLS.x + m_BS.Radius;
+	//	float t = sphereCenterLS.y + m_BS.Radius;
+	//	float f = sphereCenterLS.z + m_BS.Radius;
 
 
-		cbShadow.EyePosW = basicLight.LightVecW;
-		cbShadow.shadowTransform = m_ShadowTransform;
-		cbShadow.Mat = shinyMaterial;
-		cbShadow.point = basicLight;
+	//	XMMATRIX lightProj = XMMatrixOrthographicOffCenterLH(l,r,b,t,n,f);
+	//	XMMATRIX T(
+	//		0.5f, 0.f, 0.f, 0.f,
+	//		0.f, -0.5f, 0.f, 0.f,
+	//		0.f, 0.f, 1.f, 0.f,
+	//		0.5f, 0.5f, 0.f, 1.0f
+	//	);
+
+	//	XMMATRIX S = lightView * lightProj * T;
+
+	//	XMStoreFloat4x4(&m_ShadowTransform, S);
+	//	XMStoreFloat4x4(&m_LightProj, lightProj);
+	//	XMStoreFloat4x4(&m_LightView, lightView);
+
+	//	wvpMat = GO3->m_Particle->ReturnWorldMatrix() * viewMat * projMat; // create wvp matrix
+	//	transposed = XMMatrixTranspose(wvpMat); // must transpose wvp matrix for the gpu
+	//	XMStoreFloat4x4(&cbPerObject.wvpMat, transposed); // store transposed wvp matrix in constant buffer
+	//	cbPerObject.projection = m_Manager->ReturnCamera()->ReturnViewPlusProjection().m_projection;
+	//	XMStoreFloat4x4(&cbPerObject.worldPos, GO3->m_Particle->ReturnWorldMatrix());
+	//	cbPerObject.shadowTransform = m_ShadowTransform;
+	//	cbPerObject.mode = 3;
+	//	cbPerObject.point = basicLight;
+	//	cbPerObject.Mat = shinyMaterial;
+	//	memcpy(cbvGPUAddress[frameIndex] + ConstantBufferPerObjectAlignedSize + ConstantBufferPerObjectAlignedSize, &cbPerObject, sizeof(cbPerObject));
 
 
-		XMMATRIX wvpMat = GO->m_Particle->ReturnWorldMatrix() * lightView * lightProj; // create wvp matrix
-		XMMATRIX transposed = XMMatrixTranspose(wvpMat); // must transpose wvp matrix for the gpu
-		XMStoreFloat4x4(&cbShadow.wvpMat, transposed); // store transposed wvp matrix in constant buffer
-		cbShadow.projection = m_LightProj;
-		XMStoreFloat4x4(&cbShadow.worldPos, GO->m_Particle->ReturnWorldMatrix());
+	//	cbShadow.EyePosW = basicLight.LightVecW;
+	//	cbShadow.shadowTransform = m_ShadowTransform;
+	//	cbShadow.Mat = shinyMaterial;
+	//	cbShadow.point = basicLight;
 
-		// copy our ConstantBuffer instance to the mapped constant buffer resource
-		memcpy(cbvGPUAddress[frameIndex] + (ConstantBufferPerObjectAlignedSize * 3), &cbShadow, sizeof(cbShadow));
 
-		wvpMat = GO2->m_Particle->ReturnWorldMatrix() * lightView * lightProj;  // create wvp matrix
-		transposed = XMMatrixTranspose(wvpMat); // must transpose wvp matrix for the gpu
-		XMStoreFloat4x4(&cbShadow.wvpMat, transposed); // store transposed wvp matrix in constant buffer
-		cbShadow.projection = m_LightProj;
-		XMStoreFloat4x4(&cbShadow.worldPos, GO2->m_Particle->ReturnWorldMatrix());
+	//	XMMATRIX wvpMat = GO->m_Particle->ReturnWorldMatrix() * lightView * lightProj; // create wvp matrix
+	//	XMMATRIX transposed = XMMatrixTranspose(wvpMat); // must transpose wvp matrix for the gpu
+	//	XMStoreFloat4x4(&cbShadow.wvpMat, transposed); // store transposed wvp matrix in constant buffer
+	//	cbShadow.projection = m_LightProj;
+	//	XMStoreFloat4x4(&cbShadow.worldPos, GO->m_Particle->ReturnWorldMatrix());
 
-		// copy our ConstantBuffer instance to the mapped constant buffer resource
-		memcpy(cbvGPUAddress[frameIndex] + (ConstantBufferPerObjectAlignedSize * 4), &cbShadow, sizeof(cbShadow));
-	}
-	else
-	{
-		for (size_t i = m_BillboardCount; i--;)
-		{
-			GameObject* GO4 = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(i + 3));
-			GO4->Update(0.f);
-			XMMATRIX wvpMat = GO4->m_Particle->ReturnWorldMatrix() * viewMat * projMat; // create wvp matrix
-			cbPerObject.mode = 1;
-			XMMATRIX transposed = XMMatrixTranspose(wvpMat); // must transpose wvp matrix for the gpu
-			XMStoreFloat4x4(&cbPerObject.wvpMat, transposed); // store transposed wvp matrix in constant buffer
-			XMStoreFloat4x4(&cbPerObject.worldPos, GO4->m_Particle->ReturnWorldMatrix());
-			memcpy(m_BillboardGPUAddress[frameIndex] + (ConstantBufferPerObjectAlignedSize * i), &cbPerObject, sizeof(cbPerObject));
-		}
-	}
+	//	// copy our ConstantBuffer instance to the mapped constant buffer resource
+	//	memcpy(cbvGPUAddress[frameIndex] + (ConstantBufferPerObjectAlignedSize * 3), &cbShadow, sizeof(cbShadow));
+
+	//	wvpMat = GO2->m_Particle->ReturnWorldMatrix() * lightView * lightProj;  // create wvp matrix
+	//	transposed = XMMatrixTranspose(wvpMat); // must transpose wvp matrix for the gpu
+	//	XMStoreFloat4x4(&cbShadow.wvpMat, transposed); // store transposed wvp matrix in constant buffer
+	//	cbShadow.projection = m_LightProj;
+	//	XMStoreFloat4x4(&cbShadow.worldPos, GO2->m_Particle->ReturnWorldMatrix());
+
+	//	// copy our ConstantBuffer instance to the mapped constant buffer resource
+	//	memcpy(cbvGPUAddress[frameIndex] + (ConstantBufferPerObjectAlignedSize * 4), &cbShadow, sizeof(cbShadow));
+	//}
+	//else
+	//{
+	//	for (size_t i = m_BillboardCount; i--;)
+	//	{
+	//		GameObject* GO4 = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(i + 3));
+	//		GO4->Update(0.f);
+	//		XMMATRIX wvpMat = GO4->m_Particle->ReturnWorldMatrix() * viewMat * projMat; // create wvp matrix
+	//		cbPerObject.mode = 1;
+	//		XMMATRIX transposed = XMMatrixTranspose(wvpMat); // must transpose wvp matrix for the gpu
+	//		XMStoreFloat4x4(&cbPerObject.wvpMat, transposed); // store transposed wvp matrix in constant buffer
+	//		XMStoreFloat4x4(&cbPerObject.worldPos, GO4->m_Particle->ReturnWorldMatrix());
+	//		memcpy(m_BillboardGPUAddress[frameIndex] + (ConstantBufferPerObjectAlignedSize * i), &cbPerObject, sizeof(cbPerObject));
+	//	}
+	//}
 
 	int i = 0;
 

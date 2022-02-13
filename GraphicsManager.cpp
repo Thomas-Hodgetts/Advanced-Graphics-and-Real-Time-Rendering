@@ -1,5 +1,9 @@
 #include "GraphicsManager.h"
 
+GraphicsManager::GraphicsManager()
+{
+}
+
 GraphicsManager::GraphicsManager(int width, int height) : m_Height(height), m_Width(width)
 {
 	HRESULT hr;
@@ -411,68 +415,63 @@ bool GraphicsManager::CreateTextureHeap(LPCWSTR* textureLocations, int texCount,
 	DescriptorHeapHelper* dHH = new DescriptorHeapHelper(heapDesc, m_Device, &hr);
 	m_TextureHeapMap[name] = dHH;
 
-	// create the descriptor heap that will store our srv
-	hr = m_Device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(m_TextureHeapMap[name]->CPUStartAddress()));
+	ID3D12DescriptorHeap* mainDescriptorHeap = m_TextureHeapMap[name]->GetHeap();
+	hr = m_Device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&mainDescriptorHeap));
 	if (FAILED(hr))
 	{
-		Running = false;
+		return false;
 	}
-
-
-	buffOffset = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	// Load the image from file
 	D3D12_RESOURCE_DESC textureDesc;
 	int imageBytesPerRow;
 
-	LPCWSTR filename[4] = { L"color.jpg" ,L"normals.jpg" ,L"displacement.jpg" ,L"dx12.jpg" };
-	int objectCount = sizeof(filename) / sizeof(LPCWSTR);
+	BYTE* imageData;
 
-	CD3DX12_CPU_DESCRIPTOR_HANDLE hdescriptor(mainDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-	CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(dsDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-
-	for (size_t i = 0; i < objectCount; i++)
+	for (size_t i = 0; i < texCount; i++)
 	{
-		int imageSize = LoadImageDataFromFile(&imageData, textureDesc, filename[i], imageBytesPerRow);
+
+		std::wstring texName = name;
+
+		texName.append(std::to_wstring(i));
+
+		int imageSize = LoadImageDataFromFile(&imageData, textureDesc, textureLocations[i], imageBytesPerRow);
 		// make sure we have data
 		if (imageSize <= 0)
 		{
-			Running = false;
 			return false;
 		}
 
 		// create a default heap where the upload heap will copy its contents into (contents being the texture)
-		hr = device->CreateCommittedResource(
+		hr = m_Device->CreateCommittedResource(
 			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), // a default heap
 			D3D12_HEAP_FLAG_NONE, // no flags
 			&textureDesc, // the description of our texture
 			D3D12_RESOURCE_STATE_COPY_DEST, // We will copy the texture from the upload heap to here, so we start it out in a copy dest state
 			nullptr, // used for render targets and depth/stencil buffers
-			IID_PPV_ARGS(&textureBuffer[i]));
+			IID_PPV_ARGS(&m_TextureMap[texName]));
 		if (FAILED(hr))
 		{
-			Running = false;
 			return false;
 		}
-		textureBuffer[i]->SetName(L"Texture Buffer Resource Heap");
+		m_TextureMap[texName]->SetName(L"Texture Buffer Resource Heap");
 
 		UINT64 textureUploadBufferSize;
-		device->GetCopyableFootprints(&textureDesc, 0, 1, 0, nullptr, nullptr, nullptr, &textureUploadBufferSize);
+		m_Device->GetCopyableFootprints(&textureDesc, 0, 1, 0, nullptr, nullptr, nullptr, &textureUploadBufferSize);
 
 		// now we create an upload heap to upload our texture to the GPU
-		hr = device->CreateCommittedResource(
+		hr = m_Device->CreateCommittedResource(
 			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), // upload heap
 			D3D12_HEAP_FLAG_NONE, // no flags
 			&CD3DX12_RESOURCE_DESC::Buffer(textureUploadBufferSize), // resource description for a buffer (storing the image data in this heap just to copy to the default heap)
 			D3D12_RESOURCE_STATE_GENERIC_READ, // We will copy the contents from this heap to the default heap above
 			nullptr,
-			IID_PPV_ARGS(&textureBufferUploadHeap[i]));
+			IID_PPV_ARGS(&m_TextureUploadHeapMap[texName]));
 		if (FAILED(hr))
 		{
-			Running = false;
 			return false;
 		}
-		textureBufferUploadHeap[i]->SetName(L"Texture Buffer Upload Resource Heap");
+		m_TextureUploadHeapMap[texName]->SetName(L"Texture Buffer Upload Resource Heap");
 
 		// store vertex buffer in upload heap
 		D3D12_SUBRESOURCE_DATA textureData = {};
@@ -480,9 +479,11 @@ bool GraphicsManager::CreateTextureHeap(LPCWSTR* textureLocations, int texCount,
 		textureData.RowPitch = imageBytesPerRow; // size of all our triangle vertex data
 		textureData.SlicePitch = imageBytesPerRow * textureDesc.Height; // also the size of our triangle vertex data
 		// Now we copy the upload buffer contents to the default heap
-		UpdateSubresources(commandList, textureBuffer[i], textureBufferUploadHeap[i], 0, 0, 1, &textureData);
+		//UpdateSubresources(m_CommandListMap[L"Default"], m_TextureMap[texName], m_TextureUploadHeapMap[texName], 0, 0, 1, &textureData);
+
+		UpdateSubresources(m_GraphicsCommandListMap[L"Default"], m_TextureMap[texName], m_TextureUploadHeapMap[texName], 0, 0, 1, &textureData);
 		// transition the texture default heap to a pixel shader resource (we will be sampling from this heap in the pixel shader to get the color of pixels)
-		commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(textureBuffer[i], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+		m_GraphicsCommandListMap[L"Default"]->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_TextureMap[texName], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
 
 		//BOOK
 
@@ -493,12 +494,48 @@ bool GraphicsManager::CreateTextureHeap(LPCWSTR* textureLocations, int texCount,
 		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 		srvDesc.Texture2D.MipLevels = 1;
 
-		device->CreateShaderResourceView(textureBuffer[i], &srvDesc, hdescriptor);
-		hdescriptor.Offset(1, buffOffset);
+		m_Device->CreateShaderResourceView(m_TextureMap[texName], &srvDesc, m_TextureHeapMap[name]->CPUCurrentAddress());
+		m_TextureHeapMap[name]->CPUOffset();
+		return true;
+	}
+}
+
+bool GraphicsManager::CreateCustomTexture(D3D12_RESOURCE_FLAGS flags)
+{
+	D3D12_RESOURCE_DESC textureDesc;
+	textureDesc = {};
+	textureDesc.MipLevels = 1;
+	textureDesc.Height = m_Height;
+	textureDesc.Width = m_Width;
+	textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	textureDesc.DepthOrArraySize = 1;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.SampleDesc.Quality = 0;
+	textureDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+	textureDesc.Alignment = 0;
+	textureDesc.Flags = flags;
+	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+
+	return true;
+}
+
+bool GraphicsManager::UpdateObjectConstantBuffer(ConstantBufferPerObject cBPO, std::wstring identifier, int pos)
+{
+	ConstantBufferPerObject * constBuffObject = m_ConstantBufferMap[identifier]->GetBuffer();
+	*constBuffObject = cBPO;
+	m_ConstantBufferMap[identifier]->FlushBuffer(pos);
+	return true;
+}
+
+bool GraphicsManager::FlushCommandList(std::wstring idenifier)
+{
+	m_GraphicsCommandListMap[idenifier]->Close();
+	ID3D12CommandList* ppCommandLists[] = { m_GraphicsCommandListMap[idenifier] };
+	m_CommadQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+	return true;
 }
 
 int GraphicsManager::GetDXGIFormatBitsPerPixel(DXGI_FORMAT& dxgiFormat)
-
 {
 	if (dxgiFormat == DXGI_FORMAT_R32G32B32A32_FLOAT) return 128;
 	else if (dxgiFormat == DXGI_FORMAT_R16G16B16A16_FLOAT) return 64;

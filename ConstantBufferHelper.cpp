@@ -73,4 +73,11 @@ void ConstantBufferHelper::FlushBuffer()
 		m_CurrentAddress + m_ConstantBufferOffset;
 		++buff;
 	}
+	m_CurrentAddress = m_StartAddress;
+}
+
+void ConstantBufferHelper::FlushBuffer(int pos)
+{
+	UINT8* baseAddr = m_StartAddress + (m_ConstantBufferOffset);
+	memcpy(baseAddr, m_Buffer, sizeof(*m_Buffer));
 }

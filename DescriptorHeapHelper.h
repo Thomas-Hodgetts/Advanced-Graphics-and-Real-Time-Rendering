@@ -35,6 +35,8 @@ public:
 
 	void SetName(std::wstring name) { m_DescriptorHeap->SetName(name.c_str()); };
 
+	ID3D12DescriptorHeap* GetHeap() { return m_DescriptorHeap; };
+
 private:
 
 	int m_DescriptorSize;

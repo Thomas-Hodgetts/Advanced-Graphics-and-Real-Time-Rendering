@@ -13,6 +13,7 @@ public:
 	ConstantBufferPerObject* GetBuffer() { return m_Buffer; };
 
 	void FlushBuffer();
+	void FlushBuffer(int pos);
 
 private:
 

@@ -75,7 +75,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeapHelper::GetCPUAddress(int pos)
 
 D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHeapHelper::GetGPUAddress(int pos)
 {
-	if (pos > !m_Size)
+	if (pos >! m_Size)
 	{
 		CD3DX12_GPU_DESCRIPTOR_HANDLE tempHandle(m_DescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 		tempHandle.Offset(pos);

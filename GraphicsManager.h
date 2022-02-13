@@ -53,6 +53,7 @@ private:
 class GraphicsManager
 {
 public:
+	GraphicsManager();
 	GraphicsManager(int width, int height);
 	~GraphicsManager();
 
@@ -95,12 +96,21 @@ public:
 
 	bool CreateTextureHeap(LPCWSTR* textureLocations, int texCount, std::wstring name);
 
+	bool CreateCustomTexture(D3D12_RESOURCE_FLAGS flags);
+
 	//Getter functions
 
 
 	ID3D12Device* GetDevice() { return m_Device; };
 	ID3D12CommandQueue* GetCommandQueue() { return m_CommadQueue; };
 	IDXGIFactory4* GetFactory() { return m_Factory; };
+
+	//Helpers
+
+	bool UpdateObjectConstantBuffer(ConstantBufferPerObject cBPO, std::wstring identifier, int pos);
+
+	bool FlushCommandList(std::wstring Idenifier);
+
 
 private:
 
@@ -148,6 +158,8 @@ private:
 	std::unordered_map<std::wstring, D3D12_VERTEX_BUFFER_VIEW*> m_VertexViewMap;
 	std::unordered_map<std::wstring, D3D12_INDEX_BUFFER_VIEW*> m_IndexViewMap;
 	std::unordered_map<std::wstring, ID3D12Resource*> m_VertexMap;
+	std::unordered_map<std::wstring, ID3D12Resource*> m_TextureMap;
+	std::unordered_map<std::wstring, ID3D12Resource*> m_TextureUploadHeapMap;
 	std::unordered_map<std::wstring, ID3D12Resource*> m_IndexMap;
 	std::unordered_map<std::wstring, ConstantBufferHelper*> m_ConstantBufferMap;
 	std::unordered_map<std::wstring, DescriptorHeapHelper*> m_TextureHeapMap;
