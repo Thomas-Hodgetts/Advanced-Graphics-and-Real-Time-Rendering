@@ -128,7 +128,7 @@ void GraphicsManager::ExecuteCommands()
 {
 }
 
-void GraphicsManager::Draw(void* gameObjectData, int objectCount,OutputManager* output,std::wstring pipelineIdentifier, std::wstring dsvIdentifier, std::wstring srvIdentifer)
+void GraphicsManager::Draw(OutputManager* output,std::wstring pipelineIdentifier, std::wstring dsvIdentifier, std::wstring srvIdentifer, std::wstring constantBufferIdentifier, std::vector<void*> gameObjectVector)
 {
 	HRESULT hr;
 	int frameIndex = output->GetCurrentFrameIndex();
@@ -168,6 +168,61 @@ void GraphicsManager::Draw(void* gameObjectData, int objectCount,OutputManager* 
 	m_GraphicsCommandListMap[L"Default"]->RSSetViewports(1, &m_Viewport); // set the viewports
 	m_GraphicsCommandListMap[L"Default"]->RSSetScissorRects(1, &m_Scissor); // set the scissor rects
 	m_GraphicsCommandListMap[L"Default"]->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // set the primitive topology
+
+
+	int i = 0;
+
+
+	for (size_t i = 0; i < length; i++)
+	{
+		GameObject* objects = dynamic_cast<GameObject*>(gameObjectVector[0]);
+	}
+
+	do
+	{
+		GameObject* gObject = dynamic_cast<GameObject*>(pManager->GetStoredObject(i));
+
+		m_GraphicsCommandListMap[L"Default"]->IASetVertexBuffers(0, 1, gObject->m_Apperance->ReturnGeo().vertexBufferView); // set the vertex buffer (using the vertex buffer view)
+		m_GraphicsCommandListMap[L"Default"]->IASetIndexBuffer(gObject->m_Apperance->ReturnGeo().indexBufferView);
+
+		D3D12_GPU_VIRTUAL_ADDRESS addr = m_ConstantBufferMap[constantBufferIdentifier]->GetHeapPointer()->GetGPUVirtualAddress();
+
+		m_GraphicsCommandListMap[L"Default"]->SetGraphicsRootConstantBufferView(0, addr);
+
+		m_GraphicsCommandListMap[L"Default"]->SetGraphicsRootDescriptorTable(1, m_TextureHeapMap[srvIdentifer]->GetGPUAddress(0));
+		m_GraphicsCommandListMap[L"Default"]->SetGraphicsRootDescriptorTable(2, m_TextureHeapMap[srvIdentifer]->GetGPUAddress(1));
+		m_GraphicsCommandListMap[L"Default"]->SetGraphicsRootDescriptorTable(3, m_TextureHeapMap[srvIdentifer]->GetGPUAddress(2));
+
+		m_GraphicsCommandListMap[L"Default"]->DrawIndexedInstanced(gObject->m_Apperance->ReturnGeo().numberOfIndices, 1, 0, 0, 0);
+
+		++i;
+	} while (pManager->GetStoredObject(i) != nullptr);
+
+	m_GraphicsCommandListMap[L"Default"]->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(output->GetCurrentFrame(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+
+	hr = m_GraphicsCommandListMap[L"Default"]->Close();
+	if (FAILED(hr))
+	{
+		Debug::OutputString("Drawing failed: Failed to close the command list");
+	}
+
+}
+
+void GraphicsManager::Render(OutputManager* outputManager)
+{
+	HRESULT hr;
+	hr = m_CommadQueue->Signal(m_FenceMap[L"OutputManager"][outputManager->GetCurrentFrameIndex()], m_FenceValueMap[L"OutputManager"][outputManager->GetCurrentFrameIndex()]);
+	if (FAILED(hr))
+	{
+		
+	}
+
+	// present the current backbuffer
+	outputManager->Present();
+	if (FAILED(hr))
+	{
+		hr = m_Device->GetDeviceRemovedReason();
+	}
 }
 
 HRESULT GraphicsManager::CreatePipeline(D3D12_GRAPHICS_PIPELINE_STATE_DESC pipeDesc, std::wstring name)

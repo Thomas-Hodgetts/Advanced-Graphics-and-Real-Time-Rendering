@@ -18,6 +18,7 @@ public:
 	OutputManager(GraphicsManager* pGManager, DXGI_SWAP_CHAIN_DESC swapChaindesc, D3D12_DESCRIPTOR_HEAP_DESC descriptorHeap);
 	~OutputManager();
 
+	bool	Present();
 
 	BUFFER_MODE GetBufferMode() { return m_BufferMode; }
 

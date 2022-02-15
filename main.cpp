@@ -755,6 +755,8 @@ bool InitD3D()
 	//// we are done with image data now that we've uploaded it to the gpu, so free it up
 	//delete[] imageData;
 
+	m_OutputManager = output;
+
 	return true;
 }
 
@@ -964,349 +966,11 @@ void Update()
 	//	}
 	//}
 
-	int i = 0;
-
 }
 
 void UpdatePipeline()
 {
-	Geometry GO1 = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(0))->GetGeometryData();
-	/*Geometry GO2 = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(1))->GetGeometryData();
-	Geometry GO3 = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(2))->GetGeometryData();*/
-
-	
-
-	HRESULT hr;
-
-	// We have to wait for the gpu to finish with the command allocator before we reset it
-	WaitForPreviousFrame();
-
-	// we can only reset an allocator once the gpu is done with it
-	// resetting an allocator frees the memory that the command list was stored in
-	hr = commandAllocator[frameIndex]->Reset();
-	if (FAILED(hr))
-	{
-		Running = false;
-	}
-
-
-
-	m_DrawObjectStructs.frameIndex = frameIndex;
-	m_DrawObjectStructs.commandAllocator = commandAllocator[frameIndex];
-	m_DrawObjectStructs.renderTargets = renderTargets[frameIndex];
-
-
-	
-	// reset the command list. by resetting the command list we are putting it into
-	// a recording state so we can start recording commands into the command allocator.
-	// the command allocator that we reference here may have multiple command lists
-	// associated with it, but only one can be recording at any time. Make sure
-	// that any other command lists associated to this command allocator are in
-	// the closed state (not recording).
-	// Here you will pass an initial pipeline state object as the second parameter,
-	// but in this tutorial we are only clearing the rtv, and do not actually need
-	// anything but an initial default pipeline, which is what we get by setting
-	// the second parameter to NULL
-	hr = commandList->Reset(commandAllocator[frameIndex], pipelineStateObject);
-	if (FAILED(hr))
-	{
-		Running = false;
-	}
-
-	// here we start recording commands into the commandList (which all the commands will be stored in the commandAllocator)
-
-	// transition the "frameIndex" render target from the present state to the render target state so the command list draws to it starting from here
-	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(renderTargets[frameIndex], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-
-	// here we again get the handle to our current render target view so we can set it as the render target in the output merger stage of the pipeline
-	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), frameIndex, rtvDescriptorSize);
-
-	// get a handle to the depth/stencil buffer
-	CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(dsDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-
-	// set the render target for the output merger stage (the output of the pipeline)
-	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
-
-	// Clear the render target by using the ClearRenderTargetView command
-	const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
-	commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
-
-	// clear the depth/stencil buffer
-	commandList->ClearDepthStencilView(dsDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-
-	// set root signature
-	commandList->SetGraphicsRootSignature(rootSignature); // set the root signature
-
-	// set the descriptor heap
-	ID3D12DescriptorHeap* descriptorHeaps[] = { mainDescriptorHeap };
-	commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-
-	// set the descriptor table to the descriptor heap (parameter 1, as constant buffer root descriptor is parameter index 0)
-	commandList->SetGraphicsRootDescriptorTable(1, mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-
-	commandList->RSSetViewports(1, &viewport); // set the viewports
-	commandList->RSSetScissorRects(1, &scissorRect); // set the scissor rects
-	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // set the primitive topology
-	commandList->IASetVertexBuffers(0, 1, &vertexBufferView); // set the vertex buffer (using the vertex buffer view)
-	commandList->IASetIndexBuffer(&indexBufferView);
-
-
-	if (m_ShadowMapping)
-	{
-		commandList->SetGraphicsRootConstantBufferView(0, constantBufferUploadHeaps[frameIndex]->GetGPUVirtualAddress());
-		CD3DX12_GPU_DESCRIPTOR_HANDLE Cube1tex(mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-		commandList->SetGraphicsRootDescriptorTable(1, Cube1tex);
-		Cube1tex.Offset(2, buffOffset);
-		commandList->SetGraphicsRootDescriptorTable(2, Cube1tex);
-		Cube1tex.Offset(2, buffOffset);
-		commandList->SetGraphicsRootDescriptorTable(3, Cube1tex);
-
-		commandList->DrawIndexedInstanced(numCubeIndices, 1, 0, 0, 0);
-
-		commandList->SetGraphicsRootConstantBufferView(0, constantBufferUploadHeaps[frameIndex]->GetGPUVirtualAddress() + ConstantBufferPerObjectAlignedSize);
-
-		//Book
-		CD3DX12_GPU_DESCRIPTOR_HANDLE Cube2tex(mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-		Cube2tex.Offset(4, buffOffset);
-		commandList->SetGraphicsRootDescriptorTable(1, Cube2tex);
-		Cube2tex.Offset(0, buffOffset);
-		commandList->SetGraphicsRootDescriptorTable(2, Cube2tex);
-		Cube2tex.Offset(0, buffOffset);
-		commandList->SetGraphicsRootDescriptorTable(3, Cube2tex);
-
-		// draw second cube
-		commandList->DrawIndexedInstanced(numCubeIndices, 1, 0, 0, 0);
-
-		commandList->SetGraphicsRootConstantBufferView(0, constantBufferUploadHeaps[frameIndex]->GetGPUVirtualAddress() + ConstantBufferPerObjectAlignedSize + ConstantBufferPerObjectAlignedSize);
-		//Book
-		CD3DX12_GPU_DESCRIPTOR_HANDLE Cube3tex(mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-		Cube3tex.Offset(3, buffOffset);
-		commandList->SetGraphicsRootDescriptorTable(1, Cube3tex);
-		Cube3tex.Offset(0, buffOffset);
-		commandList->SetGraphicsRootDescriptorTable(2, Cube3tex);
-		Cube3tex.Offset(1, buffOffset);
-		commandList->SetGraphicsRootDescriptorTable(4, Cube3tex);
-		commandList->DrawIndexedInstanced(numCubeIndices, 1, 0, 0, 0);
-	}
-
-	else if (m_RenderToTexture)
-	{
-		commandList->SetGraphicsRootConstantBufferView(0, constantBufferUploadHeaps[frameIndex]->GetGPUVirtualAddress());
-		CD3DX12_GPU_DESCRIPTOR_HANDLE Cube1tex(mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-		commandList->SetGraphicsRootDescriptorTable(1, Cube1tex);
-		Cube1tex.Offset(2, buffOffset);
-		commandList->SetGraphicsRootDescriptorTable(2, Cube1tex);
-		Cube1tex.Offset(2, buffOffset);
-		commandList->SetGraphicsRootDescriptorTable(3, Cube1tex);
-
-		commandList->DrawIndexedInstanced(numCubeIndices, 1, 0, 0, 0);
-
-
-		commandList->SetGraphicsRootConstantBufferView(0, constantBufferUploadHeaps[frameIndex]->GetGPUVirtualAddress() + ConstantBufferPerObjectAlignedSize);
-
-		commandList->IASetVertexBuffers(0, 1, &m_ScreenQuadVertexView); // set the vertex buffer (using the vertex buffer view)
-		commandList->IASetIndexBuffer(&m_ScreenQuadIndexView);
-
-
-		commandList->SetPipelineState(pipelineStateObject2);
-
-		CD3DX12_GPU_DESCRIPTOR_HANDLE Cube2tex(mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-		Cube2tex.Offset(4, buffOffset);
-		commandList->SetGraphicsRootDescriptorTable(1, Cube2tex);
-
-		// draw second cube
-		commandList->DrawIndexedInstanced(numCubeIndices2, 1, 0, 0, 0);
-
-		commandList->SetPipelineState(pipelineStateObject);
-
-		commandList->IASetVertexBuffers(0, 1, &vertexBufferView); // set the vertex buffer (using the vertex buffer view)
-		commandList->IASetIndexBuffer(&indexBufferView);
-
-	}
-	else
-	{
-
-		// set cube1's constant buffer
-		commandList->SetGraphicsRootConstantBufferView(0, constantBufferUploadHeaps[frameIndex]->GetGPUVirtualAddress());
-
-		CD3DX12_GPU_DESCRIPTOR_HANDLE Cube1tex(mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-		commandList->SetGraphicsRootDescriptorTable(1, Cube1tex);
-		Cube1tex.Offset(2, buffOffset);
-		commandList->SetGraphicsRootDescriptorTable(2, Cube1tex);
-		Cube1tex = CD3DX12_GPU_DESCRIPTOR_HANDLE(mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-		Cube1tex.Offset(1, buffOffset);
-		commandList->SetGraphicsRootDescriptorTable(3, Cube1tex);
-
-		// draw second cube
-		commandList->DrawIndexedInstanced(numCubeIndices, 1, 0, 0, 0);
-
-		commandList->SetGraphicsRootConstantBufferView(0, constantBufferUploadHeaps[frameIndex]->GetGPUVirtualAddress() + ConstantBufferPerObjectAlignedSize);
-
-		Cube1tex = (mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-		commandList->SetGraphicsRootDescriptorTable(1, Cube1tex);
-		Cube1tex.Offset(2, buffOffset);
-		commandList->SetGraphicsRootDescriptorTable(2, Cube1tex);
-		Cube1tex = CD3DX12_GPU_DESCRIPTOR_HANDLE(mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-		Cube1tex.Offset(1, buffOffset);
-		commandList->SetGraphicsRootDescriptorTable(3, Cube1tex);
-
-		// draw second cube
-		commandList->DrawIndexedInstanced(numCubeIndices, 1, 0, 0, 0);
-
-		CD3DX12_GPU_DESCRIPTOR_HANDLE bill(mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-		commandList->SetGraphicsRootDescriptorTable(1, bill);
-		bill.Offset(2, buffOffset);
-		commandList->SetGraphicsRootDescriptorTable(2, bill);
-		bill = CD3DX12_GPU_DESCRIPTOR_HANDLE(mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-		bill.Offset(3, buffOffset);
-		commandList->SetGraphicsRootDescriptorTable(3, bill);
-
-		commandList->IASetVertexBuffers(0, 1, &m_BillboardVertexView[0]); // set the vertex buffer (using the vertex buffer view)
-		commandList->IASetIndexBuffer(&m_BillboardIndexView[0]);
-
-		for (size_t i = m_BillboardCount; i--;)
-		{
-			commandList->SetGraphicsRootConstantBufferView(0, m_BillboardConstantBufferUploadHeaps[frameIndex]->GetGPUVirtualAddress() + (ConstantBufferPerObjectAlignedSize * i));
-			commandList->DrawIndexedInstanced(numCubeIndices2, 1, 0, 0, 0);
-		}
-
-		commandList->SetPipelineState(pipelineStateObject);
-		commandList->IASetVertexBuffers(0, 1, &vertexBufferView); // set the vertex buffer (using the vertex buffer view)
-		commandList->IASetIndexBuffer(&indexBufferView);
-
-	}
-
-	if (m_RenderToTexture)
-	{
-
-		// here we start recording commands into the commandList (which all the commands will be stored in the commandAllocator)
-
-		// transition the "frameIndex" render target from the present state to the render target state so the command list draws to it starting from here
-		commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(MSAA_RenderTarget, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-
-		// here we again get the handle to our current render target view so we can set it as the render target in the output merger stage of the pipeline
-		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 4, rtvDescriptorSize);
-
-		// get a handle to the depth/stencil buffer
-		CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(dsDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-		dsvHandle.Offset(1, dsvDescriptorSize);
-
-		//dsvHandle.Offset(1, dsvDescriptorSize);
-
-		// set the render target for the output merger stage (the output of the pipeline)
-		commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
-
-		// Clear the render target by using the ClearRenderTargetView command
-		const float clearColor[] = { 0.0f, 0.4f, 0.4f, 1.0f };
-		commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
-
-		// clear the depth/stencil buffer
-		commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-
-		// set root signature
-		commandList->SetGraphicsRootSignature(rootSignature); // set the root signature
-
-		// set the descriptor heap
-		ID3D12DescriptorHeap* descriptorHeaps[] = { mainDescriptorHeap };
-		commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-
-		// set the descriptor table to the descriptor heap (parameter 1, as constant buffer root descriptor is parameter index 0)
-		commandList->SetGraphicsRootDescriptorTable(1, mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-
-		commandList->RSSetViewports(1, &viewport); // set the viewports
-		commandList->RSSetScissorRects(1, &scissorRect); // set the scissor rects
-		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // set the primitive topology
-		commandList->IASetVertexBuffers(0, 1, &vertexBufferView); // set the vertex buffer (using the vertex buffer view)
-		commandList->IASetIndexBuffer(&indexBufferView);
-
-		// first cube
-
-		//Book
-		CD3DX12_GPU_DESCRIPTOR_HANDLE Cube1tex(mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-		commandList->SetGraphicsRootDescriptorTable(1, Cube1tex);
-		Cube1tex.Offset(2, buffOffset);
-		commandList->SetGraphicsRootDescriptorTable(2, Cube1tex);
-		Cube1tex = CD3DX12_GPU_DESCRIPTOR_HANDLE(mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-		Cube1tex.Offset(3, buffOffset);
-		commandList->SetGraphicsRootDescriptorTable(3, Cube1tex);
-
-		// set cube1's constant buffer
-		commandList->SetGraphicsRootConstantBufferView(0, constantBufferUploadHeaps[frameIndex]->GetGPUVirtualAddress());
-
-		// draw first cube
-		commandList->DrawIndexedInstanced(numCubeIndices, 1, 0, 0, 0);
-
-		// second cube
-
-
-		// set cube2's constant buffer. You can see we are adding the size of ConstantBufferPerObject to the constant buffer
-		// resource heaps address. This is because cube1's constant buffer is stored at the beginning of the resource heap, while
-		// cube2's constant buffer data is stored after (256 bits from the start of the heap).
-		commandList->SetGraphicsRootConstantBufferView(0, constantBufferUploadHeaps[frameIndex]->GetGPUVirtualAddress() + ConstantBufferPerObjectAlignedSize);
-
-		//Book
-		CD3DX12_GPU_DESCRIPTOR_HANDLE Cube2tex(mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-		Cube2tex.Offset(3, buffOffset);
-		commandList->SetGraphicsRootDescriptorTable(1, Cube2tex);
-		Cube2tex.Offset(0, buffOffset);
-		commandList->SetGraphicsRootDescriptorTable(2, Cube2tex);
-		Cube2tex = CD3DX12_GPU_DESCRIPTOR_HANDLE(mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-		Cube2tex.Offset(3, buffOffset);
-		commandList->SetGraphicsRootDescriptorTable(3, Cube2tex);
-
-		// draw second cube
-		commandList->DrawIndexedInstanced(numCubeIndices, 1, 0, 0, 0);
-
-		commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(MSAA_RenderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_RESOLVE_SOURCE));
-
-		//renderTargets[frameIndex]
-		commandList->ResolveSubresource(textureBuffer[4], 0, MSAA_RenderTarget, 0, DXGI_FORMAT_R8G8B8A8_UNORM);
-	}
-
-	if (m_ShadowMapping)
-	{
-		// copy our ConstantBuffer instance to the mapped constant buffer resource
-		memcpy(cbvGPUAddress[frameIndex] + (ConstantBufferPerObjectAlignedSize * 4), &cbPerObject, sizeof(cbPerObject));
-
-		//Need to ajust the constant buffer to change the light perspective and then reverse it i.e 	wvpMat = XMLoadFloat4x4(&CUBE WORLD POS) * lightView * lightProj; // create wvp matrix
-
-		commandList->RSSetViewports(1, &m_SM.Viewport());
-		commandList->RSSetScissorRects(1, &m_SM.Rect());
-
-		commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_SM.Resource(), D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE));
-
-		commandList->ClearDepthStencilView(m_SM.Dsv(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-
-		commandList->OMSetRenderTargets(0, nullptr, false, &m_SM.Dsv());
-
-		commandList->SetPipelineState(ShadowPipelineState);
-
-		commandList->SetGraphicsRootConstantBufferView(0, constantBufferUploadHeaps[frameIndex]->GetGPUVirtualAddress() + (ConstantBufferPerObjectAlignedSize + ConstantBufferPerObjectAlignedSize + ConstantBufferPerObjectAlignedSize));
-
-		commandList->DrawIndexedInstanced(numCubeIndices, 1, 0, 0, 0);
-
-		commandList->SetGraphicsRootConstantBufferView(0, constantBufferUploadHeaps[frameIndex]->GetGPUVirtualAddress() + ConstantBufferPerObjectAlignedSize + ConstantBufferPerObjectAlignedSize + ConstantBufferPerObjectAlignedSize + ConstantBufferPerObjectAlignedSize);
-
-		commandList->DrawIndexedInstanced(numCubeIndices, 1, 0, 0, 0);
-
-		commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_SM.Resource(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_GENERIC_READ));
-
-	}
-
-	// transition the "frameIndex" render target from the render target state to the present state. If the debug layer is enabled, you will receive a
-	// warning if present is called on the render target when it's not in the present state
-	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(renderTargets[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
-
-
-
-	commandList->SetPipelineState(pipelineStateObject);
-
-	hr = commandList->Close();
-	if (FAILED(hr))
-	{
-		Running = false;
-	}
-	
+	m_GameManager.Draw(&m_OutputManager, L"Pipeline1", L"Default Depth Stencil", L"TestGeometry", L"TestGeomerty", m_Manager);
 }
 void Render()
 {
@@ -1314,28 +978,32 @@ void Render()
 
 	UpdatePipeline(); // update the pipeline by sending commands to the commandqueue
 
-	// create an array of command lists (only one command list here)
-	ID3D12CommandList* ppCommandLists[] = { commandList };
+	m_GameManager.FlushCommandList(L"Default");
 
-	// execute the array of command lists
-	commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+	m_GameManager.Render(&m_OutputManager);
 
-	// this command goes in at the end of our command queue. we will know when our command queue 
-	// has finished because the fence value will be set to "fenceValue" from the GPU since the command
-	// queue is being executed on the GPU
-	hr = commandQueue->Signal(fence[frameIndex], fenceValue[frameIndex]);
-	if (FAILED(hr))
-	{
-		Running = false;
-	}
+	//// create an array of command lists (only one command list here)
+	//ID3D12CommandList* ppCommandLists[] = { commandList };
 
-	// present the current backbuffer
-	hr = swapChain->Present(0, 0);
-	if (FAILED(hr))
-	{
-		hr = device->GetDeviceRemovedReason();
-		Running = false;
-	}
+	//// execute the array of command lists
+	//commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+
+	//// this command goes in at the end of our command queue. we will know when our command queue 
+	//// has finished because the fence value will be set to "fenceValue" from the GPU since the command
+	//// queue is being executed on the GPU
+	//hr = commandQueue->Signal(fence[frameIndex], fenceValue[frameIndex]);
+	//if (FAILED(hr))
+	//{
+	//	Running = false;
+	//}
+
+	//// present the current backbuffer
+	//hr = swapChain->Present(0, 0);
+	//if (FAILED(hr))
+	//{
+	//	hr = device->GetDeviceRemovedReason();
+	//	Running = false;
+	//}
 }
 
 void Cleanup()

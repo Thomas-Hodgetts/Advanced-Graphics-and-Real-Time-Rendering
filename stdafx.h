@@ -243,5 +243,6 @@ XMFLOAT4X4 m_LightMatrix;
 ID3D12Debug* m_DebugLayer;
 
 GraphicsManager m_GameManager;
+OutputManager m_OutputManager;
 
 BoundingSphere m_BS;

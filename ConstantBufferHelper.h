@@ -12,6 +12,8 @@ public:
 
 	ConstantBufferPerObject* GetBuffer() { return m_Buffer; };
 
+	ID3D12Resource* GetHeapPointer() { return m_UploadHeap; };
+
 	void FlushBuffer();
 	void FlushBuffer(int pos);
 

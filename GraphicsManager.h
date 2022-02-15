@@ -62,7 +62,9 @@ public:
 
 	void ExecuteCommands();
 
-	void Draw(void* gameObjectData, int objectCount, OutputManager* output, std::wstring pipelineIdentifier, std::wstring dsvIdentifier, std::wstring srvIdentifer);
+	void Draw(OutputManager* output, std::wstring pipelineIdentifier, std::wstring dsvIdentifier, std::wstring srvIdentifer, std::wstring constantBufferIdentifier, void* gameObjectVector);
+
+	void Render(OutputManager* outputManager);
 
 	//Pipeline functions
 

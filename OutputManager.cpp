@@ -37,6 +37,12 @@ OutputManager::~OutputManager()
 {
 }
 
+bool OutputManager::Present()
+{
+	m_SwapChain->Present(0, 0);
+	return true;
+}
+
 void OutputManager::operator++()
 {
 	m_CurrentFrame++;
