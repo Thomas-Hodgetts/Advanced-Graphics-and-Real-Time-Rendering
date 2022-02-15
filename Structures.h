@@ -43,15 +43,12 @@ enum class ObjectType
 
 struct CreateObjectStruct
 {
-	CreateObjectStruct(ID3D12Device* device, ID3D12GraphicsCommandList* cl, std::string oN , ObjectType type, std::vector<Vertex> verts, std::vector<DWORD> indies, int objNum, int alignment, Transform* trans) : dev(device), commandList(cl), objName(oN),objType(type), vertices(verts), indices(indies), bufferAlignment((objNum - 1) * alignment), transform(trans) {}
-	ID3D12Device* dev = nullptr;
-	ID3D12GraphicsCommandList* commandList;
-	std::string objName;
-	ObjectType objType;
-	std::vector<Vertex> vertices;
-	std::vector<DWORD> indices;
-	int bufferAlignment;
+	CreateObjectStruct() {};
+	CreateObjectStruct(void* gm, Transform* trans, std::wstring ws, std::string name) :  transform(trans), graphicsManager(gm), identifier(ws), objName(name){}
+	void* graphicsManager;
 	Transform* transform = nullptr;
+	std::wstring identifier;
+	std::string objName;
 };
 
 struct DrawObjectsStruct
@@ -76,13 +73,10 @@ struct DrawObjectsStruct
 
 struct Geometry
 {
-	ID3D12Resource* vertexBuffer; // a default buffer in GPU memory that we will load vertex data
-	ID3D12Resource* indexBuffer; // a default buffer in GPU memory that we will load index data
 	int numberOfIndices;
 	XMFLOAT3 Point;
-	D3D12_VERTEX_BUFFER_VIEW vertexBufferView; // a structure containing a pointer to the vertex data in gpu memory
-										   // the total size of the buffer, and the size of each element (vertex)
-	D3D12_INDEX_BUFFER_VIEW indexBufferView; // a structure holding information about the index buffer
+	D3D12_VERTEX_BUFFER_VIEW* vertexBufferView; // a structure containing a pointer to the vertex data in gpu memory
+	D3D12_INDEX_BUFFER_VIEW* indexBufferView; // a structure holding information about the index buffer
 };
 
 //48 bytes

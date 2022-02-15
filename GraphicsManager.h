@@ -23,6 +23,9 @@
 #include "DescriptorHeapHelper.h"
 #include "NormalCalculations.h"
 #include "ConstantBufferHelper.h"
+#include "GameObject.h"
+#include "OutputManager.h"
+#include "SystemManager.h"
 
 enum class PIPELINE_SHADER_ENUM_TYPE
 {
@@ -59,9 +62,9 @@ public:
 
 	void ExecuteCommands();
 
+	void Draw(void* gameObjectData, int objectCount, OutputManager* output, std::wstring pipelineIdentifier, std::wstring dsvIdentifier, std::wstring srvIdentifer);
 
 	//Pipeline functions
-
 
 	HRESULT CreatePipeline(D3D12_GRAPHICS_PIPELINE_STATE_DESC pipeDesc, std::wstring name);
 
@@ -75,6 +78,10 @@ public:
 
 	bool CompileGeomertyShader(std::wstring shaderName, std::wstring shaderFileLocation, const char* functionName);
 
+	bool CompileHullShader(std::wstring shaderName, std::wstring shaderFileLocation, const char* functionName);
+
+	bool CompileDomainShader(std::wstring shaderName, std::wstring shaderFileLocation, const char* functionName);
+
 	void AddFrameSampleDescription(DXGI_SAMPLE_DESC desc, std::wstring identifier) { m_SampleDescMap[identifier] = desc; };
 
 	void AddFrameInputLayout(D3D12_INPUT_ELEMENT_DESC* desc, std::wstring identifier, int size);
@@ -84,7 +91,6 @@ public:
 	//RenderTargets
 
 	DescriptorHeapHelper* CreateRenderTargetViews(D3D12_DESCRIPTOR_HEAP_DESC desc, IDXGISwapChain3* swapChain, std::wstring name);
-
 
 	//Game Objects
 
@@ -100,10 +106,17 @@ public:
 
 	//Getter functions
 
-
 	ID3D12Device* GetDevice() { return m_Device; };
+
 	ID3D12CommandQueue* GetCommandQueue() { return m_CommadQueue; };
+
 	IDXGIFactory4* GetFactory() { return m_Factory; };
+
+	D3D12_VERTEX_BUFFER_VIEW* GetVertexBufferView(std::wstring identifier) { return m_VertexViewMap[identifier]; };
+
+	D3D12_INDEX_BUFFER_VIEW* GetIndexBufferView(std::wstring identifier) { return m_IndexViewMap[identifier]; };
+
+	std::vector<ID3D12Resource*> GetRenderTargets(std::wstring identifier) { return m_RenderTargetGroups[identifier]; };
 
 	//Helpers
 
@@ -125,14 +138,15 @@ private:
 
 
 
-
-
 #ifdef _DEBUG
 	ID3D12Debug* m_DebugLayer;
 #endif // _DEBUG
 
 
 	int m_Height = 0, m_Width = 0;
+
+	D3D12_VIEWPORT m_Viewport;
+	D3D12_RECT m_Scissor;
 
 	ID3D12Device* m_Device = nullptr;
 	ID3D12CommandQueue* m_CommadQueue = nullptr;
@@ -142,13 +156,19 @@ private:
 	ID3DBlob* m_ErrorBuff; // a buffer holding the error data if any
 	ID3DBlob* m_Signature;
 
+
+	//Render Targets
+
 	std::vector<ID3D12Resource*> m_RenderTargets;
+	std::unordered_map<std::wstring, std::vector<ID3D12Resource*>> m_RenderTargetGroups;
 
 	//Pileline data
 	std::unordered_map<std::wstring,ID3D12PipelineState*> m_PipelineMap;
 	std::unordered_map<std::wstring, ID3DBlob*> m_VertexBlobMap;
 	std::unordered_map<std::wstring, ID3DBlob*> m_PixelBlobMap;
 	std::unordered_map<std::wstring, ID3DBlob*> m_GeoBlobMap;
+	std::unordered_map<std::wstring, ID3DBlob*> m_HullBlobMap;
+	std::unordered_map<std::wstring, ID3DBlob*> m_DomBlobMap;
 	std::unordered_map<std::wstring, ID3D12RootSignature*> m_RootSignatureMap;
 	std::unordered_map<std::wstring, std::vector<D3D12_INPUT_ELEMENT_DESC>> m_InputLayoutMap;
 	std::unordered_map<std::wstring, DXGI_SAMPLE_DESC> m_SampleDescMap;

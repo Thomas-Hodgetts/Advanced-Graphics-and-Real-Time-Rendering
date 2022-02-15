@@ -3,6 +3,7 @@
 #include "Camera.h"
 #include "Structures.h"
 #include "GameObject.h"
+#include "GraphicsManager.h"
 
 class SystemManager
 {

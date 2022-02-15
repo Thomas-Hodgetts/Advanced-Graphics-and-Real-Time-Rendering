@@ -30,8 +30,20 @@ OutputManager::OutputManager(GraphicsManager* pGManager ,DXGI_SWAP_CHAIN_DESC sw
 		m_BufferMode = BUFFER_MODE::NO_BUFFER;
 	}
 	m_RenderTargetHeap = pGManager->CreateRenderTargetViews(descriptorHeap, m_SwapChain, m_Name);
+	m_RenderTargets = pGManager->GetRenderTargets(m_Name);
 }
 
 OutputManager::~OutputManager()
 {
 }
+
+void OutputManager::operator++()
+{
+	m_CurrentFrame++;
+	if (m_CurrentFrame > (int)m_BufferMode)
+	{
+		m_CurrentFrame = 0;
+	}
+	m_RenderTargetHeap->CPUOffset();
+}
+

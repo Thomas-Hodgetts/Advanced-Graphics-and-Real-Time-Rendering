@@ -23,13 +23,23 @@ public:
 
 	WindowData GetWindowData() { return m_WindowData; };
 
+	ID3D12Resource* GetCurrentFrame() { return m_RenderTargets[m_CurrentFrame]; }
+
+	int GetCurrentFrameIndex() { return m_CurrentFrame; }
+
+	DescriptorHeapHelper* GetHeap() { return m_RenderTargetHeap; };
+
+	void OutputManager::operator++();
+
 private:
 
+	int m_CurrentFrame;
 	ID3D12Device* m_Device = nullptr;
 	ID3D12CommandQueue* m_CommadQueue = nullptr;
 	IDXGISwapChain3* m_SwapChain;
 	BUFFER_MODE m_BufferMode;
 	DescriptorHeapHelper* m_RenderTargetHeap;
+	std::vector<ID3D12Resource*> m_RenderTargets;
 	std::wstring m_Name = L"OutputManager";
 	WindowData m_WindowData;
 };

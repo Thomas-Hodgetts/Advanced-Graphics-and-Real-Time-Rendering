@@ -21,8 +21,6 @@ public:
 	void SetMat(Material mat) { m_Material = mat; };
 	//Set the Texture variable of the game object
 	void SetTex(ID3D11ShaderResourceView* tex) { m_TextureRV = tex; };
-	//Sets the buffer offset
-	void SetBufferOffset(int offset) { constantBufferOffset = offset; };
 	//Sets subresources for the next draw
 	void SetSubResources();
 
@@ -40,7 +38,6 @@ private:
 
 	Geometry m_Geometry;
 	Material m_Material;
-	int constantBufferOffset;
 	ID3D11ShaderResourceView* m_TextureRV;
 
 

@@ -105,7 +105,19 @@ GraphicsManager::GraphicsManager(int width, int height) : m_Height(height), m_Wi
 		GraphicsManager::~GraphicsManager();
 		return;
 	}
+	// Fill out the Viewport
+	m_Viewport.TopLeftX = 0;
+	m_Viewport.TopLeftY = 0;
+	m_Viewport.Width = (float)m_Width;
+	m_Viewport.Height = (float)m_Height;
+	m_Viewport.MinDepth = 0.0f;
+	m_Viewport.MaxDepth = 1.0f;
 
+	// Fill out a scissor rect
+	m_Scissor.left = 0;
+	m_Scissor.top = 0;
+	m_Scissor.right = m_Width;
+	m_Scissor.bottom = m_Height;
 }
 
 GraphicsManager::~GraphicsManager()
@@ -114,6 +126,48 @@ GraphicsManager::~GraphicsManager()
 
 void GraphicsManager::ExecuteCommands()
 {
+}
+
+void GraphicsManager::Draw(void* gameObjectData, int objectCount,OutputManager* output,std::wstring pipelineIdentifier, std::wstring dsvIdentifier, std::wstring srvIdentifer)
+{
+	HRESULT hr;
+	int frameIndex = output->GetCurrentFrameIndex();
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = output->GetHeap()->CPUCurrentAddress();
+
+	hr = m_GraphicsCommandListMap[L"Default"]->Reset(m_CommandAllocatorMap[L"Default"].at(frameIndex), m_PipelineMap[pipelineIdentifier]);
+	if (FAILED(hr))
+	{
+		Debug::OutputString("Drawing failed: Failed to reset the command list");
+	}
+
+	// here we start recording commands into the commandList (which all the commands will be stored in the commandAllocator)
+
+	// transition the "frameIndex" render target from the present state to the render target state so the command list draws to it starting from here
+	m_GraphicsCommandListMap[L"Default"]->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(output->GetCurrentFrame(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+
+	// set the render target for the output merger stage (the output of the pipeline)
+	m_GraphicsCommandListMap[L"Default"]->OMSetRenderTargets(1, &rtvHandle, FALSE, &m_DepthStencilHeapDescription[dsvIdentifier]->CPUCurrentAddress());
+
+	// Clear the render target by using the ClearRenderTargetView command
+	const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
+	m_GraphicsCommandListMap[L"Default"]->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+
+	// clear the depth/stencil buffer
+	m_GraphicsCommandListMap[L"Default"]->ClearDepthStencilView(m_DepthStencilHeapDescription[dsvIdentifier]->CPUCurrentAddress(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+
+	// set root signature
+	m_GraphicsCommandListMap[L"Default"]->SetGraphicsRootSignature(m_RootSignatureMap[pipelineIdentifier]); // set the root signature
+
+	// set the descriptor heap
+	ID3D12DescriptorHeap* descriptorHeaps[] = { m_TextureHeapMap[srvIdentifer]->GetHeap() };
+	m_GraphicsCommandListMap[L"Default"]->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+
+	// set the descriptor table to the descriptor heap (parameter 1, as constant buffer root descriptor is parameter index 0)
+	m_GraphicsCommandListMap[L"Default"]->SetGraphicsRootDescriptorTable(1, m_TextureHeapMap[srvIdentifer]->GPUStartAddress());
+
+	m_GraphicsCommandListMap[L"Default"]->RSSetViewports(1, &m_Viewport); // set the viewports
+	m_GraphicsCommandListMap[L"Default"]->RSSetScissorRects(1, &m_Scissor); // set the scissor rects
+	m_GraphicsCommandListMap[L"Default"]->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // set the primitive topology
 }
 
 HRESULT GraphicsManager::CreatePipeline(D3D12_GRAPHICS_PIPELINE_STATE_DESC pipeDesc, std::wstring name)
@@ -176,6 +230,8 @@ HRESULT GraphicsManager::CreatePipeline(std::wstring name)
 		return 1;
 	}
 
+	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE; // type of topology we are drawing
+
 	if (m_VertexBlobMap[name] != nullptr)
 	{
 		D3D12_SHADER_BYTECODE vertexShaderByteCode;
@@ -197,8 +253,21 @@ HRESULT GraphicsManager::CreatePipeline(std::wstring name)
 		geoShaderByteCode.pShaderBytecode = m_GeoBlobMap[name]->GetBufferPointer();
 		psoDesc.GS = geoShaderByteCode;
 	}
+	if (m_HullBlobMap[name] != nullptr)
+	{
+		D3D12_SHADER_BYTECODE hullShaderBytecode;
+		hullShaderBytecode.BytecodeLength = m_HullBlobMap[name]->GetBufferSize();
+		hullShaderBytecode.pShaderBytecode = m_HullBlobMap[name]->GetBufferPointer();
+		psoDesc.HS = hullShaderBytecode;
+	}
+	if (m_DomBlobMap[name] != nullptr)
+	{
+		D3D12_SHADER_BYTECODE domShaderByteCode;
+		domShaderByteCode.BytecodeLength = m_DomBlobMap[name]->GetBufferSize();
+		domShaderByteCode.pShaderBytecode = m_DomBlobMap[name]->GetBufferPointer();
+		psoDesc.DS = domShaderByteCode;
+	}
 
-	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE; // type of topology we are drawing
 	psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM; // format of the render target
 	psoDesc.SampleDesc = m_SampleDescMap[L"OutputManager"]; // must be the same sample description as the swapchain and depth/stencil buffer
 	psoDesc.SampleMask = 0xffffffff; // sample mask has to do with multi-sampling. 0xffffffff means point sampling is done
@@ -227,20 +296,22 @@ DescriptorHeapHelper* GraphicsManager::CreateRenderTargetViews(D3D12_DESCRIPTOR_
 	std::vector<ID3D12CommandAllocator*> commandAllcoators(desc.NumDescriptors);
 	std::vector<ID3D12Fence*> fence(desc.NumDescriptors);
 	std::vector<UINT64> fenceVal(desc.NumDescriptors);
+	std::vector<ID3D12Resource*> renderTargets;
+
 
 	for (int i = 0; i < desc.NumDescriptors; i++)
 	{
 		CPU_DESC_CONTAINER* container = new CPU_DESC_CONTAINER(m_RenderTargetHeaps[name]->CPUCurrentAddress());
 
-		m_RenderTargets.push_back(nullptr);
+		renderTargets.push_back(nullptr);
 
-		hr = swapChain->GetBuffer(i, IID_PPV_ARGS(&m_RenderTargets[m_RenderTargets.size() - 1]));
+		hr = swapChain->GetBuffer(i, IID_PPV_ARGS(&renderTargets[renderTargets.size() - 1]));
 		if (FAILED(hr))
 		{
 			return nullptr;
 		}
 
-		m_Device->CreateRenderTargetView(m_RenderTargets[m_RenderTargets.size() - 1], nullptr, m_RenderTargetHeaps[name]->CPUCurrentAddress());
+		m_Device->CreateRenderTargetView(renderTargets[renderTargets.size() - 1], nullptr, m_RenderTargetHeaps[name]->CPUCurrentAddress());
 
 		m_RenderTargetHeaps[name]->CPUOffset();
 
@@ -263,6 +334,8 @@ DescriptorHeapHelper* GraphicsManager::CreateRenderTargetViews(D3D12_DESCRIPTOR_
 	m_CommandAllocatorMap[name] = commandAllcoators;
 	m_FenceMap[name] = fence;
 	m_FenceValueMap[name] = fenceVal;
+
+	m_RenderTargetGroups[name] = renderTargets;
 
 	hr = m_Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_CommandAllocatorMap[name][0], NULL, IID_PPV_ARGS(&m_GraphicsCommandListMap[name]));
 	if (FAILED(hr))
@@ -315,12 +388,15 @@ bool GraphicsManager::CreateGeomerty(Vertex* vertexList, int vertexCount, DWORD*
 		vertexList[i2].Normal += faceNormal;
 	}
 
+	int vSize = (sizeof(Vertex) * vertexCount);
+	int iSize = (sizeof(DWORD) * indexCount);
+
 	NormalCalculations::CalculateModelVectors(vertexList, vertexCount);
 
 	hr = m_Device->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
 		D3D12_HEAP_FLAG_NONE,
-		&CD3DX12_RESOURCE_DESC::Buffer(vertexCount),
+		&CD3DX12_RESOURCE_DESC::Buffer(vSize),
 		D3D12_RESOURCE_STATE_COPY_DEST,
 		nullptr,
 		IID_PPV_ARGS(&m_VertexMap[geomertyIdentifier]));
@@ -335,7 +411,7 @@ bool GraphicsManager::CreateGeomerty(Vertex* vertexList, int vertexCount, DWORD*
 	hr = m_Device->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
 		D3D12_HEAP_FLAG_NONE,
-		&CD3DX12_RESOURCE_DESC::Buffer(vertexCount),
+		&CD3DX12_RESOURCE_DESC::Buffer(vSize),
 		D3D12_RESOURCE_STATE_GENERIC_READ,
 		nullptr,
 		IID_PPV_ARGS(&vBufferUploadHeap));
@@ -348,8 +424,8 @@ bool GraphicsManager::CreateGeomerty(Vertex* vertexList, int vertexCount, DWORD*
 	// store vertex buffer in upload heap
 	D3D12_SUBRESOURCE_DATA vertexData = {};
 	vertexData.pData = reinterpret_cast<BYTE*>(vertexList); // pointer to our vertex array
-	vertexData.RowPitch = (sizeof(Vertex) * vertexCount); // size of all our triangle vertex data
-	vertexData.SlicePitch = (sizeof(Vertex) * vertexCount); // also the size of our triangle vertex data
+	vertexData.RowPitch = vSize; // size of all our triangle vertex data
+	vertexData.SlicePitch = vSize; // also the size of our triangle vertex data
 
 	// we are now creating a command with the command list to copy the data from
 	// the upload heap to the default heap
@@ -362,7 +438,7 @@ bool GraphicsManager::CreateGeomerty(Vertex* vertexList, int vertexCount, DWORD*
 	hr = m_Device->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), // a default heap
 		D3D12_HEAP_FLAG_NONE, // no flags
-		&CD3DX12_RESOURCE_DESC::Buffer(indexCount), // resource description for a buffer
+		&CD3DX12_RESOURCE_DESC::Buffer(iSize), // resource description for a buffer
 		D3D12_RESOURCE_STATE_COPY_DEST, // start in the copy destination state
 		nullptr, // optimized clear value must be null for this type of resource
 		IID_PPV_ARGS(&m_IndexMap[geomertyIdentifier]));
@@ -379,7 +455,7 @@ bool GraphicsManager::CreateGeomerty(Vertex* vertexList, int vertexCount, DWORD*
 	hr = m_Device->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), // upload heap
 		D3D12_HEAP_FLAG_NONE, // no flags
-		&CD3DX12_RESOURCE_DESC::Buffer(indexCount), // resource description for a buffer
+		&CD3DX12_RESOURCE_DESC::Buffer(iSize), // resource description for a buffer
 		D3D12_RESOURCE_STATE_GENERIC_READ, // GPU will read from this buffer and copy its contents to the default heap
 		nullptr,
 		IID_PPV_ARGS(&iBufferUploadHeap));
@@ -387,13 +463,13 @@ bool GraphicsManager::CreateGeomerty(Vertex* vertexList, int vertexCount, DWORD*
 	{
 		return false;
 	}
-	vBufferUploadHeap->SetName(L"Index Buffer Upload Resource Heap");
+	iBufferUploadHeap->SetName(L"Index Buffer Upload Resource Heap");
 
 	// store vertex buffer in upload heap
 	D3D12_SUBRESOURCE_DATA indexData = {};
 	indexData.pData = reinterpret_cast<BYTE*>(iList); // pointer to our index array
-	indexData.RowPitch = (sizeof(DWORD) * indexCount); // size of all our index buffer
-	indexData.SlicePitch = (sizeof(DWORD) * indexCount); // also the size of our index buffer
+	indexData.RowPitch = iSize; // size of all our index buffer
+	indexData.SlicePitch = iSize; // also the size of our index buffer
 
 	// we are now creating a command with the command list to copy the data from
 	// the upload heap to the default heap
@@ -401,6 +477,19 @@ bool GraphicsManager::CreateGeomerty(Vertex* vertexList, int vertexCount, DWORD*
 
 	// transition the vertex buffer data from copy destination state to vertex buffer state
 	m_GraphicsCommandListMap[L"Default"]->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_IndexMap[geomertyIdentifier], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
+
+	// create a vertex buffer view for the triangle. We get the GPU memory address to the vertex pointer using the GetGPUVirtualAddress() method
+
+	m_VertexViewMap[geomertyIdentifier] = new D3D12_VERTEX_BUFFER_VIEW();
+	m_VertexViewMap[geomertyIdentifier]->BufferLocation = m_VertexMap[geomertyIdentifier]->GetGPUVirtualAddress();
+	m_VertexViewMap[geomertyIdentifier]->StrideInBytes = sizeof(Vertex);
+	m_VertexViewMap[geomertyIdentifier]->SizeInBytes = vSize;
+
+	// create a vertex buffer view for the triangle. We get the GPU memory address to the vertex pointer using the GetGPUVirtualAddress() method
+	m_IndexViewMap[geomertyIdentifier] = new D3D12_INDEX_BUFFER_VIEW();
+	m_IndexViewMap[geomertyIdentifier]->BufferLocation = m_IndexMap[geomertyIdentifier]->GetGPUVirtualAddress();
+	m_IndexViewMap[geomertyIdentifier]->Format = DXGI_FORMAT_R32_UINT; // 32-bit unsigned integer (this is what a dword is, double word, a word is 2 bytes)
+	m_IndexViewMap[geomertyIdentifier]->SizeInBytes = iSize;
 }
 
 bool GraphicsManager::CreateTextureHeap(LPCWSTR* textureLocations, int texCount, std::wstring name)
@@ -879,7 +968,7 @@ bool GraphicsManager::CompileVertexShader(std::wstring shaderName, std::wstring 
 bool GraphicsManager::CompilePixelShader(std::wstring shaderName, std::wstring shaderFileLocation, const char* functionName)
 {
 	HRESULT hr;
-	hr = D3DCompileFromFile(L"PixelShader.hlsl",
+	hr = D3DCompileFromFile(shaderFileLocation.c_str(),
 		nullptr,
 		nullptr,
 		functionName,
@@ -898,7 +987,7 @@ bool GraphicsManager::CompilePixelShader(std::wstring shaderName, std::wstring s
 bool GraphicsManager::CompileGeomertyShader(std::wstring shaderName, std::wstring shaderFileLocation, const char* functionName)
 {
 	HRESULT hr;
-	hr = D3DCompileFromFile(L"GeometryShader.hlsl",
+	hr = D3DCompileFromFile(shaderFileLocation.c_str(),
 		nullptr,
 		nullptr,
 		functionName,
@@ -906,6 +995,44 @@ bool GraphicsManager::CompileGeomertyShader(std::wstring shaderName, std::wstrin
 		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
 		0,
 		&m_GeoBlobMap[shaderName],
+		&m_ErrorBuff);
+	if (FAILED(hr))
+	{
+		OutputDebugStringA((char*)m_ErrorBuff->GetBufferPointer());
+		return false;
+	}
+}
+
+bool GraphicsManager::CompileHullShader(std::wstring shaderName, std::wstring shaderFileLocation, const char* functionName)
+{
+	HRESULT hr;
+	hr = D3DCompileFromFile(shaderFileLocation.c_str(),
+		nullptr,
+		nullptr,
+		functionName,
+		"gs_5_0",
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+		0,
+		&m_HullBlobMap[shaderName],
+		&m_ErrorBuff);
+	if (FAILED(hr))
+	{
+		OutputDebugStringA((char*)m_ErrorBuff->GetBufferPointer());
+		return false;
+	}
+}
+
+bool GraphicsManager::CompileDomainShader(std::wstring shaderName, std::wstring shaderFileLocation, const char* functionName)
+{
+	HRESULT hr;
+	hr = D3DCompileFromFile(shaderFileLocation.c_str(),
+		nullptr,
+		nullptr,
+		functionName,
+		"gs_5_0",
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+		0,
+		&m_DomBlobMap[shaderName],
 		&m_ErrorBuff);
 	if (FAILED(hr))
 	{
