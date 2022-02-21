@@ -118,6 +118,12 @@ GraphicsManager::GraphicsManager(int width, int height) : m_Height(height), m_Wi
 	m_Scissor.top = 0;
 	m_Scissor.right = m_Width;
 	m_Scissor.bottom = m_Height;
+
+	m_FenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+	if (m_FenceEvent == nullptr)
+	{
+		Debug::OutputString("Failed to create Fence event");
+	}
 }
 
 GraphicsManager::~GraphicsManager()
@@ -126,81 +132,80 @@ GraphicsManager::~GraphicsManager()
 
 void GraphicsManager::ExecuteCommands()
 {
+
 }
 
-void GraphicsManager::Draw(OutputManager* output,std::wstring pipelineIdentifier, std::wstring dsvIdentifier, std::wstring srvIdentifer, std::wstring constantBufferIdentifier, std::vector<void*> gameObjectVector)
+void GraphicsManager::ForceCloseCommandList(std::wstring identifier)
 {
 	HRESULT hr;
-	int frameIndex = output->GetCurrentFrameIndex();
-	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = output->GetHeap()->CPUCurrentAddress();
-
-	hr = m_GraphicsCommandListMap[L"Default"]->Reset(m_CommandAllocatorMap[L"Default"].at(frameIndex), m_PipelineMap[pipelineIdentifier]);
+	hr = m_GraphicsCommandListMap[identifier]->Close();
 	if (FAILED(hr))
 	{
-		Debug::OutputString("Drawing failed: Failed to reset the command list");
+		Debug::OutputString("Failed to force commandlist to close");
 	}
+}
+
+void GraphicsManager::Draw(ID3D12Resource* currentFrame ,D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, int frameIndex,std::wstring pipelineIdentifier, std::wstring dsvIdentifier, std::wstring srvIdentifer, std::wstring constantBufferIdentifier, Flotilla gameObjectVector)
+{
+	HRESULT hr;
+
+	m_GraphicsCommandListMap[L"OutputManager"]->SetPipelineState(m_PipelineMap[pipelineIdentifier]);
 
 	// here we start recording commands into the commandList (which all the commands will be stored in the commandAllocator)
 
 	// transition the "frameIndex" render target from the present state to the render target state so the command list draws to it starting from here
-	m_GraphicsCommandListMap[L"Default"]->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(output->GetCurrentFrame(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+	m_GraphicsCommandListMap[L"OutputManager"]->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(currentFrame, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
+	//D3D12_CPU_DESCRIPTOR_HANDLE test = m_DepthStencilHeapDescription[dsvIdentifier]->CPUCurrentAddress();
 	// set the render target for the output merger stage (the output of the pipeline)
-	m_GraphicsCommandListMap[L"Default"]->OMSetRenderTargets(1, &rtvHandle, FALSE, &m_DepthStencilHeapDescription[dsvIdentifier]->CPUCurrentAddress());
+	m_GraphicsCommandListMap[L"OutputManager"]->OMSetRenderTargets(1, &rtvHandle, FALSE, &m_DepthStencilHeapDescription[dsvIdentifier]->GetCPUAddress(0));
 
 	// Clear the render target by using the ClearRenderTargetView command
 	const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
-	m_GraphicsCommandListMap[L"Default"]->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+	m_GraphicsCommandListMap[L"OutputManager"]->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
 	// clear the depth/stencil buffer
-	m_GraphicsCommandListMap[L"Default"]->ClearDepthStencilView(m_DepthStencilHeapDescription[dsvIdentifier]->CPUCurrentAddress(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+	m_GraphicsCommandListMap[L"OutputManager"]->ClearDepthStencilView(m_DepthStencilHeapDescription[dsvIdentifier]->GetCPUAddress(0), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 	// set root signature
-	m_GraphicsCommandListMap[L"Default"]->SetGraphicsRootSignature(m_RootSignatureMap[pipelineIdentifier]); // set the root signature
+	m_GraphicsCommandListMap[L"OutputManager"]->SetGraphicsRootSignature(m_RootSignatureMap[pipelineIdentifier]); // set the root signature
 
 	// set the descriptor heap
 	ID3D12DescriptorHeap* descriptorHeaps[] = { m_TextureHeapMap[srvIdentifer]->GetHeap() };
-	m_GraphicsCommandListMap[L"Default"]->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+	m_GraphicsCommandListMap[L"OutputManager"]->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
 	// set the descriptor table to the descriptor heap (parameter 1, as constant buffer root descriptor is parameter index 0)
-	m_GraphicsCommandListMap[L"Default"]->SetGraphicsRootDescriptorTable(1, m_TextureHeapMap[srvIdentifer]->GPUStartAddress());
+	m_GraphicsCommandListMap[L"OutputManager"]->SetGraphicsRootDescriptorTable(1, m_TextureHeapMap[srvIdentifer]->GPUStartAddress());
 
-	m_GraphicsCommandListMap[L"Default"]->RSSetViewports(1, &m_Viewport); // set the viewports
-	m_GraphicsCommandListMap[L"Default"]->RSSetScissorRects(1, &m_Scissor); // set the scissor rects
-	m_GraphicsCommandListMap[L"Default"]->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // set the primitive topology
+	m_GraphicsCommandListMap[L"OutputManager"]->RSSetViewports(1, &m_Viewport); // set the viewports
+	m_GraphicsCommandListMap[L"OutputManager"]->RSSetScissorRects(1, &m_Scissor); // set the scissor rects
+	m_GraphicsCommandListMap[L"OutputManager"]->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // set the primitive topology
 
 
 	int i = 0;
 
 
-	for (size_t i = 0; i < length; i++)
+	for (size_t i = 0; i < gameObjectVector.ReturnVectorSize(); i++)
 	{
-		GameObject* objects = dynamic_cast<GameObject*>(gameObjectVector[0]);
+		GameObject* gameObj = dynamic_cast<GameObject*>(gameObjectVector.ReturnObject(i));
+		m_GraphicsCommandListMap[L"OutputManager"]->IASetVertexBuffers(0, 1, gameObj->m_Apperance->ReturnGeo().vertexBufferView); // set the vertex buffer (using the vertex buffer view)
+		m_GraphicsCommandListMap[L"OutputManager"]->IASetIndexBuffer(gameObj->m_Apperance->ReturnGeo().indexBufferView);
+
+		D3D12_GPU_VIRTUAL_ADDRESS addr = m_ConstantBufferMap[constantBufferIdentifier]->GetHeapPointer(frameIndex)->GetGPUVirtualAddress();
+
+		m_GraphicsCommandListMap[L"OutputManager"]->SetGraphicsRootConstantBufferView(0, addr);
+
+		m_GraphicsCommandListMap[L"OutputManager"]->SetGraphicsRootDescriptorTable(1, m_TextureHeapMap[srvIdentifer]->GetGPUAddress(0));
+		m_GraphicsCommandListMap[L"OutputManager"]->SetGraphicsRootDescriptorTable(2, m_TextureHeapMap[srvIdentifer]->GetGPUAddress(1));
+		m_GraphicsCommandListMap[L"OutputManager"]->SetGraphicsRootDescriptorTable(3, m_TextureHeapMap[srvIdentifer]->GetGPUAddress(2));
+
+		m_GraphicsCommandListMap[L"OutputManager"]->DrawIndexedInstanced(gameObj->m_Apperance->ReturnGeo().numberOfIndices, 1, 0, 0, 0);
 	}
 
-	do
-	{
-		GameObject* gObject = dynamic_cast<GameObject*>(pManager->GetStoredObject(i));
 
-		m_GraphicsCommandListMap[L"Default"]->IASetVertexBuffers(0, 1, gObject->m_Apperance->ReturnGeo().vertexBufferView); // set the vertex buffer (using the vertex buffer view)
-		m_GraphicsCommandListMap[L"Default"]->IASetIndexBuffer(gObject->m_Apperance->ReturnGeo().indexBufferView);
+	m_GraphicsCommandListMap[L"OutputManager"]->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(currentFrame, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
-		D3D12_GPU_VIRTUAL_ADDRESS addr = m_ConstantBufferMap[constantBufferIdentifier]->GetHeapPointer()->GetGPUVirtualAddress();
-
-		m_GraphicsCommandListMap[L"Default"]->SetGraphicsRootConstantBufferView(0, addr);
-
-		m_GraphicsCommandListMap[L"Default"]->SetGraphicsRootDescriptorTable(1, m_TextureHeapMap[srvIdentifer]->GetGPUAddress(0));
-		m_GraphicsCommandListMap[L"Default"]->SetGraphicsRootDescriptorTable(2, m_TextureHeapMap[srvIdentifer]->GetGPUAddress(1));
-		m_GraphicsCommandListMap[L"Default"]->SetGraphicsRootDescriptorTable(3, m_TextureHeapMap[srvIdentifer]->GetGPUAddress(2));
-
-		m_GraphicsCommandListMap[L"Default"]->DrawIndexedInstanced(gObject->m_Apperance->ReturnGeo().numberOfIndices, 1, 0, 0, 0);
-
-		++i;
-	} while (pManager->GetStoredObject(i) != nullptr);
-
-	m_GraphicsCommandListMap[L"Default"]->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(output->GetCurrentFrame(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
-
-	hr = m_GraphicsCommandListMap[L"Default"]->Close();
+	hr = m_GraphicsCommandListMap[L"OutputManager"]->Close();
 	if (FAILED(hr))
 	{
 		Debug::OutputString("Drawing failed: Failed to close the command list");
@@ -208,20 +213,47 @@ void GraphicsManager::Draw(OutputManager* output,std::wstring pipelineIdentifier
 
 }
 
-void GraphicsManager::Render(OutputManager* outputManager)
+void GraphicsManager::Render(int frameIndex, std::wstring identifier)
 {
+	ID3D12CommandList* ppCommandLists[] = { m_GraphicsCommandListMap[identifier] };
+	m_CommadQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+	//if (frameIndex > -1)
+	//{
+	//	IncrementFenceValue(frameIndex, identifier);
+	//}
 	HRESULT hr;
-	hr = m_CommadQueue->Signal(m_FenceMap[L"OutputManager"][outputManager->GetCurrentFrameIndex()], m_FenceValueMap[L"OutputManager"][outputManager->GetCurrentFrameIndex()]);
+	if (frameIndex > -1)
+	{
+		hr = m_CommadQueue->Signal(m_FenceMap[L"OutputManager"][frameIndex], m_FenceValueMap[L"OutputManager"][frameIndex]);
+	}
+	else
+	{
+		hr = 0;
+	}
 	if (FAILED(hr))
 	{
 		
 	}
+}
 
-	// present the current backbuffer
-	outputManager->Present();
+void GraphicsManager::ReopenAllocator(int frameIndex, std::wstring identifier, std::wstring pipelineIdentifier)
+{
+	HRESULT hr;
+	hr = m_GraphicsCommandListMap[identifier]->Reset(m_CommandAllocatorMap[identifier][frameIndex], m_PipelineMap[pipelineIdentifier]);
 	if (FAILED(hr))
 	{
-		hr = m_Device->GetDeviceRemovedReason();
+		Debug::OutputString("Failed to reopen an allocator");
+	}
+}
+
+void GraphicsManager::ResetAllocator(int frameIndex, std::wstring identifier)
+{
+	HRESULT hr;
+	m_CommandAllocatorMap[identifier][frameIndex]->SetName(L"Test");
+	hr = m_CommandAllocatorMap[identifier][frameIndex]->Reset();
+	if (FAILED(hr))
+	{
+		Debug::OutputString("Failed to reset an allocator");
 	}
 }
 
@@ -415,12 +447,10 @@ bool GraphicsManager::CreateGeomerty(const char* fileLoation, std::wstring geome
 	return false;
 }
 
-bool GraphicsManager::CreateConstantBuffer(std::wstring name, int blockCount, int classSize, int objectCount)
+void GraphicsManager::CreateConstantBuffer(std::wstring name, int frameCount, int blockCount, int classSize, int objectCount)
 {
 	m_ConstantBufferMap[name] = new ConstantBufferHelper(name);
-	m_ConstantBufferMap[name]->Init(m_Device, blockCount, classSize, objectCount);
-
-	return false;
+	m_ConstantBufferMap[name]->Init(m_Device, blockCount, classSize, objectCount, frameCount);
 }
 
 bool GraphicsManager::CreateGeomerty(Vertex* vertexList, int vertexCount, DWORD* iList, int indexCount, std::wstring geomertyIdentifier)
@@ -484,10 +514,10 @@ bool GraphicsManager::CreateGeomerty(Vertex* vertexList, int vertexCount, DWORD*
 
 	// we are now creating a command with the command list to copy the data from
 	// the upload heap to the default heap
-	UpdateSubresources(m_GraphicsCommandListMap[L"Default"], m_VertexMap[geomertyIdentifier], vBufferUploadHeap, 0, 0, 1, &vertexData);
+	UpdateSubresources(m_GraphicsCommandListMap[L"OutputManager"], m_VertexMap[geomertyIdentifier], vBufferUploadHeap, 0, 0, 1, &vertexData);
 
 	// transition the vertex buffer data from copy destination state to vertex buffer state
-	m_GraphicsCommandListMap[L"Default"]->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_VertexMap[geomertyIdentifier], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
+	m_GraphicsCommandListMap[L"OutputManager"]->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_VertexMap[geomertyIdentifier], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
 
 	// create default heap to hold index buffer
 	hr = m_Device->CreateCommittedResource(
@@ -528,10 +558,10 @@ bool GraphicsManager::CreateGeomerty(Vertex* vertexList, int vertexCount, DWORD*
 
 	// we are now creating a command with the command list to copy the data from
 	// the upload heap to the default heap
-	UpdateSubresources(m_GraphicsCommandListMap[L"Default"], m_IndexMap[geomertyIdentifier], iBufferUploadHeap, 0, 0, 1, &indexData);
+	UpdateSubresources(m_GraphicsCommandListMap[L"OutputManager"], m_IndexMap[geomertyIdentifier], iBufferUploadHeap, 0, 0, 1, &indexData);
 
 	// transition the vertex buffer data from copy destination state to vertex buffer state
-	m_GraphicsCommandListMap[L"Default"]->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_IndexMap[geomertyIdentifier], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
+	m_GraphicsCommandListMap[L"OutputManager"]->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_IndexMap[geomertyIdentifier], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER));
 
 	// create a vertex buffer view for the triangle. We get the GPU memory address to the vertex pointer using the GetGPUVirtualAddress() method
 
@@ -663,19 +693,22 @@ bool GraphicsManager::CreateCustomTexture(D3D12_RESOURCE_FLAGS flags)
 	return true;
 }
 
-bool GraphicsManager::UpdateObjectConstantBuffer(ConstantBufferPerObject cBPO, std::wstring identifier, int pos)
+bool GraphicsManager::UpdateObjectConstantBuffer(ConstantBufferPerObject cBPO, std::wstring identifier, int frameIndex, int pos)
 {
 	ConstantBufferPerObject * constBuffObject = m_ConstantBufferMap[identifier]->GetBuffer();
 	*constBuffObject = cBPO;
-	m_ConstantBufferMap[identifier]->FlushBuffer(pos);
+	m_ConstantBufferMap[identifier]->FlushBuffer(frameIndex, pos);
 	return true;
 }
 
-bool GraphicsManager::FlushCommandList(std::wstring idenifier)
+bool GraphicsManager::FlushCommandList(std::wstring idenifier, int frameIndex)
 {
-	m_GraphicsCommandListMap[idenifier]->Close();
 	ID3D12CommandList* ppCommandLists[] = { m_GraphicsCommandListMap[idenifier] };
 	m_CommadQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+	if (frameIndex > -1)
+	{
+		IncrementFenceValue(frameIndex, idenifier);
+	}
 	return true;
 }
 
@@ -932,22 +965,6 @@ bool GraphicsManager::CreateRootSignature(D3D12_ROOT_SIGNATURE_FLAGS rootSigFlag
 		{
 			ranges[texCount] = CD3DX12_DESCRIPTOR_RANGE(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, texCount);
 			rootParameters[i].InitAsDescriptorTable(1, &ranges[texCount], D3D12_SHADER_VISIBILITY_PIXEL);
-
-			///// Texture 1
-			//CD3DX12_DESCRIPTOR_RANGE texture1Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
-			//rootParameters[1].InitAsDescriptorTable(1, &texture1Range, D3D12_SHADER_VISIBILITY_PIXEL);
-
-			////// Texture 2
-			//CD3DX12_DESCRIPTOR_RANGE texture2Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);
-			//rootParameters[2].InitAsDescriptorTable(1, &texture2Range, D3D12_SHADER_VISIBILITY_PIXEL);
-
-			////// Texture 3
-			//CD3DX12_DESCRIPTOR_RANGE texture3Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2);
-			//rootParameters[3].InitAsDescriptorTable(1, &texture3Range, D3D12_SHADER_VISIBILITY_PIXEL);
-			////// Texture 4
-			//CD3DX12_DESCRIPTOR_RANGE texture4Range(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3);
-			//rootParameters[4].InitAsDescriptorTable(1, &texture4Range, D3D12_SHADER_VISIBILITY_PIXEL);
-
 			++texCount;
 		}
 	}
@@ -1150,5 +1167,29 @@ bool GraphicsManager::CreateStencilDepthView(std::wstring name, int size, D3D12_
 		++depthStencilDesc;
 		++depthOptimizedClearValue;
 	}
+	return true;
+}
+
+bool GraphicsManager:: WaitOnFrame(int frameIndex)
+{
+	HRESULT hr;
+	// if the current fence value is still less than "fenceValue", then we know the GPU has not finished executing
+	// the command queue since it has not reached the "commandQueue->Signal(fence, fenceValue)" command
+	if (m_FenceMap[L"OutputManager"][frameIndex]->GetCompletedValue() < m_FenceValueMap[L"OutputManager"][frameIndex])
+	{
+		// we have the fence create an event which is signaled once the fence's current value is "fenceValue"
+		hr = m_FenceMap[L"OutputManager"][frameIndex]->SetEventOnCompletion(m_FenceValueMap[L"OutputManager"][frameIndex], m_FenceEvent);
+		if (FAILED(hr))
+		{
+			return false;
+		}
+
+		// We will wait until the fence has triggered the event that it's current value has reached "fenceValue". once it's value
+		// has reached "fenceValue", we know the command queue has finished executing
+		WaitForSingleObject(m_FenceEvent, INFINITE);
+	}
+
+	// increment fenceValue for next frame
+	m_FenceValueMap[L"OutputManager"][frameIndex]++;
 	return true;
 }

@@ -412,7 +412,7 @@ bool InitD3D()
 
 
 	gm.AddFrameInputLayout(inputLayout, L"Pipeline1", 5);
-	gm.AddFrameInputLayout(inputLayout2, L"DefaultInput2", 2);
+	gm.AddFrameInputLayout(inputLayout2, L"OutputManagerInput2", 2);
 
 	gm.CreatePipeline(L"Pipeline1");
 
@@ -609,19 +609,17 @@ bool InitD3D()
 	depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
 	depthOptimizedClearValue.DepthStencil.Stencil = 0;
 
-	bool test = gm.CreateStencilDepthView(L"Default Depth Stencil", 1,&depthStencilDesc, &depthOptimizedClearValue);
+	bool test = gm.CreateStencilDepthView(L"OutputManager Depth Stencil", 1,&depthStencilDesc, &depthOptimizedClearValue);
 
 
-	test = gm.CreateConstantBuffer(L"TestGeomerty", 1024, sizeof(ConstantBufferPerObject), 4);
+	gm.CreateConstantBuffer(L"TestGeometry", output.GetBufferSize() , 1024, sizeof(ConstantBufferPerObject), 4);
 
 
 	LPCWSTR filename[4] = { L"color.jpg" ,L"normals.jpg" ,L"displacement.jpg" ,L"dx12.jpg" };
 	int objectCount = sizeof(filename) / sizeof(LPCWSTR);
 
-	gm.CreateTextureHeap(filename, objectCount, L"TestGeomerty");
+	gm.CreateTextureHeap(filename, objectCount, L"TestGeometry");
 
-
-	gm.FlushCommandList(L"Default");
 
 	// Fill out the Viewport
 	viewport.TopLeftX = 0;
@@ -724,38 +722,11 @@ bool InitD3D()
 
 	XMStoreFloat4x4(&m_LightMatrix, scale * rotation * translation);
 
-	if (m_ShadowMapping)
-	{
-		//m_SM = ShadowMap(device, 2048, 2048);
-		//m_BS.Center = { 0.f, 0.f, 0.f };
-		//m_BS.Radius = sqrtf(10.f * 10.f + 15.f * 15.f);
-
-		//dsvHandle.Offset(1, dsvDescriptorSize);
-
-		//m_SM.BuildDescriptors(
-		//	hdescriptor,
-		//	CD3DX12_GPU_DESCRIPTOR_HANDLE(mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), 0, srvDescriptorSize),
-		//	dsvHandle);
-	}
-
-	// Now we execute the command list to upload the initial assets (triangle data)
-	//commandList->Close();
-	//ID3D12CommandList* ppCommandLists[] = { commandList };
-	//commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-
-	//// increment the fence value now, otherwise the buffer might not be uploaded by the time we start drawing
-	//fenceValue[frameIndex]++;
-	//hr = commandQueue->Signal(fence[frameIndex], fenceValue[frameIndex]);
-	//if (FAILED(hr))
-	//{
-	//	Running = false;
-	//	return false;
-	//}
-
-	//// we are done with image data now that we've uploaded it to the gpu, so free it up
-	//delete[] imageData;
-
 	m_OutputManager = output;
+
+	m_GameManager.ForceCloseCommandList(L"OutputManager");
+
+	m_GameManager.Render(m_OutputManager.GetCurrentFrameIndex(), L"OutputManager");
 
 	return true;
 }
@@ -824,7 +795,7 @@ void Update()
 	}
 
 
-	//GO->Update(0.f);
+	GO->Update(0.f);
 	//GO2->Update(0.f);
 	//GO3->Update(0.f);
 
@@ -861,116 +832,29 @@ void Update()
 	XMStoreFloat4x4(&cbPerObject.wvpMat, transposed); // store transposed wvp matrix in constant buffer
 	XMStoreFloat4x4(&cbPerObject.worldPos,GO->m_Particle->ReturnWorldMatrix());
 
-	m_GameManager.UpdateObjectConstantBuffer(cbPerObject, L"TestGeomerty", 0);
+	int currentFrameIndex = m_OutputManager.GetCurrentFrameIndex();
+
+	m_GameManager.UpdateObjectConstantBuffer(cbPerObject, L"TestGeometry", currentFrameIndex,0);
 
 
 	// copy our ConstantBuffer instance to the mapped constant buffer resource
 	//memcpy(cbvGPUAddress[frameIndex], &cbPerObject, sizeof(cbPerObject));
 
-
-	////wvpMat = GO2->m_Particle->ReturnWorldMatrix() * viewMat * projMat; // create wvp matrix
-	//transposed = XMMatrixTranspose(wvpMat); // must transpose wvp matrix for the gpu
-	//XMStoreFloat4x4(&cbPerObject.wvpMat, transposed); // store transposed wvp matrix in constant buffer
-	//XMStoreFloat4x4(&cbPerObject.worldPos, GO2->m_Particle->ReturnWorldMatrix());
-
-	// copy our ConstantBuffer instance to the mapped constant buffer resource
-	//memcpy(cbvGPUAddress[frameIndex] + ConstantBufferPerObjectAlignedSize, &cbPerObject, sizeof(cbPerObject));
-	m_GameManager.UpdateObjectConstantBuffer(cbPerObject, L"TestGeomerty", 1);
-
-	//if (m_ShadowMapping)
-	//{
-	//	cbShadow = cbPerObject;
-	//	XMFLOAT3 dir(0,0,1);
-	//	XMVECTOR lightDir = XMLoadFloat3(&dir);
-	//	XMVECTOR lightPos = XMLoadFloat3(&dir) *-2.0 * m_BS.Radius;
-	//	//XMVECTOR lightPos = -2.0 * m_BS.Radius * lightDir;
-	//	XMVECTOR targetPos = XMLoadFloat3(&m_BS.Center);
-	//	XMVECTOR lightUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-	//	XMMATRIX lightView = XMMatrixLookAtLH(lightPos, targetPos, lightUp);
-
-	//	// Transform bounding sphere to light space.
-	//	XMFLOAT3 sphereCenterLS;
-	//	XMStoreFloat3(&sphereCenterLS, XMVector3TransformCoord(targetPos, lightView));
-
-	//	// Ortho frustum in light space encloses scene.
-	//	float l = sphereCenterLS.x - m_BS.Radius;
-	//	float b = sphereCenterLS.y - m_BS.Radius;
-	//	float n = sphereCenterLS.z - m_BS.Radius;
-	//	float r = sphereCenterLS.x + m_BS.Radius;
-	//	float t = sphereCenterLS.y + m_BS.Radius;
-	//	float f = sphereCenterLS.z + m_BS.Radius;
-
-
-	//	XMMATRIX lightProj = XMMatrixOrthographicOffCenterLH(l,r,b,t,n,f);
-	//	XMMATRIX T(
-	//		0.5f, 0.f, 0.f, 0.f,
-	//		0.f, -0.5f, 0.f, 0.f,
-	//		0.f, 0.f, 1.f, 0.f,
-	//		0.5f, 0.5f, 0.f, 1.0f
-	//	);
-
-	//	XMMATRIX S = lightView * lightProj * T;
-
-	//	XMStoreFloat4x4(&m_ShadowTransform, S);
-	//	XMStoreFloat4x4(&m_LightProj, lightProj);
-	//	XMStoreFloat4x4(&m_LightView, lightView);
-
-	//	wvpMat = GO3->m_Particle->ReturnWorldMatrix() * viewMat * projMat; // create wvp matrix
-	//	transposed = XMMatrixTranspose(wvpMat); // must transpose wvp matrix for the gpu
-	//	XMStoreFloat4x4(&cbPerObject.wvpMat, transposed); // store transposed wvp matrix in constant buffer
-	//	cbPerObject.projection = m_Manager->ReturnCamera()->ReturnViewPlusProjection().m_projection;
-	//	XMStoreFloat4x4(&cbPerObject.worldPos, GO3->m_Particle->ReturnWorldMatrix());
-	//	cbPerObject.shadowTransform = m_ShadowTransform;
-	//	cbPerObject.mode = 3;
-	//	cbPerObject.point = basicLight;
-	//	cbPerObject.Mat = shinyMaterial;
-	//	memcpy(cbvGPUAddress[frameIndex] + ConstantBufferPerObjectAlignedSize + ConstantBufferPerObjectAlignedSize, &cbPerObject, sizeof(cbPerObject));
-
-
-	//	cbShadow.EyePosW = basicLight.LightVecW;
-	//	cbShadow.shadowTransform = m_ShadowTransform;
-	//	cbShadow.Mat = shinyMaterial;
-	//	cbShadow.point = basicLight;
-
-
-	//	XMMATRIX wvpMat = GO->m_Particle->ReturnWorldMatrix() * lightView * lightProj; // create wvp matrix
-	//	XMMATRIX transposed = XMMatrixTranspose(wvpMat); // must transpose wvp matrix for the gpu
-	//	XMStoreFloat4x4(&cbShadow.wvpMat, transposed); // store transposed wvp matrix in constant buffer
-	//	cbShadow.projection = m_LightProj;
-	//	XMStoreFloat4x4(&cbShadow.worldPos, GO->m_Particle->ReturnWorldMatrix());
-
-	//	// copy our ConstantBuffer instance to the mapped constant buffer resource
-	//	memcpy(cbvGPUAddress[frameIndex] + (ConstantBufferPerObjectAlignedSize * 3), &cbShadow, sizeof(cbShadow));
-
-	//	wvpMat = GO2->m_Particle->ReturnWorldMatrix() * lightView * lightProj;  // create wvp matrix
-	//	transposed = XMMatrixTranspose(wvpMat); // must transpose wvp matrix for the gpu
-	//	XMStoreFloat4x4(&cbShadow.wvpMat, transposed); // store transposed wvp matrix in constant buffer
-	//	cbShadow.projection = m_LightProj;
-	//	XMStoreFloat4x4(&cbShadow.worldPos, GO2->m_Particle->ReturnWorldMatrix());
-
-	//	// copy our ConstantBuffer instance to the mapped constant buffer resource
-	//	memcpy(cbvGPUAddress[frameIndex] + (ConstantBufferPerObjectAlignedSize * 4), &cbShadow, sizeof(cbShadow));
-	//}
-	//else
-	//{
-	//	for (size_t i = m_BillboardCount; i--;)
-	//	{
-	//		GameObject* GO4 = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(i + 3));
-	//		GO4->Update(0.f);
-	//		XMMATRIX wvpMat = GO4->m_Particle->ReturnWorldMatrix() * viewMat * projMat; // create wvp matrix
-	//		cbPerObject.mode = 1;
-	//		XMMATRIX transposed = XMMatrixTranspose(wvpMat); // must transpose wvp matrix for the gpu
-	//		XMStoreFloat4x4(&cbPerObject.wvpMat, transposed); // store transposed wvp matrix in constant buffer
-	//		XMStoreFloat4x4(&cbPerObject.worldPos, GO4->m_Particle->ReturnWorldMatrix());
-	//		memcpy(m_BillboardGPUAddress[frameIndex] + (ConstantBufferPerObjectAlignedSize * i), &cbPerObject, sizeof(cbPerObject));
-	//	}
-	//}
-
+	m_GameManager.UpdateObjectConstantBuffer(cbPerObject, L"TestGeometry", currentFrameIndex,1);
 }
 
 void UpdatePipeline()
 {
-	m_GameManager.Draw(&m_OutputManager, L"Pipeline1", L"Default Depth Stencil", L"TestGeometry", L"TestGeomerty", m_Manager);
+
+	int frameIndex = m_OutputManager.GetCurrentFrameIndex();
+
+	m_GameManager.WaitOnFrame(frameIndex);
+
+	m_GameManager.ResetAllocator(frameIndex, L"OutputManager");
+
+	m_GameManager.ReopenAllocator(frameIndex, L"OutputManager", L"Pipeline1");
+
+	m_GameManager.Draw(m_OutputManager.GetCurrentFrame(), m_OutputManager.GetHeap()->GetCPUAddress(frameIndex), frameIndex,L"Pipeline1", L"OutputManager Depth Stencil", L"TestGeometry", L"TestGeometry", m_Manager->GetObjectVector());
 }
 void Render()
 {
@@ -978,9 +862,11 @@ void Render()
 
 	UpdatePipeline(); // update the pipeline by sending commands to the commandqueue
 
-	m_GameManager.FlushCommandList(L"Default");
+	m_GameManager.Render(m_OutputManager.GetCurrentFrameIndex(), L"OutputManager");
 
-	m_GameManager.Render(&m_OutputManager);
+	m_OutputManager.Present();
+
+	m_OutputManager.UpdateFrameIndex();
 
 	//// create an array of command lists (only one command list here)
 	//ID3D12CommandList* ppCommandLists[] = { commandList };

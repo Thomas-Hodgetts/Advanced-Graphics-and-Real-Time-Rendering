@@ -8,25 +8,23 @@ public:
 	ConstantBufferHelper(std::wstring name);
 	~ConstantBufferHelper();
 
-	void Init(ID3D12Device* device, int blockCount, int classSize, int objectCount);
+	void Init(ID3D12Device* device, int blockCount, int classSize, int objectCount, int frameCount);
 
 	ConstantBufferPerObject* GetBuffer() { return m_Buffer; };
 
-	ID3D12Resource* GetHeapPointer() { return m_UploadHeap; };
+	ID3D12Resource* GetHeapPointer(int frameIndex) { return m_UploadHeap[frameIndex]; };
 
-	void FlushBuffer();
-	void FlushBuffer(int pos);
+	void FlushBuffer(int frameIndex, int objCount);
 
 private:
 
 	std::wstring m_Identifier;
 
-	ID3D12Resource* m_UploadHeap;
+	std::vector<ID3D12Resource*> m_UploadHeap;
 
 	ConstantBufferPerObject* m_Buffer;
 
-	UINT8* m_StartAddress;
-	UINT8* m_CurrentAddress;
+	UINT8** m_Address;
 
 	int m_ConstantBufferOffset = 0;
 	int m_Count = 0;

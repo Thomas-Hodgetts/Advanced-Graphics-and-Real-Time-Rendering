@@ -43,13 +43,13 @@ bool OutputManager::Present()
 	return true;
 }
 
+void OutputManager::UpdateFrameIndex()
+{
+	m_CurrentFrame = m_SwapChain->GetCurrentBackBufferIndex();
+}
+
 void OutputManager::operator++()
 {
-	m_CurrentFrame++;
-	if (m_CurrentFrame > (int)m_BufferMode)
-	{
-		m_CurrentFrame = 0;
-	}
-	m_RenderTargetHeap->CPUOffset();
+	UpdateFrameIndex();
 }
 

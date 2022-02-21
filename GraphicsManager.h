@@ -24,7 +24,6 @@
 #include "NormalCalculations.h"
 #include "ConstantBufferHelper.h"
 #include "GameObject.h"
-#include "OutputManager.h"
 #include "SystemManager.h"
 
 enum class PIPELINE_SHADER_ENUM_TYPE
@@ -62,9 +61,17 @@ public:
 
 	void ExecuteCommands();
 
-	void Draw(OutputManager* output, std::wstring pipelineIdentifier, std::wstring dsvIdentifier, std::wstring srvIdentifer, std::wstring constantBufferIdentifier, void* gameObjectVector);
+	void ForceCloseCommandList(std::wstring identifier);
 
-	void Render(OutputManager* outputManager);
+	void Draw(ID3D12Resource* currentFrame, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, int frameIndex, std::wstring pipelineIdentifier, std::wstring dsvIdentifier, std::wstring srvIdentifer, std::wstring constantBufferIdentifier, Flotilla gameObjectVector);
+
+	void Render(int frameIndex, std::wstring identifier);
+
+	void ResetAllocator(int frameIndex, std::wstring identifier);
+
+	void ReopenAllocator(int frameIndex, std::wstring identifier, std::wstring pipelineIdentifier);
+
+	void IncrementFenceValue(int currentFrame, std::wstring identifier) { m_FenceValueMap[identifier][currentFrame]++; };
 
 	//Pipeline functions
 
@@ -90,6 +97,8 @@ public:
 
 	bool CreateStencilDepthView(std::wstring name, int size, D3D12_DEPTH_STENCIL_VIEW_DESC* depthStencilDesc, D3D12_CLEAR_VALUE* depthOptimizedClearValue);
 
+	bool WaitOnFrame(int frameIndex);
+
 	//RenderTargets
 
 	DescriptorHeapHelper* CreateRenderTargetViews(D3D12_DESCRIPTOR_HEAP_DESC desc, IDXGISwapChain3* swapChain, std::wstring name);
@@ -98,7 +107,7 @@ public:
 
 	bool CreateGeomerty(const char* fileLoation, std::wstring geomertyIdentifier);
 
-	bool CreateConstantBuffer(std::wstring name, int blockCount, int classSize, int objectCount);
+	void CreateConstantBuffer(std::wstring name, int frameCount, int blockCount, int classSize, int objectCount);
 
 	bool CreateGeomerty(Vertex* vertexList, int vertexCount, DWORD* iList, int indexCount, std::wstring geomertyIdentifier);
 
@@ -122,9 +131,9 @@ public:
 
 	//Helpers
 
-	bool UpdateObjectConstantBuffer(ConstantBufferPerObject cBPO, std::wstring identifier, int pos);
+	bool UpdateObjectConstantBuffer(ConstantBufferPerObject cBPO, std::wstring identifier, int frameIndex, int pos);
 
-	bool FlushCommandList(std::wstring Idenifier);
+	bool FlushCommandList(std::wstring Idenifier, int frameIndex);
 
 
 private:
@@ -158,6 +167,7 @@ private:
 	ID3DBlob* m_ErrorBuff; // a buffer holding the error data if any
 	ID3DBlob* m_Signature;
 
+	HANDLE m_FenceEvent; // a handle to an event when our fence is unlocked by the gpu
 
 	//Render Targets
 

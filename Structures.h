@@ -28,6 +28,8 @@ struct Vertex
 	};
 };
 
+
+
 struct WindowData
 {
 	int m_Height = 0;
