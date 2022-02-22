@@ -196,8 +196,8 @@ void GraphicsManager::Draw(ID3D12Resource* currentFrame ,D3D12_CPU_DESCRIPTOR_HA
 		m_GraphicsCommandListMap[L"OutputManager"]->SetGraphicsRootConstantBufferView(0, addr);
 
 		m_GraphicsCommandListMap[L"OutputManager"]->SetGraphicsRootDescriptorTable(1, m_TextureHeapMap[srvIdentifer]->GetGPUAddress(0));
-		m_GraphicsCommandListMap[L"OutputManager"]->SetGraphicsRootDescriptorTable(2, m_TextureHeapMap[srvIdentifer]->GetGPUAddress(1));
-		m_GraphicsCommandListMap[L"OutputManager"]->SetGraphicsRootDescriptorTable(3, m_TextureHeapMap[srvIdentifer]->GetGPUAddress(2));
+		m_GraphicsCommandListMap[L"OutputManager"]->SetGraphicsRootDescriptorTable(2, m_TextureHeapMap[srvIdentifer]->GetGPUAddress(0));
+		m_GraphicsCommandListMap[L"OutputManager"]->SetGraphicsRootDescriptorTable(3, m_TextureHeapMap[srvIdentifer]->GetGPUAddress(0));
 
 		m_GraphicsCommandListMap[L"OutputManager"]->DrawIndexedInstanced(gameObj->m_Apperance->ReturnGeo().numberOfIndices, 1, 0, 0, 0);
 	}
@@ -582,7 +582,7 @@ bool GraphicsManager::CreateTextureHeap(LPCWSTR* textureLocations, int texCount,
 	HRESULT hr;
 
 	D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
-	heapDesc.NumDescriptors = 5;
+	heapDesc.NumDescriptors = texCount;
 	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 
@@ -628,7 +628,12 @@ bool GraphicsManager::CreateTextureHeap(LPCWSTR* textureLocations, int texCount,
 		{
 			return false;
 		}
-		m_TextureMap[texName]->SetName(L"Texture Buffer Resource Heap");
+
+		std::wstring resourceHeapName = name;
+	
+		resourceHeapName.append(L" Texture Buffer Resource Heap");
+
+		m_TextureMap[texName]->SetName(resourceHeapName.c_str());
 
 		UINT64 textureUploadBufferSize;
 		m_Device->GetCopyableFootprints(&textureDesc, 0, 1, 0, nullptr, nullptr, nullptr, &textureUploadBufferSize);
@@ -649,15 +654,14 @@ bool GraphicsManager::CreateTextureHeap(LPCWSTR* textureLocations, int texCount,
 
 		// store vertex buffer in upload heap
 		D3D12_SUBRESOURCE_DATA textureData = {};
-		textureData.pData = &imageData[0]; // pointer to our image data
+		textureData.pData = imageData; // pointer to our image data
 		textureData.RowPitch = imageBytesPerRow; // size of all our triangle vertex data
 		textureData.SlicePitch = imageBytesPerRow * textureDesc.Height; // also the size of our triangle vertex data
 		// Now we copy the upload buffer contents to the default heap
-		//UpdateSubresources(m_CommandListMap[L"Default"], m_TextureMap[texName], m_TextureUploadHeapMap[texName], 0, 0, 1, &textureData);
 
-		UpdateSubresources(m_GraphicsCommandListMap[L"Default"], m_TextureMap[texName], m_TextureUploadHeapMap[texName], 0, 0, 1, &textureData);
+		UINT64 test = UpdateSubresources(m_GraphicsCommandListMap[L"OutputManager"], m_TextureMap[texName], m_TextureUploadHeapMap[texName], 0, 0, 1, &textureData);
 		// transition the texture default heap to a pixel shader resource (we will be sampling from this heap in the pixel shader to get the color of pixels)
-		m_GraphicsCommandListMap[L"Default"]->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_TextureMap[texName], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+		m_GraphicsCommandListMap[L"OutputManager"]->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_TextureMap[texName], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
 
 		//BOOK
 
@@ -668,10 +672,10 @@ bool GraphicsManager::CreateTextureHeap(LPCWSTR* textureLocations, int texCount,
 		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 		srvDesc.Texture2D.MipLevels = 1;
 
-		m_Device->CreateShaderResourceView(m_TextureMap[texName], &srvDesc, m_TextureHeapMap[name]->CPUCurrentAddress());
-		m_TextureHeapMap[name]->CPUOffset();
-		return true;
+		m_Device->CreateShaderResourceView(m_TextureMap[texName], &srvDesc, m_TextureHeapMap[name]->GetCPUAddress(i));
 	}
+
+	return true;
 }
 
 bool GraphicsManager::CreateCustomTexture(D3D12_RESOURCE_FLAGS flags)

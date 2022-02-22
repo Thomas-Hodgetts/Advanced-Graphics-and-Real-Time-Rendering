@@ -644,24 +644,6 @@ bool InitD3D()
 	cameraTarget = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
 	cameraUp = XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f);
 
-	//// set starting cubes position
-	//// first cube
-	//cube1Position = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f); // set cube 1's position
-	//XMVECTOR posVec = XMLoadFloat4(&cube1Position); // create xmvector for cube1's position
-
-	//tmpMat = XMMatrixTranslationFromVector(posVec); // create translation matrix from cube1's position vector
-	//XMStoreFloat4x4(&cube1RotMat, XMMatrixIdentity()); // initialize cube1's rotation matrix to identity matrix
-	//XMStoreFloat4x4(&cube1WorldMat, tmpMat); // store cube1's world matrix
-
-	//// second cube
-	//cube2PositionOffset = XMFLOAT4(1.5f, 0.0f, 0.0f, 0.0f);
-	//posVec = XMLoadFloat4(&cube2PositionOffset) + XMLoadFloat4(&cube1Position); // create xmvector for cube2's position
-	//																			// we are rotating around cube1 here, so add cube2's position to cube1
-
-	//tmpMat = XMMatrixTranslationFromVector(posVec); // create translation matrix from cube2's position offset vector
-	//XMStoreFloat4x4(&cube2RotMat, XMMatrixIdentity()); // initialize cube2's rotation matrix to identity matrix
-	//XMStoreFloat4x4(&cube2WorldMat, tmpMat); // store cube2's world matrix
-
 	m_GameManager = gm;
 
 	m_Manager = new SystemManager();
@@ -676,34 +658,6 @@ bool InitD3D()
 	COS.objName = "Obj1";
 	COS.identifier = L"TestGeomerty";
 	m_Manager->BuildObject(COS);
-
-	//transform = new Transform(Vector3D(1.5f, 0.0f, 0.0f), Vector3D(0.0f, 00.0f, 0.0f), Vector3D(0.5f, 0.5f, 0.5f));
-	//XMStoreFloat4x4(&transform->RotationalMatrix, XMMatrixIdentity());
-	//COS = CreateObjectStruct(device, commandList, "Obj2", ObjectType::GameObj, vertexList, indexList, 2, ConstantBufferPerObjectAlignedSize, transform);
-	//m_Manager->BuildObject(COS);
-
-
-	////Thing to note: Constant buffer aligned size didn't increase on billboard creation
-	//for (size_t i = m_BillboardCount; i--;)
-	//{
-	//	float x = GenerateRandomNumber(0,10);
-	//	float y = GenerateRandomNumber(0,10);
-	//	float z = GenerateRandomNumber(5,15);
-	//	if (GenerateRandomNumber(1,2) % 2)
-	//	{
-	//		x = -x;
-	//	}
-	//	if (GenerateRandomNumber(1, 2) % 2)
-	//	{
-	//		y = -y;
-	//	}
-
-	//	transform = new Transform(Vector3D(x, y, z), Vector3D(0.0f, 0.0f, 0.0f), Vector3D(1.0f, 1.0f, 1.0f));
-	//	XMStoreFloat4x4(&transform->RotationalMatrix, XMMatrixIdentity());
-	//	COS = CreateObjectStruct(device, commandList, std::to_string(i), ObjectType::GameObj, verts2, indies2, 3 + i, ConstantBufferPerObjectAlignedSize, transform);
-	//	m_Manager->BuildObject(COS);
-
-	//}
 
 	shinyMaterial.AmbientMtrl = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
 	shinyMaterial.DiffuseMtrl = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -836,10 +790,6 @@ void Update()
 
 	m_GameManager.UpdateObjectConstantBuffer(cbPerObject, L"TestGeometry", currentFrameIndex,0);
 
-
-	// copy our ConstantBuffer instance to the mapped constant buffer resource
-	//memcpy(cbvGPUAddress[frameIndex], &cbPerObject, sizeof(cbPerObject));
-
 	m_GameManager.UpdateObjectConstantBuffer(cbPerObject, L"TestGeometry", currentFrameIndex,1);
 }
 
@@ -860,36 +810,13 @@ void Render()
 {
 	HRESULT hr;
 
-	UpdatePipeline(); // update the pipeline by sending commands to the commandqueue
+	UpdatePipeline();
 
 	m_GameManager.Render(m_OutputManager.GetCurrentFrameIndex(), L"OutputManager");
 
 	m_OutputManager.Present();
 
 	m_OutputManager.UpdateFrameIndex();
-
-	//// create an array of command lists (only one command list here)
-	//ID3D12CommandList* ppCommandLists[] = { commandList };
-
-	//// execute the array of command lists
-	//commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-
-	//// this command goes in at the end of our command queue. we will know when our command queue 
-	//// has finished because the fence value will be set to "fenceValue" from the GPU since the command
-	//// queue is being executed on the GPU
-	//hr = commandQueue->Signal(fence[frameIndex], fenceValue[frameIndex]);
-	//if (FAILED(hr))
-	//{
-	//	Running = false;
-	//}
-
-	//// present the current backbuffer
-	//hr = swapChain->Present(0, 0);
-	//if (FAILED(hr))
-	//{
-	//	hr = device->GetDeviceRemovedReason();
-	//	Running = false;
-	//}
 }
 
 void Cleanup()
