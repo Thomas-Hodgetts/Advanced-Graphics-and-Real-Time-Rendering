@@ -175,6 +175,7 @@
     <ClCompile Include="RigidBody.cpp" />
     <ClCompile Include="ShadowMaps.cpp" />
     <ClCompile Include="SystemManager.cpp" />
+    <ClCompile Include="Terrain.cpp" />
     <ClCompile Include="Transform.cpp" />
     <ClCompile Include="Vector2.cpp" />
     <ClCompile Include="Vector3D.cpp" />
@@ -202,6 +203,7 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Structures.h" />
     <ClInclude Include="SystemManager.h" />
+    <ClInclude Include="Terrain.h" />
     <ClInclude Include="ThreadVector.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="Vector2.h" />

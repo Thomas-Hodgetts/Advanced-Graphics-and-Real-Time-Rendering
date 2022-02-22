@@ -78,6 +78,9 @@
     <ClCompile Include="ConstantBufferHelper.cpp">
       <Filter>Managers\Graphic Manager\ManagerHelpers</Filter>
     </ClCompile>
+    <ClCompile Include="Terrain.cpp">
+      <Filter>Terrain</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -145,6 +148,9 @@
     </ClInclude>
     <ClInclude Include="ConstantBufferHelper.h">
       <Filter>Managers\Graphic Manager\ManagerHelpers</Filter>
+    </ClInclude>
+    <ClInclude Include="Terrain.h">
+      <Filter>Terrain</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -222,6 +228,9 @@
     </Filter>
     <Filter Include="Shader">
       <UniqueIdentifier>{fb0951fc-4be7-4776-9329-1f8973d8c2b0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Terrain">
+      <UniqueIdentifier>{a181173a-ca1b-4b82-bf2e-bedfd7146254}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
