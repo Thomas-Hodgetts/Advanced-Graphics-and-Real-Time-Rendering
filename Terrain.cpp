@@ -9,10 +9,10 @@ Terrain::~Terrain()
 {
 }
 
-Terrain::Terrain(int x, int z, std::string MapLocale, float scale, GraphicsManager* gm, std::string TexLocale)
+Terrain::Terrain(int x, int z, std::string MapLocale, float scale, std::wstring name)
 {
+	m_Name = name;
 	m_HeightMapScale = scale;
-	Loader L;
 
 	std::vector<unsigned char> in(x * z);
 	std::vector<float> out(z * x, 0);
@@ -73,7 +73,6 @@ Terrain::Terrain(int x, int z, std::string MapLocale, float scale, GraphicsManag
 			k += 6;
 		}
 	}
-	//	NormalCalculations::CalculateObjectNormals(m_VertexStore.data(), m_IndexStore.data(), faceCount);
 
 
 	for (UINT i = 0; i < faceCount; i++)
@@ -86,11 +85,9 @@ Terrain::Terrain(int x, int z, std::string MapLocale, float scale, GraphicsManag
 		m_VertexStore[i2].Normal = { 0,1,0 };
 	}
 
-	//gm->CreateGeomerty();
+
+	//LPCWSTR* TexLocale, int texCount,
 
 	m_Geometry = new Geometry();
-
-	m_Geometry->numberOfIndices = m_IndexStore.size();
-
 }
 

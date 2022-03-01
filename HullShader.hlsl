@@ -1,56 +1,48 @@
+#include "Header.hlsli"
+
 // Input control point
 struct VS_CONTROL_POINT_OUTPUT
 {
-	float3 vPosition : WORLDPOS;
+	float4 vPosition : WORLDPOS;
 	// TODO: change/add other stuff
 };
-
-// Output control point
-struct HS_CONTROL_POINT_OUTPUT
-{
-	float3 vPosition : WORLDPOS; 
-};
-
-// Output patch constant data.
-struct HS_CONSTANT_DATA_OUTPUT
-{
-	float EdgeTessFactor[3]			: SV_TessFactor; // e.g. would be [4] for a quad domain
-	float InsideTessFactor			: SV_InsideTessFactor; // e.g. would be Inside[2] for a quad domain
-	// TODO: change/add other stuff
-};
-
-#define NUM_CONTROL_POINTS 3
 
 // Patch Constant Function
 HS_CONSTANT_DATA_OUTPUT CalcHSPatchConstants(
-	InputPatch<VS_CONTROL_POINT_OUTPUT, NUM_CONTROL_POINTS> ip,
+	InputPatch<VS_OUTPUT, NUM_CONTROL_POINTS> ip,
 	uint PatchID : SV_PrimitiveID)
 {
 	HS_CONSTANT_DATA_OUTPUT Output;
 
 	// Insert code to compute Output here
-	Output.EdgeTessFactor[0] = 
-		Output.EdgeTessFactor[1] = 
-		Output.EdgeTessFactor[2] = 
-		Output.InsideTessFactor = 15; // e.g. could calculate dynamic tessellation factors instead
+	Output.EdgeTessFactor[0] = 3;
+	Output.EdgeTessFactor[1] = 3;
+	Output.EdgeTessFactor[2] = 3;
+	Output.EdgeTessFactor[3] = 3;
+	Output.InsideTessFactor[0] = 3; // e.g. could calculate dynamic tessellation factors instead
+	Output.InsideTessFactor[1] = 3; // e.g. could calculate dynamic tessellation factors instead
 
 	return Output;
 }
 
-[domain("tri")]
-[partitioning("fractional_odd")]
+[domain("quad")]
+[partitioning("integer")]
 [outputtopology("triangle_cw")]
-[outputcontrolpoints(3)]
+[outputcontrolpoints(4)]
 [patchconstantfunc("CalcHSPatchConstants")]
-HS_CONTROL_POINT_OUTPUT main( 
-	InputPatch<VS_CONTROL_POINT_OUTPUT, NUM_CONTROL_POINTS> ip, 
+[maxtessfactor(64.f)]
+VS_OUTPUT main(
+	InputPatch<VS_OUTPUT, NUM_CONTROL_POINTS> ip,
 	uint i : SV_OutputControlPointID,
 	uint PatchID : SV_PrimitiveID )
 {
-	HS_CONTROL_POINT_OUTPUT Output;
-
-	// Insert code to compute Output here
-	Output.vPosition = ip[i].vPosition;
-
+	VS_OUTPUT Output;
+	//Output = ip[i];
+	Output.pos = ip[i].pos;
+	Output.posW = ip[i].posW;
+	Output.norm = ip[i].norm;
+	Output.biNorm = ip[i].biNorm;
+	Output.tangent = ip[i].tangent;
+	Output.texCoord = ip[i].texCoord;
 	return Output;
 }

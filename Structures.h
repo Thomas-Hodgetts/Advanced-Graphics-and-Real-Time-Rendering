@@ -46,10 +46,11 @@ enum class ObjectType
 struct CreateObjectStruct
 {
 	CreateObjectStruct() {};
-	CreateObjectStruct(void* gm, Transform* trans, std::wstring ws, std::string name) :  transform(trans), graphicsManager(gm), identifier(ws), objName(name){}
+	CreateObjectStruct(void* gm, Transform* trans, D3D12_INDEX_BUFFER_VIEW* i, D3D12_VERTEX_BUFFER_VIEW* v, std::string name) : transform(trans), graphicsManager(gm), index(i), vertex(v), objName(name) {};
 	void* graphicsManager;
 	Transform* transform = nullptr;
-	std::wstring identifier;
+	D3D12_INDEX_BUFFER_VIEW* index;
+	D3D12_VERTEX_BUFFER_VIEW* vertex;
 	std::string objName;
 };
 

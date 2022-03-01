@@ -1,8 +1,4 @@
-struct VS_OUTPUT2
-{
-	float4 pos : SV_POSITION;
-	float2 texCoord: TEXCOORD;
-};
+#include "Header.hlsli"
 
 /***********************************************
 MARKING SCHEME: Geomertry Shader

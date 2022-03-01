@@ -1,25 +1,25 @@
 #pragma once
-#include "Vector3D.h"
-#include "Loader.h"
-#include "TerrainTex.h"
-#include "NormalCalculations.h"
+#include <vector>
 #include "Structures.h"
-#include "GraphicsManager.h"
+#include <fstream>
+
+
 class Terrain 
 {
 public:
 	Terrain();
-	Terrain(int x, int z, std::string MapLocale, float scale, GraphicsManager* gm, std::string TexLocale);
+	Terrain(int x, int z, std::string MapLocale, float scale, std::wstring name);
 	~Terrain();
 
-
+	std::vector<Vertex> GetVertexStorage() { return m_VertexStore;};
+	std::vector<DWORD> GetIndexStorage() { return m_IndexStore;};
+	Geometry* GetGeometry() { return m_Geometry;};
 
 private:
 
 
-	Loader m_Loader;
 	Geometry* m_Geometry;
-	std::vector<TerrainTex*> m_TextureStore;
+	std::wstring m_Name;
 	std::vector<Vertex> m_VertexStore;
 	std::vector<float> m_HeightMap;
 	std::vector<DWORD> m_IndexStore;

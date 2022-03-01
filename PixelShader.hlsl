@@ -1,3 +1,5 @@
+#include "Header.hlsli"
+
 Texture2D t1 : register(t0);
 Texture2D heightMap : register(t1);
 Texture2D normalMap : register(t2);
@@ -5,69 +7,22 @@ Texture2D gShadowMap : register(t3);
 SamplerState s1 : register(s0);
 SamplerComparisonState gsamShadow : register(s1);
 
-struct GSOutput
+cbuffer ConstantBuffer : register(b0)
 {
-	float4 posH : SV_POSITION;
-	float3 posW : POSITION;
-	float3 norm : NORMAL;
-	float2 texCoord : TEXCOORD;
-};
-
-struct VertexOut
-{
-	float3 posL : POSITION;
-	float3 norm : NORMAL;
-	float2 texCoord : TEXCOORD;
-};
-
-
-struct SurfaceInfo
-{
-	float4 AmbientMtrl;
-	float4 DiffuseMtrl;
-	float4 SpecularMtrl;
-};
-
-struct Light
-{
-	float4 AmbientLight;
-	float4 DiffuseLight;
-	float4 SpecularLight;
-
-	float SpecularPower;
-	float3 LightVecW;
-};
-
-struct LightingResult
-{
-	float4 Diffuse;
-	float4 Specular;
-};
-
-struct VS_OUTPUT
-{
-	float4 pos: SV_POSITION;
-	float3 posW: POSW;
-	float4 ShadowPosH : POSITION0;
-	float2 texCoord: TEXCOORD;
-	float4 projTex: TEXCOORD1;
-	float3 EyePosW : TANGENT2;
-	Light l : LIGHTDATA;
-	SurfaceInfo s : SURFACEINFO;
-	float3 LightVecW : TANGENT1;
-	float3 norm : NORMAL;
-	float3 biNorm : TANGENT3;
-	float3 tangent : TANGENT4;
-	float3 irradiance : IRADIANCE;
-	float4x4 worldMat : WORLDMAT;
-	int mode : MODE;
-};
-
-struct VS_SHADOW
-{
-	float4 posH : SV_POSITION;
-	float2 texCoord: TEXCOORD;
-	float4 DiffuseMtrl : POSITION0;
+	float4x4 wvpMat;
+	//----------------------------------- (16 byte boundary)
+	float4x4 WorldPos;
+	//----------------------------------- (16 byte boundary)
+	float4x4 Projection;
+	//----------------------------------- (16 byte boundary)
+	float4x4 gShadowTransform;
+	//----------------------------------- (16 byte boundary)
+	SurfaceInfo Si;
+	//----------------------------------- (16 byte boundary)
+	Light light;
+	//----------------------------------- (16 byte boundary)
+	float3 EyePosW;
+	int mode;
 };
 
 /***********************************************
@@ -231,12 +186,12 @@ float4 main(VS_OUTPUT input) : SV_TARGET
 	float3x3 TBN = float3x3(input.tangent, input.biNorm, input.norm);
 	float3x3 TBN_inv = transpose(TBN);
 
-	float3 eyeVectorTS = VectorToTangentSpace(input.EyePosW.xyz, TBN_inv);
-	float3 lightVectorTS = VectorToTangentSpace(input.LightVecW.xyz, TBN_inv);
+	float3 eyeVectorTS = VectorToTangentSpace(EyePosW.xyz, TBN_inv);
+	float3 lightVectorTS = VectorToTangentSpace(light.LightVecW.xyz, TBN_inv);
 	float3 normalTS = VectorToTangentSpace(input.norm, TBN_inv);
 	float4 posTS = (VectorToTangentSpace(input.posW.xyz, TBN_inv), 0);
 
-	float3 toEye = normalize(input.EyePosW - input.posW);
+	float3 toEye = normalize(	EyePosW - input.posW);
 	float3 toEyeTS = VectorToTangentSpace(toEye, TBN_inv);
 	float2 texCoords = input.texCoord;
 	float4 bumpMap;
@@ -245,7 +200,7 @@ float4 main(VS_OUTPUT input) : SV_TARGET
 
 	LightingResult lr;
 
-	if (input.mode == 0)
+	if (mode == 0)
 	{
 		texCoords = ParallaxMapping(input.texCoord, toEyeTS);
 
@@ -253,7 +208,7 @@ float4 main(VS_OUTPUT input) : SV_TARGET
 
 		shadowFactor = parallaxSoftShadowMultiplier(lightVectorTS, texCoords, heightMap.Sample(s1, texCoords).x);
 		
-		lr = ComputeSimpleLighting(eyeVectorTS, bumpMap, lightVectorTS, input.s, input.l, shadowFactor);
+		lr = ComputeSimpleLighting(eyeVectorTS, bumpMap, lightVectorTS, Si, light, shadowFactor);
 
 		if (texCoords.x > 1 || texCoords.x < 0 || texCoords.y > 1 || texCoords.y < 0)
 		{
@@ -261,53 +216,47 @@ float4 main(VS_OUTPUT input) : SV_TARGET
 		}
 
 	}
-	if (input.mode == 1)
+	if (mode == 1)
 	{
 		bumpMap = ProcessBumpMap(normalMap.Sample(s1, texCoords), TBN, 0);
 
-		lr = ComputeSimpleLighting(toEyeTS, bumpMap, lightVectorTS, input.s, input.l, shadowFactor2);
+		lr = ComputeSimpleLighting(toEyeTS, bumpMap, lightVectorTS, Si, light, shadowFactor2);
 	}
-	if (input.mode == 2)
+	if (mode == 2)
 	{ 
-		lr = ComputeSimpleLighting(toEye, input.norm, input.LightVecW, input.s, input.l, shadowFactor2);
+		lr = ComputeSimpleLighting(toEye, input.norm, light.LightVecW, Si, light, shadowFactor2);
 	}
-	if (input.mode == 3)
+	if (mode == 3)
 	{
 
 		input.ShadowPosH.xyz /= input.ShadowPosH.w;
 
 		shadowFactor2 = CalcShadowFactor(input.ShadowPosH);
 
-		lr = ComputeSimpleLighting(toEye, input.norm, input.LightVecW, input.s, input.l, shadowFactor2);
+		lr = ComputeSimpleLighting(toEye, input.norm, light.LightVecW, Si, light, shadowFactor2);
 	}
 
 
 	float3 ambient = (0, 0, 0);
 
 
-	ambient += (input.l.AmbientLight * input.l.DiffuseLight).rgb;
+	ambient += (light.AmbientLight * light.DiffuseLight).rgb;
 
 	float4 finalCol = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
-	if (input.mode == 0)
+	if (mode == 0)
 	{
 		finalCol.rgb = ((ambient + lr.Diffuse) + lr.Specular * shadowFactor) * t1.Sample(s1, texCoords).rgb;
-		finalCol.a = input.s.DiffuseMtrl.a;
+		finalCol.a = Si.DiffuseMtrl.a;
 	}
 	else
 	{
 		finalCol.rgb = ((ambient + lr.Diffuse) + lr.Specular) * t1.Sample(s1, input.texCoord).rgb;
-		finalCol.a = input.s.DiffuseMtrl.a;
+		finalCol.a = Si.DiffuseMtrl.a;
 	}
 	return finalCol;
 
 }
-
-struct VS_OUTPUT2
-{
-	float4 pos : SV_POSITION;
-	float2 texCoord: TEXCOORD;
-};
 
 /***********************************************
 MARKING SCHEME: Render to texture
@@ -332,69 +281,4 @@ void shadowOuput(VS_SHADOW input)
 #ifdef APLHA_CLIP
 	clip(diffuseAlbedo.a - 0.1f);
 #endif
-}
-
-//
-//void Subdivide(VertexOut inVerts[3], out VertexOut outVerts[6])
-//{
-//	VertexOut m[3];
-//	m[0].posL = 0.5f * (inVerts[0].posL + inVerts[1].posL);
-//	m[1].posL = 0.5f * (inVerts[1].posL + inVerts[2].posL);
-//	m[2].posL = 0.5f * (inVerts[2].posL + inVerts[0].posL);
-//
-//	m[0].posL = normalize(m[0].posL);
-//	m[1].posL = normalize(m[1].posL);
-//	m[2].posL = normalize(m[2].posL);
-//
-//	m[0].norm = m[0].posL;
-//	m[1].norm = m[1].posL;
-//	m[2].norm = m[2].posL;
-//
-//	m[0].texCoord = 0.5f * (inVerts[0].texCoord + inVerts[1].texCoord;
-//	m[1].texCoord = 0.5f * (inVerts[1].texCoord + inVerts[2].texCoord;
-//	m[2].texCoord = 0.5f * (inVerts[2].texCoord + inVerts[0].texCoord;
-//
-//	outVerts[0] = inVerts[0];
-//	outVerts[1] = m[0];
-//	outVerts[2] = m[1];
-//	outVerts[3] = m[2];
-//	outVerts[4] = inVerts[2];
-//	outVerts[5] = inVerts[1];
-//};
-//
-//void OutpiutSubDivision(VertexOut v[6], inout TriangleStream<GSOutput> triStream)
-//{
-//	GSOutput gout[6];
-//
-//	[unroll]
-//	for (int i = 0; i < 6; i++)
-//	{
-//		gout[i].posW = mul(float(v[i].posL, 1.0f), gWorld).xyz;
-//		gout.NormalW = mul(v[i].NormalL, )
-//
-//	}
-//}
-
-[maxvertexcount(3)]
-void gsMain(triangle VertexOut input[3], inout TriangleStream<VertexOut> outputStream)
-{
-	/*float3 rightVector = { 1,0,0 };
-	float3 upVector = { 0,1,0 };
-	vert[0] = input[0].worldPos - rightVector;
-	vert[1] = input[0].worldPos + rightVector;
-	vert[2] = input[0].worldPos - rightVector + upVector;
-	vert[3] = input[0].worldPos + rightVector + upVector;
-	float2 texCoord[4];
-	texCoord[0] = float2(0, 1);
-	texCoord[1] = float2(1, 1);
-	texCoord[2] = float2(0, 0);
-	texCoord[3] = float2(1, 0);
-	VertexOut outputVert;
-	for (int i = 0; i < 3; i++)
-	{
-		outputVert.Pos = mul(float4(vert[i], 1.0f), VP);
-		outputVert.worldPos = float4(vert[i], 0.0f);
-		outputVert.TexCoord = texCoord[i];
-		outputStream.Append(outputVert);
-	}*/
 }

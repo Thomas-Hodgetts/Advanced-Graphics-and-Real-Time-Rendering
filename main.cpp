@@ -224,80 +224,8 @@ bool InitD3D()
 		m_ShadowMapping = false;
 		m_Rotate = false;
 	}
+
 	HRESULT hr;
-
-	// -- Create the Device -- //
-
-	IDXGIFactory4* dxgiFactory;
-	hr = CreateDXGIFactory2(DXGI_CREATE_FACTORY_DEBUG, IID_PPV_ARGS(&dxgiFactory));
-	//hr = CreateDXGIFactory(IID_PPV_ARGS(&dxgiFactory));
-	
-	D3D12GetDebugInterface(IID_PPV_ARGS(&m_DebugLayer));
-	m_DebugLayer->EnableDebugLayer();
-	if (FAILED(hr))
-	{
-		return false;
-	}
-
-	IDXGIAdapter1* adapter; // adapters are the graphics card (this includes the embedded graphics on the motherboard)
-
-	int adapterIndex = 0; // we'll start looking for directx 12  compatible graphics devices starting at index 0
-
-	bool adapterFound = false; // set this to true when a good one was found
-
-							   // find first hardware gpu that supports d3d 12
-	while (dxgiFactory->EnumAdapters1(adapterIndex, &adapter) != DXGI_ERROR_NOT_FOUND)
-	{
-		DXGI_ADAPTER_DESC1 desc;
-		adapter->GetDesc1(&desc);
-
-		if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
-		{
-			// we dont want a software device
-			continue;
-		}
-
-		// we want a device that is compatible with direct3d 12 (feature level 11 or higher)
-		hr = D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_11_0, _uuidof(ID3D12Device), nullptr);
-		if (SUCCEEDED(hr))
-		{
-			adapterFound = true;
-			break;
-		}
-
-		adapterIndex++;
-	}
-
-	if (!adapterFound)
-	{
-		Running = false;
-		return false;
-	}
-
-	// Create the device
-	hr = D3D12CreateDevice(
-		adapter,
-		D3D_FEATURE_LEVEL_11_0,
-		IID_PPV_ARGS(&device)
-		);
-	if (FAILED(hr))
-	{
-		Running = false;
-		return false;
-	}
-
-	// -- Create a direct command queue -- //
-
-	D3D12_COMMAND_QUEUE_DESC cqDesc = {};
-	cqDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-	cqDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT; // direct means the gpu can directly execute this command queue
-
-	hr = device->CreateCommandQueue(&cqDesc, IID_PPV_ARGS(&commandQueue)); // create the command queue
-	if (FAILED(hr))
-	{
-		Running = false;
-		return false;
-	}
 
 	// -- Create the Swap Chain (double/tripple buffering) -- //
 
@@ -323,16 +251,6 @@ bool InitD3D()
 
 	IDXGISwapChain* tempSwapChain;
 
-	//hr = dxgiFactory->CreateSwapChain(
-	//	commandQueue, // the queue will be flushed once the swap chain is created
-	//	&swapChainDesc, // give it the swap chain description we created above
-	//	&tempSwapChain // store the created swap chain in a temp IDXGISwapChain interface
-	//	);
-
-
-	//swapChain = static_cast<IDXGISwapChain3*>(tempSwapChain);
-
-
 	// -- Create the Back Buffers (render target views) Descriptor Heap -- //
 
 	// describe an rtv descriptor heap and create
@@ -343,20 +261,12 @@ bool InitD3D()
 													   // This heap will not be directly referenced by the shaders (not shader visible), as this will store the output from the pipeline
 													   // otherwise we would set the heap's flag to D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE
 	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	hr = device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&rtvDescriptorHeap));
-	if (FAILED(hr))
-	{
-		Running = false;
-		return false;
-	}
 
 	GraphicsManager gm(1920, 1080);
 	OutputManager output(&gm, swapChainDesc, rtvHeapDesc);
 
 	D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
-		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
+		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
 
 	// create a static sampler
@@ -392,6 +302,8 @@ bool InitD3D()
 	gm.CreateRootSignature(rootSignatureFlags, samples, 2, 5, 1, 4, L"Pipeline1");
 	gm.CompileVertexShader(L"Pipeline1", L"VertexShader.hlsl", "main");
 	gm.CompilePixelShader(L"Pipeline1", L"PixelShader.hlsl", "main");
+	gm.CompileDomainShader(L"Pipeline1", L"DomainShader.hlsl", "main");
+	gm.CompileHullShader(L"Pipeline1", L"HullShader.hlsl", "main");
 
 
 
@@ -656,7 +568,8 @@ bool InitD3D()
 	COS.graphicsManager = &m_GameManager;
 	COS.transform = transform;
 	COS.objName = "Obj1";
-	COS.identifier = L"TestGeomerty";
+	COS.index = gm.GetIndexBufferView(L"");
+	COS.vertex = gm.GetVertexBufferView()
 	m_Manager->BuildObject(COS);
 
 	shinyMaterial.AmbientMtrl = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
@@ -676,11 +589,20 @@ bool InitD3D()
 
 	XMStoreFloat4x4(&m_LightMatrix, scale * rotation * translation);
 
+
+	Terrain* pTerrain = m_Manager->GetTerrain();
+
+	m_GameManager.CreateGeomerty(pTerrain->GetVertexStorage(), pTerrain->GetIndexStorage(), L"Terrain", pTerrain->GetGeometry());
+
+	m_GameManager.CreateTextureHeap(filename, 4, L"Terrain");
+
 	m_OutputManager = output;
 
 	m_GameManager.ForceCloseCommandList(L"OutputManager");
 
 	m_GameManager.Render(m_OutputManager.GetCurrentFrameIndex(), L"OutputManager");
+
+	m_Manager->CreateTerrain(512, 512, "MapLocation", 2, L"Terrain");
 
 	return true;
 }
@@ -804,7 +726,7 @@ void UpdatePipeline()
 
 	m_GameManager.ReopenAllocator(frameIndex, L"OutputManager", L"Pipeline1");
 
-	m_GameManager.Draw(m_OutputManager.GetCurrentFrame(), m_OutputManager.GetHeap()->GetCPUAddress(frameIndex), frameIndex,L"Pipeline1", L"OutputManager Depth Stencil", L"TestGeometry", L"TestGeometry", m_Manager->GetObjectVector());
+	m_GameManager.Draw(m_OutputManager.GetCurrentFrame(), m_OutputManager.GetHeap()->GetCPUAddress(frameIndex), frameIndex,L"Pipeline1", L"OutputManager Depth Stencil", L"TestGeometry", L"TestGeometry", m_Manager);
 }
 void Render()
 {

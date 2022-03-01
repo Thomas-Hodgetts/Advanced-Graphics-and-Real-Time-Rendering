@@ -17,3 +17,8 @@ void Debug::OutputString(double OutputString)
 {
 	OutputDebugStringA(std::to_string(OutputString).c_str() + '\n');
 }
+
+void Debug::CreateOutputMessage(std::wstring message)
+{
+	MessageBox(NULL, message.c_str(), L"Error", MB_OK | MB_ICONERROR);
+}

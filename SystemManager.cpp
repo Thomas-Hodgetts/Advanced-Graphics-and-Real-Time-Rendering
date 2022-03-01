@@ -17,12 +17,10 @@ HRESULT SystemManager::BuildObject(CreateObjectStruct COS)
 {
 	HRESULT hr;
 
-	GraphicsManager* gm = (GraphicsManager*)COS.graphicsManager;
-
 	Geometry geo;
 	geo.Point = XMFLOAT3(0, 0, 0);
-	geo.vertexBufferView = gm->GetVertexBufferView(COS.identifier);
-	geo.indexBufferView = gm->GetIndexBufferView(COS.identifier);
+	geo.vertexBufferView = COS.vertex;
+	geo.indexBufferView = COS.index;
 	geo.numberOfIndices = geo.indexBufferView->SizeInBytes / sizeof(DWORD);
 
 

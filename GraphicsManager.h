@@ -63,7 +63,7 @@ public:
 
 	void ForceCloseCommandList(std::wstring identifier);
 
-	void Draw(ID3D12Resource* currentFrame, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, int frameIndex, std::wstring pipelineIdentifier, std::wstring dsvIdentifier, std::wstring srvIdentifer, std::wstring constantBufferIdentifier, Flotilla gameObjectVector);
+	void Draw(ID3D12Resource* currentFrame, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, int frameIndex, std::wstring pipelineIdentifier, std::wstring dsvIdentifier, std::wstring srvIdentifer, std::wstring constantBufferIdentifier, SystemManager* sysManager);
 
 	void Render(int frameIndex, std::wstring identifier);
 
@@ -110,6 +110,8 @@ public:
 	void CreateConstantBuffer(std::wstring name, int frameCount, int blockCount, int classSize, int objectCount);
 
 	bool CreateGeomerty(Vertex* vertexList, int vertexCount, DWORD* iList, int indexCount, std::wstring geomertyIdentifier);
+
+	bool CreateGeomerty(std::vector<Vertex> vertex, std::vector<DWORD> index, std::wstring geomertyIdentifier, Geometry* geo);
 
 	bool CreateTextureHeap(LPCWSTR* textureLocations, int texCount, std::wstring name);
 
@@ -207,6 +209,7 @@ private:
 	std::unordered_map<std::wstring, ID3D12GraphicsCommandList*> m_GraphicsCommandListMap;
 	std::unordered_map<std::wstring, ID3D12CommandList*> m_CommandListMap;
 	std::unordered_map<std::wstring, ID3D12Resource*> m_DepthStencilBufferMap;
+	std::unordered_map<std::wstring, bool> m_PipelineTess;
 
 };
 

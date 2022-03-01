@@ -1,67 +1,4 @@
-struct VS_INPUT
-{
-	float4 pos : POSITION;
-	float2 texCoord: TEXCOORD;
-	float3 normalL: NORMAL;
-	float3 tan: TANGENT;
-	float3 biNorm: BINORMAL;
-};
-
-struct VS_INPUT2
-{
-	float4 pos : POSITION;
-	float2 texCoord: TEXCOORD;
-};
-
-struct VS_OUTPUT2
-{
-	float4 pos : SV_POSITION;
-	float2 texCoord: TEXCOORD;
-};
-
-struct SurfaceInfo
-{
-	float4 AmbientMtrl;
-	float4 DiffuseMtrl;
-	float4 SpecularMtrl;
-
-};
-
-struct Light
-{
-	float4 AmbientLight;
-	float4 DiffuseLight;
-	float4 SpecularLight;
-
-	float SpecularPower;
-	float3 LightVecW;
-};
-
-struct VS_OUTPUT
-{
-	float4 pos: SV_POSITION;
-	float3 posW: POSW;
-	float4 ShadowPosH : POSITION0;
-	float2 texCoord: TEXCOORD;
-	float4 projTex: TEXCOORD1;
-	float3 EyePosW : TANGENT2;
-	Light l : LIGHTDATA;
-	SurfaceInfo s : SURFACEINFO;
-	float3 LightVecW : TANGENT1;
-	float3 norm : NORMAL;
-	float3 biNorm : TANGENT3;
-	float3 tangent : TANGENT4;
-	float3 irradiance : IRADIANCE;
-	float4x4 worldMat : WORLDMAT;
-	int mode : MODE;
-};
-
-struct VS_SHADOW
-{
-	float4 posH : SV_POSITION;
-	float2 texCoord: TEXCOORD;
-	float4 DiffuseMtrl : POSITION0;
-};
+#include "Header.hlsli"
 
 cbuffer ConstantBuffer : register(b0)
 {
@@ -156,26 +93,18 @@ VS_OUTPUT main(VS_INPUT input)
 {
 	VS_OUTPUT output;
 	output.posW = mul(input.pos, WorldPos);
-	output.pos = mul(input.pos, wvpMat);
+	//output.pos = mul(input.pos, wvpMat);
+	output.pos = input.pos;
 	output.texCoord = input.texCoord;
-	output.ShadowPosH = mul(output.posW, gShadowTransform);
+	output.ShadowPosH = float4(0.f, 0.f, 0.f, 0.f);
+	output.projTex = float4(0.f, 0.f, 0.f, 0.f);
 	//output.projTex = mul(float4(light.LightVecW, 1.0f), gLightWorldViewProjTexture);
-	output.norm = normalize(mul(input.normalL, WorldPos));
-	output.biNorm = normalize(mul(input.biNorm, WorldPos));
-	output.tangent = normalize(mul(input.tan, WorldPos));
-	output.l = light;
-	output.s = Si;
-	//output.l.AmbientLight = float4(0.5f, 0.5f, 0.5f, 1.0f);
-	//output.l.DiffuseLight = float4(1.0f, 1.0f, 1.0f, 1.0f);
-	//output.l.SpecularLight = float4(0.3f, 0.3f, 0.3f, 1.0f);
-	//output.l.SpecularPower = 32.f;
-	//output.s.AmbientMtrl = float4(0.3f, 0.3f, 0.3f, 1.0f);
-	//output.s.DiffuseMtrl = float4(1.0f, 1.0f, 1.0f, 1.0f);
-	//output.s.SpecularMtrl = float4(0.5f, 0.5f, 0.5f, 1.0f);
-	output.LightVecW = normalize(light.LightVecW - output.posW.xyz);
-	output.EyePosW = normalize(EyePosW - output.posW.xyz);
-	output.worldMat = wvpMat;
-	output.mode = mode;
+	//output.norm = normalize(mul(input.normalL, WorldPos));
+	//output.biNorm = normalize(mul(input.biNorm, WorldPos));
+	//output.tangent = normalize(mul(input.tan, WorldPos));
+	output.norm = input.normalL;
+	output.biNorm = input.biNorm;
+	output.tangent = input.tan;
 
 	//float3 Harmonics[9];
 	//accumLightSH(Harmonics, (255, 255, 255), output.norm, );

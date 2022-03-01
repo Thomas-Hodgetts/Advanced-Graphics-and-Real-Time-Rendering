@@ -3,7 +3,7 @@
 #include "Camera.h"
 #include "Structures.h"
 #include "GameObject.h"
-#include "GraphicsManager.h"
+#include "Terrain.h"
 
 class SystemManager
 {
@@ -19,8 +19,8 @@ public:
 	Camera* ReturnCamera() { return m_Camera; };
 	Object* GetStoredObject(int Pos) { return m_Objects.ReturnObject(Pos); }
 	Flotilla GetObjectVector() { return m_Objects; };
-
-
+	void CreateTerrain(int x, int z, std::string MapLocale, float scale, std::wstring name) { m_Terrain = new Terrain(x,z, MapLocale, scale, name); }
+	Terrain* GetTerrain() { return m_Terrain; };
 	
 	void Update();
 	void Draw(DrawObjectsStruct DOS);
@@ -32,6 +32,6 @@ private:
 	
 	Camera* m_Camera;
 	Flotilla m_Objects;
-	Flotilla m_DrawQueue;
+	Terrain* m_Terrain;
 };
 

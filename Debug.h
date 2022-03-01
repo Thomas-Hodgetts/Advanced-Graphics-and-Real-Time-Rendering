@@ -11,5 +11,7 @@ public:
 	static void OutputString(float OutputString);
 	static void OutputString(double OutputString);
 
+	static void CreateOutputMessage(std::wstring message);
+
 };
 
