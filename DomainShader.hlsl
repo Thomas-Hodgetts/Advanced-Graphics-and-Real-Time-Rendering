@@ -64,9 +64,9 @@ cbuffer ConstantBuffer : register(b0)
 // Called once per tessellated vertex
 [domain("tri")] // indicates that triangle patches were used
 //The original patch is passed in, along with the vertex position //in barycentric coordinates, and the patch constant phase hull //shader output (tessellation factors)
-VS_OUTPUT main(HS_CONSTANT_DATA_OUTPUT input, float3 BarycentricCoordinates : SV_DomainLocation, const OutputPatch<HS_CONTROL_POINT_OUTPUT, 3> TrianglePatch)
+DS_OUTPUT main(HS_CONSTANT_DATA_OUTPUT input, float3 BarycentricCoordinates : SV_DomainLocation, const OutputPatch<HS_CONTROL_POINT_OUTPUT, 3> TrianglePatch)
 {
-	VS_OUTPUT Output;
+	DS_OUTPUT Output = (DS_OUTPUT)0;
 
 	// Interpolate world space position with barycentric coordinates
 	float3 vWorldPos = BarycentricCoordinates.x * TrianglePatch[0].posL + BarycentricCoordinates.y * TrianglePatch[1].posL + BarycentricCoordinates.z * TrianglePatch[2].posL;
@@ -75,26 +75,41 @@ VS_OUTPUT main(HS_CONSTANT_DATA_OUTPUT input, float3 BarycentricCoordinates : SV
 	Output.texCoord = BarycentricCoordinates.x * TrianglePatch[0].texCoord + BarycentricCoordinates.y * TrianglePatch[1].texCoord;
 
 		// Interpolate normal with barycentric coordinates
-	Output.norm = BarycentricCoordinates.x * TrianglePatch[0].normalL + BarycentricCoordinates.y * TrianglePatch[1].normalL + BarycentricCoordinates.z * TrianglePatch[2].normalL;
+	Output.normalW = BarycentricCoordinates.x * TrianglePatch[0].normalL + BarycentricCoordinates.y * TrianglePatch[1].normalL + BarycentricCoordinates.z * TrianglePatch[2].normalL;
 
 	Output.biNorm = BarycentricCoordinates.x * TrianglePatch[0].biNorm + BarycentricCoordinates.y * TrianglePatch[1].biNorm + BarycentricCoordinates.z * TrianglePatch[2].biNorm;
 
-	Output.tangent = BarycentricCoordinates.x * TrianglePatch[0].tan + BarycentricCoordinates.y * TrianglePatch[1].tan + BarycentricCoordinates.z * TrianglePatch[2].tan;
+	Output.tan = BarycentricCoordinates.x * TrianglePatch[0].tan + BarycentricCoordinates.y * TrianglePatch[1].tan + BarycentricCoordinates.z * TrianglePatch[2].tan;
 
-	//	// Interpolate light vector with barycentric coordinates
-	//	// sample the displacement map for the magnitude of displacement
+	////	// Interpolate light vector with barycentric coordinates
+	////	// sample the displacement map for the magnitude of displacement
 	//float fDisplacement = g_DisplacementMap.SampleLevel(g_sampleLinear, Out.vTexCoord.xy, 0).r; 
 	//fDisplacement *= g_Scale; fDisplacement += g_Bias;
 	//float3 vDirection = -vNormal; // direction is opposite normal
 
-	//// translate the position
+	////// translate the position
 	//vWorldPos += vDirection * fDisplacement;
 
 	//// transform to clip space
 	//Out.vPosCS = mul(float4(vWorldPos.xyz, 1.0), g_mWorldViewProjection);
 
 // Displacement mapping
-	vWorldPos.y = 0.3f * (vWorldPos.z * sin(vWorldPos.x) + vWorldPos.x * cos(vWorldPos.z));
+	//vWorldPos.y = 0.3f * (vWorldPos.z * sin(vWorldPos.x) + vWorldPos.x * cos(vWorldPos.z));
+
+
+	Output.normalW = normalize(mul(float4(Output.normalW, 0), WorldPos));
+	Output.biNorm = normalize(mul(float4(Output.biNorm, 0), WorldPos));
+	Output.tan = normalize(mul(float4(Output.tan, 0), WorldPos));
+
+	Output.TBN = float3x3(Output.tan, Output.biNorm, Output.normalW);
+	Output.TBN_inv = transpose(Output.TBN);
+
+	float3 EyePosWorld = normalize(EyePosW - Output.posW.xyz);
+	float3 LightVectorWorld = normalize(light.LightVecW - Output.posW.xyz);
+
+	Output.eyeVectorTS = VectorToTangentSpace(EyePosWorld, Output.TBN_inv);
+	Output.lightVectorTS = VectorToTangentSpace(LightVectorWorld, Output.TBN_inv);
+
 
 	Output.posW = mul(vWorldPos, WorldPos);
 	Output.pos = mul(Output.posW, wvpMat);

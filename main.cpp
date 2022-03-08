@@ -302,8 +302,8 @@ bool InitD3D()
 	gm.CreateRootSignature(rootSignatureFlags, samples, 2, 5, 1, 4, L"Pipeline1");
 	gm.CompileVertexShader(L"Pipeline1", L"VertexShader.hlsl", "main");
 	gm.CompilePixelShader(L"Pipeline1", L"PixelShader.hlsl", "main");
-	gm.CompileDomainShader(L"Pipeline1", L"DomainShader.hlsl", "main");
-	gm.CompileHullShader(L"Pipeline1", L"HullShader.hlsl", "main");
+	//gm.CompileDomainShader(L"Pipeline1", L"DomainShader.hlsl", "main");
+	//gm.CompileHullShader(L"Pipeline1", L"HullShader.hlsl", "main");
 
 	gm.CreateRootSignature(rootSignatureFlags, samples, 2, 5, 1, 4, L"Pipeline2");
 	gm.CompileVertexShader(L"Pipeline2", L"VertexShader.hlsl", "main");
@@ -715,8 +715,8 @@ void UpdatePipeline()
 
 	m_GameManager.ReopenAllocator(frameIndex, L"OutputManager", L"Pipeline1");
 
-	m_GameManager.Draw(m_OutputManager.GetCurrentFrame(), m_OutputManager.GetHeap()->GetCPUAddress(frameIndex), frameIndex,L"Pipeline1", L"OutputManager Depth Stencil", L"TestGeometry", L"TestGeometry", m_Manager, false, true, false);
-	m_GameManager.Draw(m_OutputManager.GetCurrentFrame(), m_OutputManager.GetHeap()->GetCPUAddress(frameIndex), frameIndex,L"Pipeline1", L"OutputManager Depth Stencil", L"TestGeometry", L"TestGeometry", m_Manager, true, false, true);
+	m_GameManager.Draw(m_OutputManager.GetCurrentFrame(), m_OutputManager.GetHeap()->GetCPUAddress(frameIndex), frameIndex,L"Pipeline2", L"OutputManager Depth Stencil", L"TestGeometry", L"TestGeometry", m_Manager, true, true, true);
+	//m_GameManager.Draw(m_OutputManager.GetCurrentFrame(), m_OutputManager.GetHeap()->GetCPUAddress(frameIndex), frameIndex,L"Pipeline1", L"OutputManager Depth Stencil", L"TestGeometry", L"TestGeometry", m_Manager, true, false, true);
 }
 void Render()
 {

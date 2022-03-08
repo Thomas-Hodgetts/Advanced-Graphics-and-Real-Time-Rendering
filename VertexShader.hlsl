@@ -104,13 +104,21 @@ VS_OUTPUT main(VS_INPUT input)
 	//return output;
 
 	VS_OUTPUT output;
-	output.posW = mul(input.pos, WorldPos);
+
+	output.posW = float3(0.f, 0.f, 0.f);
 	output.posL = input.pos;
-	output.pos = mul(input.pos, wvpMat);
+	output.pos = float4(0.f, 0.f, 0.f, 0.f);
 	output.texCoord = input.texCoord;
 	output.norm = input.normalL;
 	output.biNorm = input.biNorm;
 	output.tangent = input.tan;
+	//output.posW = mul(input.pos, WorldPos);
+	//output.posL = input.pos;
+	//output.pos = mul(input.pos, wvpMat);
+	//output.texCoord = input.texCoord;
+	//output.norm = input.normalL;
+	//output.biNorm = input.biNorm;
+	//output.tangent = input.tan;
 	output.ShadowPosH = float4(0.f, 0.f, 0.f, 0.f);
 	output.projTex = float4(0.f, 0.f, 0.f, 0.f);
 	return output;

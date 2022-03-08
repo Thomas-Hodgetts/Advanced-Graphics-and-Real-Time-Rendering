@@ -12,6 +12,23 @@ struct HS_CONTROL_POINT_OUTPUT
 	float3 biNorm: BINORMAL;
 };
 
+struct DS_OUTPUT
+{
+	float4 pos: SV_POSITION;
+	float4 posL: POSL;
+	float3 posW: POSW;
+	float2 texCoord: TEXCOORD;
+	float3 normalW: NORMAL;
+	float3 tan: TANGENT;
+	float3 biNorm: BINORMAL;
+	float3x3 TBN : TBN_MATRIX;
+	float3x3 TBN_inv : INV_TBN_MATRIX;
+	float3 eyeVectorTS : TANGENT_SPACE_VAR;
+	float3 lightVectorTS : TANGENT_SPACE_VAR1;	
+	float4 ShadowPosH : POSITION;
+	float4 projTex: TEXCOORD1;
+};
+
 struct HS_CONSTANT_DATA_OUTPUT
 {
 	float EdgeTessFactor[3] : SV_TessFactor; // e.g. would be [4] for a quad domain
@@ -91,3 +108,12 @@ struct GSOutput
 	float2 texCoord : TEXCOORD;
 };
 
+/***********************************************
+MARKING SCHEME: Normal Mapping
+DESCRIPTION: Transposing Vectors into Tangent Space
+***********************************************/
+float3 VectorToTangentSpace(float3 vectorV, float3x3 TBN_inv)
+{
+	float3 tangentSpaceNormal = normalize(mul(vectorV, TBN_inv));
+	return tangentSpaceNormal;
+}

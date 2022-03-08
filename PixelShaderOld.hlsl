@@ -7,15 +7,7 @@ SamplerComparisonState gsamShadow : register(s1);
 
 #include "Header.hlsli"
 
-/***********************************************
-MARKING SCHEME: Normal Mapping
-DESCRIPTION: Transposing Vectors into Tangent Space
-***********************************************/
-float3 VectorToTangentSpace(float3 vectorV, float3x3 TBN_inv)
-{
-	float3 tangentSpaceNormal = normalize(mul(vectorV, TBN_inv));
-	return tangentSpaceNormal;
-}
+
 
 /***********************************************
 MARKING SCHEME: Shadow Mapping
