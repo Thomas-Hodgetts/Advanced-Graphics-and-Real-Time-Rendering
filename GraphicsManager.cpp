@@ -182,7 +182,7 @@ void GraphicsManager::Draw(ID3D12Resource* currentFrame ,D3D12_CPU_DESCRIPTOR_HA
 
 	if (m_PipelineTess[pipelineIdentifier])
 	{
-		m_GraphicsCommandListMap[L"OutputManager"]->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST); // set the primitive topology
+		m_GraphicsCommandListMap[L"OutputManager"]->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST); // set the primitive topology
 	}
 	else
 	{

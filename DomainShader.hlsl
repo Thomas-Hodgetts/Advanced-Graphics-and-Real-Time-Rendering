@@ -69,7 +69,7 @@ VS_OUTPUT main(HS_CONSTANT_DATA_OUTPUT input, float3 BarycentricCoordinates : SV
 	VS_OUTPUT Output;
 
 	// Interpolate world space position with barycentric coordinates
-	float3 vWorldPos = BarycentricCoordinates.x * TrianglePatch[0].posW + BarycentricCoordinates.y * TrianglePatch[1].posW + BarycentricCoordinates.z * TrianglePatch[2].posW;
+	float3 vWorldPos = BarycentricCoordinates.x * TrianglePatch[0].posL + BarycentricCoordinates.y * TrianglePatch[1].posL + BarycentricCoordinates.z * TrianglePatch[2].posL;
 
 	// Interpolate texture coordinates with barycentric coordinates
 	Output.texCoord = BarycentricCoordinates.x * TrianglePatch[0].texCoord + BarycentricCoordinates.y * TrianglePatch[1].texCoord;
@@ -96,7 +96,7 @@ VS_OUTPUT main(HS_CONSTANT_DATA_OUTPUT input, float3 BarycentricCoordinates : SV
 // Displacement mapping
 	vWorldPos.y = 0.3f * (vWorldPos.z * sin(vWorldPos.x) + vWorldPos.x * cos(vWorldPos.z));
 
-	Output.posW = vWorldPos;
+	Output.posW = mul(vWorldPos, WorldPos);
 	Output.pos = mul(Output.posW, wvpMat);
 
 	Output.ShadowPosH = float4(0.f, 0.f, 0.f, 0.f);
