@@ -26,7 +26,7 @@ GraphicsManager::GraphicsManager(int width, int height) : m_Height(height), m_Wi
 
 	bool adapterFound = false; // set this to true when a good one was found
 
-	CD3DX12_RASTERIZER_DESC rastDesc(D3D12_FILL_MODE_SOLID,
+	CD3DX12_RASTERIZER_DESC rastDesc(D3D12_FILL_MODE_WIREFRAME,
 		D3D12_CULL_MODE_NONE, FALSE,
 		D3D12_DEFAULT_DEPTH_BIAS, D3D12_DEFAULT_DEPTH_BIAS_CLAMP,
 		D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS, TRUE, FALSE, TRUE,
@@ -145,7 +145,7 @@ void GraphicsManager::ForceCloseCommandList(std::wstring identifier)
 	}
 }
 
-void GraphicsManager::Draw(ID3D12Resource* currentFrame ,D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, int frameIndex,std::wstring pipelineIdentifier, std::wstring dsvIdentifier, std::wstring srvIdentifer, std::wstring constantBufferIdentifier, SystemManager* sysManager)
+void GraphicsManager::Draw(ID3D12Resource* currentFrame ,D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, int frameIndex,std::wstring pipelineIdentifier, std::wstring dsvIdentifier, std::wstring srvIdentifer, std::wstring constantBufferIdentifier, SystemManager* sysManager, bool renderTerrain, bool renderObject, bool closeCommandList)
 {
 	HRESULT hr;
 
@@ -190,34 +190,57 @@ void GraphicsManager::Draw(ID3D12Resource* currentFrame ,D3D12_CPU_DESCRIPTOR_HA
 	}
 
 	Flotilla gameObjectVector = sysManager->GetObjectVector();
-	Terrain* pTerrain = sysManager->GetTerrain();
-
-	for (size_t i = 0; i < gameObjectVector.ReturnVectorSize(); i++)
+	
+	if (renderTerrain)
 	{
-		GameObject* gameObj = dynamic_cast<GameObject*>(gameObjectVector.ReturnObject(i));
-		m_GraphicsCommandListMap[L"OutputManager"]->IASetVertexBuffers(0, 1, gameObj->m_Apperance->ReturnGeo().vertexBufferView); // set the vertex buffer (using the vertex buffer view)
-		m_GraphicsCommandListMap[L"OutputManager"]->IASetIndexBuffer(gameObj->m_Apperance->ReturnGeo().indexBufferView);
+		Terrain* pTerrain = sysManager->GetTerrain();
 
-		D3D12_GPU_VIRTUAL_ADDRESS addr = m_ConstantBufferMap[constantBufferIdentifier]->GetHeapPointer(frameIndex)->GetGPUVirtualAddress();
+		m_GraphicsCommandListMap[L"OutputManager"]->IASetVertexBuffers(0, 1, pTerrain->GetGeometry()->vertexBufferView); // set the vertex buffer (using the vertex buffer view)
+		m_GraphicsCommandListMap[L"OutputManager"]->IASetIndexBuffer(pTerrain->GetGeometry()->indexBufferView);
 
-		m_GraphicsCommandListMap[L"OutputManager"]->SetGraphicsRootConstantBufferView(0, addr);
+		D3D12_GPU_VIRTUAL_ADDRESS terrainAddr = m_ConstantBufferMap[pTerrain->GetIdentifier()]->GetHeapPointer(frameIndex)->GetGPUVirtualAddress();
+
+		m_GraphicsCommandListMap[L"OutputManager"]->SetGraphicsRootConstantBufferView(0, terrainAddr);
 
 		m_GraphicsCommandListMap[L"OutputManager"]->SetGraphicsRootDescriptorTable(1, m_TextureHeapMap[srvIdentifer]->GetGPUAddress(0));
 		m_GraphicsCommandListMap[L"OutputManager"]->SetGraphicsRootDescriptorTable(2, m_TextureHeapMap[srvIdentifer]->GetGPUAddress(1));
 		m_GraphicsCommandListMap[L"OutputManager"]->SetGraphicsRootDescriptorTable(3, m_TextureHeapMap[srvIdentifer]->GetGPUAddress(2));
 
-		m_GraphicsCommandListMap[L"OutputManager"]->DrawIndexedInstanced(gameObj->m_Apperance->ReturnGeo().numberOfIndices, 1, 0, 0, 0);
+		m_GraphicsCommandListMap[L"OutputManager"]->DrawIndexedInstanced(pTerrain->GetGeometry()->numberOfIndices, 1, 0, 0, 0);
+	}
+	if (renderObject)
+	{
+		for (size_t i = 0; i < gameObjectVector.ReturnVectorSize(); i++)
+		{
+			GameObject* gameObj = dynamic_cast<GameObject*>(gameObjectVector.ReturnObject(i));
+			m_GraphicsCommandListMap[L"OutputManager"]->IASetVertexBuffers(0, 1, gameObj->m_Apperance->ReturnGeo().vertexBufferView); // set the vertex buffer (using the vertex buffer view)
+			m_GraphicsCommandListMap[L"OutputManager"]->IASetIndexBuffer(gameObj->m_Apperance->ReturnGeo().indexBufferView);
+
+			D3D12_GPU_VIRTUAL_ADDRESS addr = m_ConstantBufferMap[constantBufferIdentifier]->GetHeapPointer(frameIndex)->GetGPUVirtualAddress();
+
+			m_GraphicsCommandListMap[L"OutputManager"]->SetGraphicsRootConstantBufferView(0, addr);
+
+			m_GraphicsCommandListMap[L"OutputManager"]->SetGraphicsRootDescriptorTable(1, m_TextureHeapMap[srvIdentifer]->GetGPUAddress(0));
+			m_GraphicsCommandListMap[L"OutputManager"]->SetGraphicsRootDescriptorTable(2, m_TextureHeapMap[srvIdentifer]->GetGPUAddress(1));
+			m_GraphicsCommandListMap[L"OutputManager"]->SetGraphicsRootDescriptorTable(3, m_TextureHeapMap[srvIdentifer]->GetGPUAddress(2));
+
+			m_GraphicsCommandListMap[L"OutputManager"]->DrawIndexedInstanced(gameObj->m_Apperance->ReturnGeo().numberOfIndices, 1, 0, 0, 0);
+		
+		}
 	}
 
-
 	m_GraphicsCommandListMap[L"OutputManager"]->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(currentFrame, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+
+	if (!closeCommandList)
+	{
+		return;
+	}
 
 	hr = m_GraphicsCommandListMap[L"OutputManager"]->Close();
 	if (FAILED(hr))
 	{
 		Debug::OutputString("Drawing failed: Failed to close the command list");
 	}
-
 }
 
 void GraphicsManager::Render(int frameIndex, std::wstring identifier)

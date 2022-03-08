@@ -3,14 +3,19 @@
 // Output control point
 struct HS_CONTROL_POINT_OUTPUT
 {
-	float3 vPosition : WORLDPOS;
+	float4 pos: SV_POSITION;
+	float4 posL: POSL;
+	float3 posW: POSW;
+	float2 texCoord: TEXCOORD;
+	float3 normalL: NORMAL;
+	float3 tan: TANGENT;
+	float3 biNorm: BINORMAL;
 };
 
 struct HS_CONSTANT_DATA_OUTPUT
 {
-	float EdgeTessFactor[4] : SV_TessFactor; // e.g. would be [4] for a quad domain
-	float InsideTessFactor[2] : SV_InsideTessFactor; // e.g. would be Inside[2] for a quad domain
-	// TODO: change/add other stuff
+	float EdgeTessFactor[3] : SV_TessFactor; // e.g. would be [4] for a quad domain
+	float InsideTessFactor : SV_InsideTessFactor; // e.g. would be Inside[2] for a quad domain
 };
 
 struct VS_INPUT
@@ -55,6 +60,7 @@ struct Light
 struct VS_OUTPUT
 {
 	float4 pos: SV_POSITION;
+	float4 posL: POSL;
 	float3 posW: POSW;
 	float4 ShadowPosH : POSITION;
 	float2 texCoord: TEXCOORD;
@@ -62,7 +68,6 @@ struct VS_OUTPUT
 	float3 norm : NORMAL;
 	float3 biNorm : TANGENT3;
 	float3 tangent : TANGENT4;
-	float3 irradiance : IRADIANCE;
 };
 
 struct VS_SHADOW

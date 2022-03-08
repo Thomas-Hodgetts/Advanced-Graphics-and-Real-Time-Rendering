@@ -63,7 +63,7 @@ public:
 
 	void ForceCloseCommandList(std::wstring identifier);
 
-	void Draw(ID3D12Resource* currentFrame, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, int frameIndex, std::wstring pipelineIdentifier, std::wstring dsvIdentifier, std::wstring srvIdentifer, std::wstring constantBufferIdentifier, SystemManager* sysManager);
+	void Draw(ID3D12Resource* currentFrame, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, int frameIndex, std::wstring pipelineIdentifier, std::wstring dsvIdentifier, std::wstring srvIdentifer, std::wstring constantBufferIdentifier, SystemManager* sysManager, bool renderTerrain, bool renderObject, bool closeCommandList);
 
 	void Render(int frameIndex, std::wstring identifier);
 

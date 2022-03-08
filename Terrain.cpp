@@ -7,6 +7,20 @@ Terrain::Terrain()
 
 Terrain::~Terrain()
 {
+	delete m_Anchor;
+}
+
+XMFLOAT4X4 Terrain::ReturnAnchor()
+{
+	XMFLOAT4X4 result;
+
+	XMMATRIX scale = XMMatrixScaling(m_Anchor->ReturnSca().ReturnX(), m_Anchor->ReturnSca().ReturnY(), m_Anchor->ReturnSca().ReturnZ());
+	XMMATRIX rotation = XMMatrixRotationX(m_Anchor->ReturnRot().ReturnX()) * XMMatrixRotationY(m_Anchor->ReturnRot().ReturnY()) * XMMatrixRotationZ(m_Anchor->ReturnRot().ReturnZ());
+	XMMATRIX translation = XMMatrixTranslation(m_Anchor->ReturnPos().ReturnX(), m_Anchor->ReturnPos().ReturnY(), m_Anchor->ReturnPos().ReturnZ());
+
+	XMStoreFloat4x4(&result, scale * rotation * translation);
+
+	return result;
 }
 
 Terrain::Terrain(int x, int z, std::string MapLocale, float scale, std::wstring name)
@@ -53,7 +67,7 @@ Terrain::Terrain(int x, int z, std::string MapLocale, float scale, std::wstring 
 			s.texCoord = { float(i) / float(x), float(j) / float(z) };
 			s.pos.SetX(nX);
 			s.pos.SetY(out[i + j]);
-			s.pos.SetX(nZ);
+			s.pos.SetZ(nZ);
 			m_VertexStore[i * x + j] = s;
 		}
 	}

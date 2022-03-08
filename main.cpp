@@ -305,6 +305,12 @@ bool InitD3D()
 	gm.CompileDomainShader(L"Pipeline1", L"DomainShader.hlsl", "main");
 	gm.CompileHullShader(L"Pipeline1", L"HullShader.hlsl", "main");
 
+	gm.CreateRootSignature(rootSignatureFlags, samples, 2, 5, 1, 4, L"Pipeline2");
+	gm.CompileVertexShader(L"Pipeline2", L"VertexShader.hlsl", "main");
+	gm.CompilePixelShader(L"Pipeline2", L"PixelShader.hlsl", "main");
+	gm.CompileDomainShader(L"Pipeline2", L"DomainShader.hlsl", "main");
+	gm.CompileHullShader(L"Pipeline2", L"HullShader.hlsl", "main");
+
 
 
 	D3D12_INPUT_ELEMENT_DESC inputLayout[] =
@@ -324,9 +330,11 @@ bool InitD3D()
 
 
 	gm.AddFrameInputLayout(inputLayout, L"Pipeline1", 5);
+	gm.AddFrameInputLayout(inputLayout, L"Pipeline2", 5);
 	gm.AddFrameInputLayout(inputLayout2, L"OutputManagerInput2", 2);
 
 	gm.CreatePipeline(L"Pipeline1");
+	gm.CreatePipeline(L"Pipeline2");
 
 
 	std::vector<Vertex> vertexList(36);
@@ -405,7 +413,7 @@ bool InitD3D()
 	indexList[34] = 34;
 	indexList[35] = 35;
 
-	gm.CreateGeomerty(vertexList.data(), vertexList.size(), indexList.data(), indexList.size(), L"TestGeomerty");
+	gm.CreateGeomerty(vertexList.data(), vertexList.size(), indexList.data(), indexList.size(), L"TestGeometry");
 	m_Manager = new SystemManager();
 
 	// Create vertex buffer
@@ -552,7 +560,7 @@ bool InitD3D()
 	XMStoreFloat4x4(&cameraProjMat, tmpMat);
 
 	// set starting camera state
-	cameraPosition = XMFLOAT4(0.0f, 0.0f, -6.0f, 0.0f);
+	cameraPosition = XMFLOAT4(0.0f, 9.0f, -6.0f, 0.0f);
 	cameraTarget = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
 	cameraUp = XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f);
 
@@ -562,14 +570,14 @@ bool InitD3D()
 	m_Manager->SetUpCamera(cameraPosition, cameraTarget, cameraUp, Width, Height, 0.1, 1000);
 	m_Manager->ReturnCamera()->Update();
 
-	Transform* transform = new Transform(Vector3D(0.0f, 0.0f, 0.0f), Vector3D(0.0f, 0.0f, 0.0f), Vector3D(2.0f, 2.0f, 2.0f));
+	Transform* transform = new Transform(Vector3D(0.0f, 9.0f, 0.0f), Vector3D(0.0f, 0.0f, 0.0f), Vector3D(2.0f, 2.0f, 2.0f));
 	XMStoreFloat4x4(&transform->RotationalMatrix, XMMatrixIdentity());
 	CreateObjectStruct COS;
 	COS.graphicsManager = &m_GameManager;
 	COS.transform = transform;
 	COS.objName = "Obj1";
-	COS.index = gm.GetIndexBufferView(L"");
-	COS.vertex = gm.GetVertexBufferView()
+	COS.index = gm.GetIndexBufferView(L"TestGeometry");
+	COS.vertex = gm.GetVertexBufferView(L"TestGeometry");
 	m_Manager->BuildObject(COS);
 
 	shinyMaterial.AmbientMtrl = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
@@ -589,21 +597,24 @@ bool InitD3D()
 
 	XMStoreFloat4x4(&m_LightMatrix, scale * rotation * translation);
 
+	m_Manager->CreateTerrain(200, 200, "terrain2.raw", 2, L"Terrain");
 
 	Terrain* pTerrain = m_Manager->GetTerrain();
 
-	m_GameManager.CreateGeomerty(pTerrain->GetVertexStorage(), pTerrain->GetIndexStorage(), L"Terrain", pTerrain->GetGeometry());
+	pTerrain->CreateAnchor(Vector3D(0.0f, 0.0f, 0.0f), Vector3D(0.0f, 0.0f, 0.0f), Vector3D(1.0f, 0.5f, 1.0f));
 
-	m_GameManager.CreateTextureHeap(filename, 4, L"Terrain");
+	m_GameManager.CreateGeomerty(pTerrain->GetVertexStorage(), pTerrain->GetIndexStorage(), pTerrain->GetIdentifier(), pTerrain->GetGeometry());
+
+	m_GameManager.CreateConstantBuffer(pTerrain->GetIdentifier(), output.GetBufferSize(), 1024, sizeof(ConstantBufferPerObject), 1);
+
+	m_GameManager.CreateTextureHeap(filename, 4, pTerrain->GetIdentifier());
 
 	m_OutputManager = output;
 
 	m_GameManager.ForceCloseCommandList(L"OutputManager");
 
 	m_GameManager.Render(m_OutputManager.GetCurrentFrameIndex(), L"OutputManager");
-
-	m_Manager->CreateTerrain(512, 512, "MapLocation", 2, L"Terrain");
-
+	
 	return true;
 }
 
@@ -611,11 +622,7 @@ void Update()
 {
 
 	GameObject* GO = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(0));
-	//GameObject* GO2 = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(1));
-	//GameObject* GO3 = dynamic_cast<GameObject*>(m_Manager->GetStoredObject(2));
 
-
-	m_Time++;
 	if (GetAsyncKeyState('W') & 0x8000)
 		m_Manager->ReturnCamera()->Walk(0.005f);
 
@@ -627,23 +634,6 @@ void Update()
 
 	if (GetAsyncKeyState('D') & 0x8000)
 		m_Manager->ReturnCamera()->Strafe(0.005f);
-	if (GetAsyncKeyState('E') & 0x8000)
-	{
-		//Vector3D rot = GO->m_Transform->ReturnRot();
-		//GO->m_Transform->SetRot(Vector3D(rot.ReturnX(), rot.ReturnY() + 0.005f, rot.ReturnZ()));
-
-		//rot = GO2->m_Transform->ReturnRot();
-		//GO2->m_Transform->SetRot(Vector3D(rot.ReturnX() + 0.0003f, rot.ReturnY() + 0.000420f, rot.ReturnZ() + 0.00069f));
-	}
-
-	if (GetAsyncKeyState('Q') & 0x8000)
-	{
-		/*Vector3D rot = GO->m_Transform->ReturnRot();
-		GO->m_Transform->SetRot(Vector3D(rot.ReturnX(), rot.ReturnY() - 0.00005f, rot.ReturnZ()));
-
-		rot = GO2->m_Transform->ReturnRot();
-		GO2->m_Transform->SetRot(Vector3D(rot.ReturnX() - 0.0003f, rot.ReturnY() - 0.000420f, rot.ReturnZ() - 0.00069f));*/
-	}
 
 	if (GetAsyncKeyState(0x26) & 0x8000)
 		basicLight.LightVecW.z = basicLight.LightVecW.z + 0.0005f;
@@ -661,22 +651,9 @@ void Update()
 		m_Rotate = -m_Rotate;
 
 
-	if (m_Rotate)
-	{
-		/*Vector3D rot = GO->m_Transform->ReturnRot();
-		GO->m_Transform->SetRot(Vector3D(rot.ReturnX(), rot.ReturnY() + 0.00005f, rot.ReturnZ()));
-
-		rot = GO2->m_Transform->ReturnRot();
-		GO2->m_Transform->SetRot(Vector3D(rot.ReturnX() + 0.0003f, rot.ReturnY() + 0.000420f, rot.ReturnZ() + 0.00069f));*/
-	}
-
 
 	GO->Update(0.f);
-	//GO2->Update(0.f);
-	//GO3->Update(0.f);
 
-	// update constant buffer for cube1
-	// create the wvp matrix and store in constant buffer
 	m_Manager->ReturnCamera()->Update();
 	CameraBufferData CBD = m_Manager->ReturnCamera()->ReturnViewPlusProjection();
 	XMMATRIX viewMat = XMLoadFloat4x4(&CBD.m_view); // load view matrix
@@ -699,6 +676,8 @@ void Update()
 		cbPerObject.mode = 0;
 	}
 
+	cbPerObject.mode = 2;
+
 	cbPerObject.point = basicLight;
 	cbPerObject.Mat = shinyMaterial;
 	cbPerObject.projection = m_Manager->ReturnCamera()->ReturnViewPlusProjection().m_projection;
@@ -707,17 +686,27 @@ void Update()
 	XMMATRIX transposed = XMMatrixTranspose(wvpMat); // must transpose wvp matrix for the gpu
 	XMStoreFloat4x4(&cbPerObject.wvpMat, transposed); // store transposed wvp matrix in constant buffer
 	XMStoreFloat4x4(&cbPerObject.worldPos,GO->m_Particle->ReturnWorldMatrix());
+	XMStoreFloat3(&cbPerObject.EyePosW, m_Manager->ReturnCamera()->GetEye());
 
 	int currentFrameIndex = m_OutputManager.GetCurrentFrameIndex();
 
 	m_GameManager.UpdateObjectConstantBuffer(cbPerObject, L"TestGeometry", currentFrameIndex,0);
 
-	m_GameManager.UpdateObjectConstantBuffer(cbPerObject, L"TestGeometry", currentFrameIndex,1);
+	wvpMat = XMLoadFloat4x4(&m_Manager->GetTerrain()->ReturnAnchor()) * viewMat * projMat; // create wvp matrix
+	transposed = XMMatrixTranspose(wvpMat); // must transpose wvp matrix for the gpu
+	XMStoreFloat4x4(&cbPerObject.wvpMat, transposed); // store transposed wvp matrix in constant buffer
+
+	XMStoreFloat4x4(&cbPerObject.worldPos, XMLoadFloat4x4(&m_Manager->GetTerrain()->ReturnAnchor()));
+
+	XMStoreFloat3(&cbPerObject.EyePosW, m_Manager->ReturnCamera()->GetEye());
+
+	m_GameManager.UpdateObjectConstantBuffer(cbPerObject, L"Terrain", currentFrameIndex, 0);
+
+
 }
 
 void UpdatePipeline()
 {
-
 	int frameIndex = m_OutputManager.GetCurrentFrameIndex();
 
 	m_GameManager.WaitOnFrame(frameIndex);
@@ -726,7 +715,8 @@ void UpdatePipeline()
 
 	m_GameManager.ReopenAllocator(frameIndex, L"OutputManager", L"Pipeline1");
 
-	m_GameManager.Draw(m_OutputManager.GetCurrentFrame(), m_OutputManager.GetHeap()->GetCPUAddress(frameIndex), frameIndex,L"Pipeline1", L"OutputManager Depth Stencil", L"TestGeometry", L"TestGeometry", m_Manager);
+	m_GameManager.Draw(m_OutputManager.GetCurrentFrame(), m_OutputManager.GetHeap()->GetCPUAddress(frameIndex), frameIndex,L"Pipeline1", L"OutputManager Depth Stencil", L"TestGeometry", L"TestGeometry", m_Manager, false, true, false);
+	m_GameManager.Draw(m_OutputManager.GetCurrentFrame(), m_OutputManager.GetHeap()->GetCPUAddress(frameIndex), frameIndex,L"Pipeline1", L"OutputManager Depth Stencil", L"TestGeometry", L"TestGeometry", m_Manager, true, false, true);
 }
 void Render()
 {

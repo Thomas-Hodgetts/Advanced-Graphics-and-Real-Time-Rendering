@@ -91,24 +91,28 @@ float3 ISHTirradiance(float3 sharm[9], float3 n)
 
 VS_OUTPUT main(VS_INPUT input)
 {
-	VS_OUTPUT output;
-	output.posW = mul(input.pos, WorldPos);
+	//VS_OUTPUT output;
+	//output.posW = mul(input.pos, WorldPos);
+	//output.posL = input.pos;
 	//output.pos = mul(input.pos, wvpMat);
-	output.pos = input.pos;
-	output.texCoord = input.texCoord;
-	output.ShadowPosH = float4(0.f, 0.f, 0.f, 0.f);
-	output.projTex = float4(0.f, 0.f, 0.f, 0.f);
-	//output.projTex = mul(float4(light.LightVecW, 1.0f), gLightWorldViewProjTexture);
+	//output.texCoord = input.texCoord;
 	//output.norm = normalize(mul(input.normalL, WorldPos));
 	//output.biNorm = normalize(mul(input.biNorm, WorldPos));
 	//output.tangent = normalize(mul(input.tan, WorldPos));
+	//output.ShadowPosH = float4(0.f, 0.f, 0.f, 0.f);
+	//output.projTex = float4(0.f, 0.f, 0.f, 0.f);
+	//return output;
+
+	VS_OUTPUT output;
+	output.posW = mul(input.pos, WorldPos);
+	output.posL = input.pos;
+	output.pos = mul(input.pos, wvpMat);
+	output.texCoord = input.texCoord;
 	output.norm = input.normalL;
 	output.biNorm = input.biNorm;
 	output.tangent = input.tan;
-
-	//float3 Harmonics[9];
-	//accumLightSH(Harmonics, (255, 255, 255), output.norm, );
-	//output.irradiance = ISHTirradiance(Harmonics, bumpMap);
+	output.ShadowPosH = float4(0.f, 0.f, 0.f, 0.f);
+	output.projTex = float4(0.f, 0.f, 0.f, 0.f);
 	return output;
 } 
 

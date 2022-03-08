@@ -175,28 +175,30 @@ LightingResult ComputeSimpleLighting(float3 toEye, float3 Norm, float3 LightVecW
 
 float4 main(VS_OUTPUT input) : SV_TARGET
 {
-
 	float3 lightLecNorm;
 	float3 r;
 	float specularAmount;
 	float diffuseAmount;
 
-	input.norm = normalize(input.norm);
+	float3 EyePosWorld = normalize(EyePosW - input.posW.xyz);
+	float3 LightVectorWorld = normalize(light.LightVecW - input.posW.xyz);
+
+	input.norm = normalize(mul(input.norm, WorldPos));
+	input.biNorm = normalize(mul(input.biNorm, WorldPos));
+	input.tangent = normalize(mul(input.tangent, WorldPos));
 
 	float3x3 TBN = float3x3(input.tangent, input.biNorm, input.norm);
 	float3x3 TBN_inv = transpose(TBN);
 
-	float3 eyeVectorTS = VectorToTangentSpace(EyePosW.xyz, TBN_inv);
-	float3 lightVectorTS = VectorToTangentSpace(light.LightVecW.xyz, TBN_inv);
+	float3 eyeVectorTS = VectorToTangentSpace(EyePosWorld, TBN_inv);
+	float3 lightVectorTS = VectorToTangentSpace(LightVectorWorld, TBN_inv);
 	float3 normalTS = VectorToTangentSpace(input.norm, TBN_inv);
-	float4 posTS = (VectorToTangentSpace(input.posW.xyz, TBN_inv), 0);
 
-	float3 toEye = normalize(	EyePosW - input.posW);
-	float3 toEyeTS = VectorToTangentSpace(toEye, TBN_inv);
+	float3 toEyeTS = VectorToTangentSpace(EyePosWorld, TBN_inv);
 	float2 texCoords = input.texCoord;
 	float4 bumpMap;
 	float shadowFactor = 1;
-	float3 shadowFactor2 = float3(1.f,1.f,1.f);
+	float3 shadowFactor2 = float3(1.f, 1.f, 1.f);
 
 	LightingResult lr;
 
@@ -204,10 +206,10 @@ float4 main(VS_OUTPUT input) : SV_TARGET
 	{
 		texCoords = ParallaxMapping(input.texCoord, toEyeTS);
 
-		bumpMap = ProcessBumpMap(normalMap.Sample(s1, input.texCoord),TBN, 1);
+		bumpMap = ProcessBumpMap(normalMap.Sample(s1, input.texCoord), TBN, 1);
 
 		shadowFactor = parallaxSoftShadowMultiplier(lightVectorTS, texCoords, heightMap.Sample(s1, texCoords).x);
-		
+
 		lr = ComputeSimpleLighting(eyeVectorTS, bumpMap, lightVectorTS, Si, light, shadowFactor);
 
 		if (texCoords.x > 1 || texCoords.x < 0 || texCoords.y > 1 || texCoords.y < 0)
@@ -223,17 +225,16 @@ float4 main(VS_OUTPUT input) : SV_TARGET
 		lr = ComputeSimpleLighting(toEyeTS, bumpMap, lightVectorTS, Si, light, shadowFactor2);
 	}
 	if (mode == 2)
-	{ 
-		lr = ComputeSimpleLighting(toEye, input.norm, light.LightVecW, Si, light, shadowFactor2);
+	{
+		lr = ComputeSimpleLighting(EyePosWorld, input.norm, LightVectorWorld, Si, light, shadowFactor2);
 	}
 	if (mode == 3)
 	{
-
 		input.ShadowPosH.xyz /= input.ShadowPosH.w;
 
 		shadowFactor2 = CalcShadowFactor(input.ShadowPosH);
 
-		lr = ComputeSimpleLighting(toEye, input.norm, light.LightVecW, Si, light, shadowFactor2);
+		lr = ComputeSimpleLighting(EyePosWorld, input.norm, LightVectorWorld, Si, light, shadowFactor2);
 	}
 
 
@@ -255,6 +256,88 @@ float4 main(VS_OUTPUT input) : SV_TARGET
 		finalCol.a = Si.DiffuseMtrl.a;
 	}
 	return finalCol;
+
+
+	//float3 EyePosWorld = normalize(EyePosW - input.posW.xyz);
+	//float3 LightVectorWorld = normalize(light.LightVecW - input.posW.xyz);
+
+	//float3 lightLecNorm;
+	//float3 r;
+	//float specularAmount;
+	//float diffuseAmount;
+
+	//float3x3 TBN = float3x3(input.tangent, input.biNorm, input.norm);
+	//float3x3 TBN_inv = transpose(TBN);
+
+	//float3 eyeVectorTS = VectorToTangentSpace(EyePosWorld.xyz, TBN_inv);
+	//float3 lightVectorTS = VectorToTangentSpace(LightVectorWorld.xyz, TBN_inv);
+	//float3 normalTS = VectorToTangentSpace(input.norm, TBN_inv);
+	//float4 posTS = (VectorToTangentSpace(input.posW.xyz, TBN_inv), 0);
+
+	//float3 toEye = normalize(EyePosWorld - input.posW);
+	//float3 toEyeTS = VectorToTangentSpace(toEye, TBN_inv);
+	//float2 texCoords = input.texCoord;
+	//float4 bumpMap;
+	//float shadowFactor = 1;
+	//float3 shadowFactor2 = float3(1.f,1.f,1.f);
+
+	//LightingResult lr;
+
+	//if (mode == 0)
+	//{
+	//	texCoords = ParallaxMapping(input.texCoord, toEyeTS);
+
+	//	bumpMap = ProcessBumpMap(normalMap.Sample(s1, input.texCoord),TBN, 1);
+
+	//	shadowFactor = parallaxSoftShadowMultiplier(lightVectorTS, texCoords, heightMap.Sample(s1, texCoords).x);
+	//	
+	//	lr = ComputeSimpleLighting(eyeVectorTS, bumpMap, lightVectorTS, Si, light, shadowFactor);
+
+	//	if (texCoords.x > 1 || texCoords.x < 0 || texCoords.y > 1 || texCoords.y < 0)
+	//	{
+	//		discard;
+	//	}
+
+	//}
+	//if (mode == 1)
+	//{
+	//	bumpMap = ProcessBumpMap(normalMap.Sample(s1, texCoords), TBN, 0);
+
+	//	lr = ComputeSimpleLighting(toEyeTS, bumpMap, lightVectorTS, Si, light, shadowFactor2);
+	//}
+	//if (mode == 2)
+	//{ 
+	//	lr = ComputeSimpleLighting(toEye, input.norm, LightVectorWorld, Si, light, shadowFactor2);
+	//}
+	//if (mode == 3)
+	//{
+
+	//	input.ShadowPosH.xyz /= input.ShadowPosH.w;
+
+	//	shadowFactor2 = CalcShadowFactor(input.ShadowPosH);
+
+	//	lr = ComputeSimpleLighting(toEye, input.norm, LightVectorWorld, Si, light, shadowFactor2);
+	//}
+
+
+	//float3 ambient = (0, 0, 0);
+
+
+	//ambient += (light.AmbientLight * light.DiffuseLight).rgb;
+
+	//float4 finalCol = float4(0.0f, 0.0f, 0.0f, 0.0f);
+
+	//if (mode == 0)
+	//{
+	//	finalCol.rgb = ((ambient + lr.Diffuse) + lr.Specular * shadowFactor) * t1.Sample(s1, texCoords).rgb;
+	//	finalCol.a = Si.DiffuseMtrl.a;
+	//}
+	//else
+	//{
+	//	finalCol.rgb = ((ambient + lr.Diffuse) + lr.Specular) * t1.Sample(s1, input.texCoord).rgb;
+	//	finalCol.a = Si.DiffuseMtrl.a;
+	//}
+	//return finalCol;
 
 }
 

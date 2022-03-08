@@ -19,41 +19,86 @@ cbuffer ConstantBuffer : register(b0)
 	int mode;
 };
 
-[domain("quad")]
-VS_OUTPUT main(
-	HS_CONSTANT_DATA_OUTPUT input, float2 uv : SV_DomainLocation,
-	const OutputPatch<VS_OUTPUT, NUM_CONTROL_POINTS> patch)
+//[domain("quad")]
+//VS_OUTPUT main(HS_CONSTANT_DATA_OUTPUT input, float2 uv : SV_DomainLocation, const OutputPatch<HS_CONTROL_POINT_OUTPUT, NUM_CONTROL_POINTS> patch)
+//{
+//	VS_OUTPUT Output;
+//
+//	// Bilinear interpolation.
+//	float3 v1 = lerp(patch[0].posL, patch[1].posL, uv.x);
+//	float3 v2 = lerp(patch[2].posL, patch[3].posL, uv.x);
+//	float3 p = lerp(v1, v2, uv.y);
+//
+//	// Displacement mapping
+//	p.y = 0.3f * (p.z * sin(p.x) + p.x * cos(p.z));
+//
+//	Output.posW = mul(float4(p, 1.0f), WorldPos);
+//	Output.pos = mul(Output.posW, wvpMat);
+//
+//	float3 n1 = lerp(patch[0].normalL, patch[1].normalL, uv.x);
+//	float3 n2 = lerp(patch[2].normalL, patch[3].normalL, uv.x);
+//	float3 norm = lerp(n1, n2, uv.y);
+//
+//	float3 t1 = lerp(patch[0].tan, patch[1].tan, uv.x);
+//	float3 t2 = lerp(patch[2].tan, patch[3].tan, uv.x);
+//	float3 tan = lerp(t1, t2, uv.y);
+//
+//	float3 b1 = lerp(patch[0].biNorm, patch[1].biNorm, uv.x);
+//	float3 b2 = lerp(patch[2].biNorm, patch[3].biNorm, uv.x);
+//	float3 binorm = lerp(b1, b2, uv.y);
+//
+//	float2 tex1 = lerp(patch[0].texCoord, patch[1].texCoord, uv.x);
+//	float2 tex2 = lerp(patch[2].texCoord, patch[3].texCoord, uv.x);
+//	float2 tex = lerp(tex1, tex2, uv.y);
+//
+//	Output.norm = norm;
+//	Output.biNorm = binorm;
+//	Output.tangent = tan;
+//	Output.texCoord = tex;
+//	Output.ShadowPosH = float4(0.f, 0.f, 0.f, 0.f);
+//	Output.projTex = float4(0.f, 0.f, 0.f, 0.f);
+//
+//	return Output;
+//}
+
+// Called once per tessellated vertex
+[domain("tri")] // indicates that triangle patches were used
+//The original patch is passed in, along with the vertex position //in barycentric coordinates, and the patch constant phase hull //shader output (tessellation factors)
+VS_OUTPUT main(HS_CONSTANT_DATA_OUTPUT input, float3 BarycentricCoordinates : SV_DomainLocation, const OutputPatch<HS_CONTROL_POINT_OUTPUT, 3> TrianglePatch)
 {
 	VS_OUTPUT Output;
 
+	// Interpolate world space position with barycentric coordinates
+	float3 vWorldPos = BarycentricCoordinates.x * TrianglePatch[0].posW + BarycentricCoordinates.y * TrianglePatch[1].posW + BarycentricCoordinates.z * TrianglePatch[2].posW;
 
-	float3 v1 = lerp(patch[0].pos, patch[1].pos, uv.x);
-	float3 v2 = lerp(patch[2].pos, patch[3].pos, uv.x);
-	float3 p = lerp(v1, v2, uv.y);
+	// Interpolate texture coordinates with barycentric coordinates
+	Output.texCoord = BarycentricCoordinates.x * TrianglePatch[0].texCoord + BarycentricCoordinates.y * TrianglePatch[1].texCoord;
 
-	float3 n1 = lerp(patch[0].norm, patch[1].norm, uv.x);
-	float3 n2 = lerp(patch[2].norm, patch[3].norm, uv.x);
-	float3 norm = lerp(n1, n2, uv.y);
+		// Interpolate normal with barycentric coordinates
+	Output.norm = BarycentricCoordinates.x * TrianglePatch[0].normalL + BarycentricCoordinates.y * TrianglePatch[1].normalL + BarycentricCoordinates.z * TrianglePatch[2].normalL;
 
-	float3 t1 = lerp(patch[0].tangent, patch[1].tangent, uv.x);
-	float3 t2 = lerp(patch[2].tangent, patch[3].tangent, uv.x);
-	float3 tan = lerp(t1, t2, uv.y);
+	Output.biNorm = BarycentricCoordinates.x * TrianglePatch[0].biNorm + BarycentricCoordinates.y * TrianglePatch[1].biNorm + BarycentricCoordinates.z * TrianglePatch[2].biNorm;
 
-	float3 b1 = lerp(patch[0].biNorm, patch[1].biNorm, uv.x);
-	float3 b2 = lerp(patch[2].biNorm, patch[3].biNorm, uv.x);
-	float3 binorm = lerp(b1, b2, uv.y);
+	Output.tangent = BarycentricCoordinates.x * TrianglePatch[0].tan + BarycentricCoordinates.y * TrianglePatch[1].tan + BarycentricCoordinates.z * TrianglePatch[2].tan;
 
-	float3 tex1 = lerp(patch[0].biNorm, patch[1].biNorm, uv.x);
-	float3 tex2 = lerp(patch[2].biNorm, patch[3].biNorm, uv.x);
-	float3 tex = lerp(tex1, tex2, uv.y);
+	//	// Interpolate light vector with barycentric coordinates
+	//	// sample the displacement map for the magnitude of displacement
+	//float fDisplacement = g_DisplacementMap.SampleLevel(g_sampleLinear, Out.vTexCoord.xy, 0).r; 
+	//fDisplacement *= g_Scale; fDisplacement += g_Bias;
+	//float3 vDirection = -vNormal; // direction is opposite normal
 
-	Output.posW = mul(float4(p, 1.0f), WorldPos);
+	//// translate the position
+	//vWorldPos += vDirection * fDisplacement;
+
+	//// transform to clip space
+	//Out.vPosCS = mul(float4(vWorldPos.xyz, 1.0), g_mWorldViewProjection);
+
+// Displacement mapping
+	vWorldPos.y = 0.3f * (vWorldPos.z * sin(vWorldPos.x) + vWorldPos.x * cos(vWorldPos.z));
+
+	Output.posW = vWorldPos;
 	Output.pos = mul(Output.posW, wvpMat);
 
-	Output.norm = normalize(mul(norm, WorldPos));
-	Output.biNorm = normalize(mul(binorm, WorldPos));
-	Output.tangent = normalize(mul(tan, WorldPos));
-	Output.texCoord = tex;
 	Output.ShadowPosH = float4(0.f, 0.f, 0.f, 0.f);
 	Output.projTex = float4(0.f, 0.f, 0.f, 0.f);
 

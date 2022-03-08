@@ -10,11 +10,17 @@
     <FxCompile Include="GeometryShader.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
-    <FxCompile Include="HullShader.hlsl">
+    <FxCompile Include="PixelShaderOld.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="VertexShaderOld.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
     <FxCompile Include="DomainShader.hlsl">
-      <Filter>Shader</Filter>
+      <Filter>Shader\Terrain</Filter>
+    </FxCompile>
+    <FxCompile Include="HullShader.hlsl">
+      <Filter>Shader\Terrain</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
@@ -231,6 +237,9 @@
     </Filter>
     <Filter Include="Terrain">
       <UniqueIdentifier>{a181173a-ca1b-4b82-bf2e-bedfd7146254}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shader\Terrain">
+      <UniqueIdentifier>{aaca3877-e5be-435f-8c27-0f67a1e42593}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
