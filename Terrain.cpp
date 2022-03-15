@@ -12,12 +12,19 @@ Terrain::~Terrain()
 
 void Terrain::RandomInit(std::wstring name, float scale, RANDOM_MODE mode)
 {
-	m_TerrainData - new std::map<int, int>(m_Size, m_Size);
+	m_TerrainData = new float*[m_Size];
+	for (size_t i = 0; i < m_Size; i++)
+	{
+		m_TerrainData[i] = new float[m_Size];
+	}
 	m_TerrainData[0][0] = rnd();
 	m_TerrainData[0][m_Size - 1] = rnd();
 	m_TerrainData[m_Size - 1][0] = rnd();
 	m_TerrainData[m_Size - 1][m_Size - 1] = rnd();
 
+	Fractal();
+	Clamp_map();
+	print_map();
 }
 
 XMFLOAT4X4 Terrain::ReturnAnchor()
@@ -33,8 +40,58 @@ XMFLOAT4X4 Terrain::ReturnAnchor()
 	return result;
 }
 
+// Main fractal generating loop
+void Terrain::Fractal()
+{
+	int sideLength = m_Size / 2;
+	Diamond(m_Size);
+	Square(m_Size);
 
-void Terrain::Diamond(int sideLength, int xLength, int zLength, float scale)
+	m_Range /= 2;
+
+	while (sideLength >= 2)
+	{
+		Diamond(sideLength + 1);
+		Square(sideLength + 1);
+		sideLength /= 2;
+		m_Range /= 2;
+	}
+}
+
+// Integer clamping helper
+void Terrain::Clamp(float* val, float min, float max)
+{
+	if (*val < min) *val = min;
+	if (*val > max) *val = max;
+}
+
+// Function to clamp all map values
+void Terrain::Clamp_map()
+{
+	for (int i = 0; i < m_Size; i++)
+	{
+		for (int j = 0; j < m_Size; j++)
+		{
+			Clamp(&m_TerrainData[i][j], 0, 255);
+		}
+	}
+}
+
+void Terrain::print_map()
+{
+	for (int i = 0; i < m_Size; i++)
+	{
+		for (int j = 0; j < m_Size; j++)
+		{
+			Debug::OutputString(m_TerrainData[i][j]);
+		}
+		std::cout << std::endl;
+	}
+}
+
+
+
+void Terrain::Diamond(int sideLength)
 {
 	int halfSide = sideLength / 2;
 
@@ -56,7 +113,29 @@ void Terrain::Diamond(int sideLength, int xLength, int zLength, float scale)
 
 }
 
-void Terrain::Average(int x, int y, int sideLength, float scale)
+void Terrain::Square(int sideLength)
+{
+	int halfLength = sideLength / 2;
+
+	for (int y = 0; y < m_Size / (sideLength - 1); y++)
+	{
+		for (int x = 0; x < m_Size / (sideLength - 1); x++)
+		{
+			// Top
+			Average(x * (sideLength - 1) + halfLength, y * (sideLength - 1), sideLength);
+			// Right
+			Average((x + 1) * (sideLength - 1), y * (sideLength - 1) + halfLength,
+				sideLength);
+			// Bottom
+			Average(x * (sideLength - 1) + halfLength, (y + 1) * (sideLength - 1), sideLength);
+			// Left
+			Average(x * (sideLength - 1), y * (sideLength - 1) + halfLength, sideLength);
+		}
+	}
+}
+
+
+void Terrain::Average(int x, int y, int sideLength)
 {
 	float counter = 0;
 	float accumulator = 0;
@@ -84,7 +163,7 @@ void Terrain::Average(int x, int y, int sideLength, float scale)
 		accumulator += m_TerrainData[y + halfSide][x];
 	}
 
-	m_TerrainData[y][x] = (accumulator / counter) + rnd(-scale, scale);
+	m_TerrainData[y][x] = (accumulator / counter) + rnd(-m_Range, m_Range);
 
 }
 

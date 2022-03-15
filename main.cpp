@@ -560,7 +560,7 @@ bool InitD3D()
 	XMStoreFloat4x4(&cameraProjMat, tmpMat);
 
 	// set starting camera state
-	cameraPosition = XMFLOAT4(0.0f, 9.0f, -6.0f, 0.0f);
+	cameraPosition = XMFLOAT4(0.0f, 2.0f, -6.0f, 0.0f);
 	cameraTarget = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
 	cameraUp = XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f);
 
@@ -597,7 +597,8 @@ bool InitD3D()
 
 	XMStoreFloat4x4(&m_LightMatrix, scale * rotation * translation);
 
-	m_Manager->CreateTerrain(2000, 2000, "terrain2.raw", 2, L"Terrain");
+	//m_Manager->CreateTerrain(200, 200, "terrain2.raw", 2, L"Terrain");
+	m_Manager->CreateTerrain(2, L"Terrain");
 
 	Terrain* pTerrain = m_Manager->GetTerrain();
 

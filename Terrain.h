@@ -1,6 +1,8 @@
 #pragma once
 #include <vector>
 #include <map>
+#include <iostream>
+#include <iomanip> 
 #include "Structures.h"
 #include "Transform.h"
 #include "NormalCalculations.h"
@@ -20,7 +22,7 @@ public:
 	Terrain(int x, int z, std::string MapLocale, float scale, std::wstring name);
 	~Terrain();
 
-	void RandomInit(int x, int z, std::wstring name, float scale, RANDOM_MODE mode);
+	void RandomInit(std::wstring name, float scale, RANDOM_MODE mode);
 
 	std::vector<Vertex> GetVertexStorage() { return m_VertexStore;};
 	std::vector<DWORD> GetIndexStorage() { return m_IndexStore;};
@@ -31,13 +33,23 @@ public:
 
 	XMFLOAT4X4 ReturnAnchor();
 
+	void Fractal();
+
+	void Clamp(float* val, float min, float max);
+
+	void Clamp_map();
+
+	void print_map();
+
 	void ClearCache() { m_VertexStore.clear(); m_IndexStore.clear(); m_HeightMap.clear(); };
 
 private:
 
-	void Diamond(int sideLength, int xLength, int zLength, float scale);
+	void Diamond(int sideLength);
 
-	void Average(int x, int y, int sideLength, float scale);
+	void Square(int sideLength);
+
+	void Average(int x, int y, int sideLength);
 
 	int rnd(int min = 0, int max = 255)
 	{
@@ -51,7 +63,7 @@ private:
 	std::vector<DWORD> m_IndexStore;
 	float m_HeightMapScale;
 	Transform* m_Anchor;
-	std::map<int, int>* m_TerrainData;
+	float** m_TerrainData;
 
 	const int m_Size = 513;
 	int m_Range = 196;
