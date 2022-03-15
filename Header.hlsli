@@ -27,12 +27,14 @@ struct DS_OUTPUT
 	float3 lightVectorTS : TANGENT_SPACE_VAR1;	
 	float4 ShadowPosH : POSITION;
 	float4 projTex: TEXCOORD1;
+	float distance : DISTANCE;
 };
 
 struct HS_CONSTANT_DATA_OUTPUT
 {
 	float EdgeTessFactor[3] : SV_TessFactor; // e.g. would be [4] for a quad domain
 	float InsideTessFactor : SV_InsideTessFactor; // e.g. would be Inside[2] for a quad domain
+	float distance : DISTANCE;
 };
 
 struct VS_INPUT

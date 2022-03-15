@@ -17,6 +17,11 @@ cbuffer ConstantBuffer : register(b0)
 	//----------------------------------- (16 byte boundary)
 	float3 EyePosW;
 	int mode;
+	//----------------------------------- (16 byte boundary)
+	int mode1;
+	int mode2;
+	int mode3;
+	int mode4;
 };
 
 //[domain("quad")]
@@ -69,10 +74,10 @@ DS_OUTPUT main(HS_CONSTANT_DATA_OUTPUT input, float3 BarycentricCoordinates : SV
 	DS_OUTPUT Output = (DS_OUTPUT)0;
 
 	// Interpolate world space position with barycentric coordinates
-	float3 vWorldPos = BarycentricCoordinates.x * TrianglePatch[0].posL + BarycentricCoordinates.y * TrianglePatch[1].posL + BarycentricCoordinates.z * TrianglePatch[2].posL;
+	Output.posL = BarycentricCoordinates.x * TrianglePatch[0].posL + BarycentricCoordinates.y * TrianglePatch[1].posL + BarycentricCoordinates.z * TrianglePatch[2].posL;
 
 	// Interpolate texture coordinates with barycentric coordinates
-	Output.texCoord = BarycentricCoordinates.x * TrianglePatch[0].texCoord + BarycentricCoordinates.y * TrianglePatch[1].texCoord;
+	Output.texCoord = BarycentricCoordinates.x * TrianglePatch[0].texCoord + BarycentricCoordinates.y * TrianglePatch[1].texCoord + BarycentricCoordinates.z * TrianglePatch[2].texCoord;;
 
 		// Interpolate normal with barycentric coordinates
 	Output.normalW = BarycentricCoordinates.x * TrianglePatch[0].normalL + BarycentricCoordinates.y * TrianglePatch[1].normalL + BarycentricCoordinates.z * TrianglePatch[2].normalL;
@@ -93,9 +98,11 @@ DS_OUTPUT main(HS_CONSTANT_DATA_OUTPUT input, float3 BarycentricCoordinates : SV
 	//// transform to clip space
 	//Out.vPosCS = mul(float4(vWorldPos.xyz, 1.0), g_mWorldViewProjection);
 
-// Displacement mapping
-	//vWorldPos.y = 0.3f * (vWorldPos.z * sin(vWorldPos.x) + vWorldPos.x * cos(vWorldPos.z));
 
+
+
+	Output.posW = mul(Output.posL, WorldPos);
+	Output.pos = mul(Output.posL, wvpMat);
 
 	Output.normalW = normalize(mul(float4(Output.normalW, 0), WorldPos));
 	Output.biNorm = normalize(mul(float4(Output.biNorm, 0), WorldPos));
@@ -110,12 +117,8 @@ DS_OUTPUT main(HS_CONSTANT_DATA_OUTPUT input, float3 BarycentricCoordinates : SV
 	Output.eyeVectorTS = VectorToTangentSpace(EyePosWorld, Output.TBN_inv);
 	Output.lightVectorTS = VectorToTangentSpace(LightVectorWorld, Output.TBN_inv);
 
-
-	Output.posW = mul(vWorldPos, WorldPos);
-	Output.pos = mul(Output.posW, wvpMat);
-
 	Output.ShadowPosH = float4(0.f, 0.f, 0.f, 0.f);
 	Output.projTex = float4(0.f, 0.f, 0.f, 0.f);
-
+	Output.distance = input.distance;
 	return Output;
 }

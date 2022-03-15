@@ -16,6 +16,11 @@ cbuffer ConstantBuffer : register(b0)
 	//----------------------------------- (16 byte boundary)
 	float3 EyePosW;
 	int mode;
+	//----------------------------------- (16 byte boundary)
+	int mode1;
+	int mode2;
+	int mode3;
+	int mode4;
 };
 
 /***********************************************
@@ -112,13 +117,6 @@ VS_OUTPUT main(VS_INPUT input)
 	output.norm = input.normalL;
 	output.biNorm = input.biNorm;
 	output.tangent = input.tan;
-	//output.posW = mul(input.pos, WorldPos);
-	//output.posL = input.pos;
-	//output.pos = mul(input.pos, wvpMat);
-	//output.texCoord = input.texCoord;
-	//output.norm = input.normalL;
-	//output.biNorm = input.biNorm;
-	//output.tangent = input.tan;
 	output.ShadowPosH = float4(0.f, 0.f, 0.f, 0.f);
 	output.projTex = float4(0.f, 0.f, 0.f, 0.f);
 	return output;

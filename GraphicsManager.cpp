@@ -16,9 +16,11 @@ GraphicsManager::GraphicsManager(int width, int height) : m_Height(height), m_Wi
 	D3D12GetDebugInterface(IID_PPV_ARGS(&m_DebugLayer));
 	m_DebugLayer->EnableDebugLayer();
 #endif // _DEBUG
-#ifdef _RELEASE
-	hr = CreateDXGIFactory(IID_PPV_ARGS(&m_Factory));
-#endif // _RELEASE
+
+	if (m_Factory == NULL)
+	{
+		hr = CreateDXGIFactory(IID_PPV_ARGS(&m_Factory));
+	}
 
 	IDXGIAdapter1* adapter; // adapters are the graphics card (this includes the embedded graphics on the motherboard)
 
@@ -26,13 +28,21 @@ GraphicsManager::GraphicsManager(int width, int height) : m_Height(height), m_Wi
 
 	bool adapterFound = false; // set this to true when a good one was found
 
-	CD3DX12_RASTERIZER_DESC rastDesc(D3D12_FILL_MODE_WIREFRAME,
+	CD3DX12_RASTERIZER_DESC rastDesc(D3D12_FILL_MODE_SOLID,
 		D3D12_CULL_MODE_NONE, FALSE,
 		D3D12_DEFAULT_DEPTH_BIAS, D3D12_DEFAULT_DEPTH_BIAS_CLAMP,
 		D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS, TRUE, FALSE, TRUE,
 		0, D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF);
 
 	m_RasterDescription[L"Default"] = rastDesc;
+
+	CD3DX12_RASTERIZER_DESC rastDesc2(D3D12_FILL_MODE_WIREFRAME,
+		D3D12_CULL_MODE_NONE, FALSE,
+		D3D12_DEFAULT_DEPTH_BIAS, D3D12_DEFAULT_DEPTH_BIAS_CLAMP,
+		D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS, TRUE, FALSE, TRUE,
+		0, D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF);
+
+	m_RasterDescription[L"WIREFRAME"] = rastDesc2;
 
 							   // find first hardware gpu that supports d3d 12
 	while (m_Factory->EnumAdapters1(adapterIndex, &adapter) != DXGI_ERROR_NOT_FOUND)
@@ -128,6 +138,10 @@ GraphicsManager::GraphicsManager(int width, int height) : m_Height(height), m_Wi
 
 GraphicsManager::~GraphicsManager()
 {
+	SAFE_RELEASE(m_Device);
+	SAFE_RELEASE(m_CommadQueue);
+
+
 }
 
 void GraphicsManager::ExecuteCommands()
@@ -205,6 +219,13 @@ void GraphicsManager::Draw(ID3D12Resource* currentFrame ,D3D12_CPU_DESCRIPTOR_HA
 		m_GraphicsCommandListMap[L"OutputManager"]->SetGraphicsRootDescriptorTable(1, m_TextureHeapMap[srvIdentifer]->GetGPUAddress(0));
 		m_GraphicsCommandListMap[L"OutputManager"]->SetGraphicsRootDescriptorTable(2, m_TextureHeapMap[srvIdentifer]->GetGPUAddress(1));
 		m_GraphicsCommandListMap[L"OutputManager"]->SetGraphicsRootDescriptorTable(3, m_TextureHeapMap[srvIdentifer]->GetGPUAddress(2));
+		m_GraphicsCommandListMap[L"OutputManager"]->SetGraphicsRootDescriptorTable(4, m_TextureHeapMap[srvIdentifer]->GetGPUAddress(3));
+		m_GraphicsCommandListMap[L"OutputManager"]->SetGraphicsRootDescriptorTable(5, m_TextureHeapMap[srvIdentifer]->GetGPUAddress(4));
+		m_GraphicsCommandListMap[L"OutputManager"]->SetGraphicsRootDescriptorTable(6, m_TextureHeapMap[srvIdentifer]->GetGPUAddress(5));
+		m_GraphicsCommandListMap[L"OutputManager"]->SetGraphicsRootDescriptorTable(7, m_TextureHeapMap[srvIdentifer]->GetGPUAddress(6));
+		m_GraphicsCommandListMap[L"OutputManager"]->SetGraphicsRootDescriptorTable(8, m_TextureHeapMap[srvIdentifer]->GetGPUAddress(7));
+		m_GraphicsCommandListMap[L"OutputManager"]->SetGraphicsRootDescriptorTable(9, m_TextureHeapMap[srvIdentifer]->GetGPUAddress(8));
+
 
 		m_GraphicsCommandListMap[L"OutputManager"]->DrawIndexedInstanced(pTerrain->GetGeometry()->numberOfIndices, 1, 0, 0, 0);
 	}
@@ -1006,6 +1027,7 @@ int GraphicsManager::LoadImageDataFromFile(BYTE** imageData, D3D12_RESOURCE_DESC
 		WICDecodeMetadataCacheOnLoad,    // We will cache the metadata right away, rather than when needed, which might be unknown
 		&wicDecoder                      // the wic decoder to be created
 	);
+
 	if (FAILED(hr)) return 0;
 
 	// get image from decoder (this will decode the "frame")
@@ -1098,12 +1120,6 @@ bool GraphicsManager::CreateRootSignature(D3D12_ROOT_SIGNATURE_FLAGS rootSigFlag
 
 	std::vector<CD3DX12_ROOT_PARAMETER> rootParameters(rootParameterCount);
 
-	//for (size_t i = 0; i < textureCount; ++i)
-	//{
-	//	CD3DX12_DESCRIPTOR_RANGE textureRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, i);
-	//	rootParameters[i].InitAsDescriptorTable(1, &textureRange, D3D12_SHADER_VISIBILITY_PIXEL);
-	//}
-
 	UINT cbCount = 0;
 	UINT texCount = 0;
 
@@ -1128,15 +1144,6 @@ bool GraphicsManager::CreateRootSignature(D3D12_ROOT_SIGNATURE_FLAGS rootSigFlag
 	CD3DX12_ROOT_PARAMETER test2 = rootParameters[1];
 	test.DescriptorTable.pDescriptorRanges->RegisterSpace;
 	test2.DescriptorTable.pDescriptorRanges->RegisterSpace;
-
-	if (test.DescriptorTable.pDescriptorRanges->RegisterSpace == test2.DescriptorTable.pDescriptorRanges->RegisterSpace)
-	{
-		int i = 0;
-	}
-	if (test.DescriptorTable.pDescriptorRanges->BaseShaderRegister == test2.DescriptorTable.pDescriptorRanges->BaseShaderRegister)
-	{
-		int i = 0;
-	}
 
 	enum RootParameterIndex
 	{

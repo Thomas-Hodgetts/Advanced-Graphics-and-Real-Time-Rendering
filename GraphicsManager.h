@@ -52,6 +52,9 @@ private:
 };
 
 
+#define SAFE_RELEASE(p) { if ( (p) ) { (p)->Release(); (p) = 0; } }
+
+
 class GraphicsManager
 {
 public:
@@ -137,6 +140,7 @@ public:
 
 	bool FlushCommandList(std::wstring Idenifier, int frameIndex);
 
+	void Wireframe(bool mode) { m_Wireframe = mode; };
 
 private:
 
@@ -170,6 +174,8 @@ private:
 	ID3DBlob* m_Signature;
 
 	HANDLE m_FenceEvent; // a handle to an event when our fence is unlocked by the gpu
+
+	bool m_Wireframe = false;
 
 	//Render Targets
 

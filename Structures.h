@@ -253,6 +253,10 @@ struct ConstantBufferPerObject
 	Light point;
 	XMFLOAT3 EyePosW;
 	int mode = 0;
+	int TessDistanceNear = 0;
+	int TessDistanceFar = 0;
+	int mode3 = 0;
+	int mode4 = 0;
 };
 
 struct ConstantBufferLighting

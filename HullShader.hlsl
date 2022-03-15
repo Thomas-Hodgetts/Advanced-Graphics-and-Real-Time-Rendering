@@ -16,6 +16,11 @@ cbuffer ConstantBuffer : register(b0)
 	//----------------------------------- (16 byte boundary)
 	float3 EyePosW;
 	int mode;
+	//----------------------------------- (16 byte boundary)
+	int TessDistanceNear;
+	int TessDistanceFar;
+	int mode3;
+	int mode4;
 };
 
 // Patch Constant Function
@@ -32,12 +37,13 @@ HS_CONSTANT_DATA_OUTPUT CalcHSPatchConstants(InputPatch<VS_OUTPUT, 3> ip, uint P
 	// the tessellation is 0 if d >= d1 and 64 if d <= d0.  The interval
 	// [d0, d1] defines the range we tessellate in.
 
-	const float d0 = 20.0f;
-	const float d1 = 100.0f;
+	const float d0 = TessDistanceNear;
+	const float d1 = TessDistanceFar;
 	float tess = 64.0f * saturate((d1 - d) / (d1 - d0));
 
-	// Uniformly tessellate the patch.
+	Output.distance = d;
 
+	// Uniformly tessellate the patch.
 	Output.EdgeTessFactor[0] = tess;
 	Output.EdgeTessFactor[1] = tess;
 	Output.EdgeTessFactor[2] = tess;
@@ -46,26 +52,6 @@ HS_CONSTANT_DATA_OUTPUT CalcHSPatchConstants(InputPatch<VS_OUTPUT, 3> ip, uint P
 
 	return Output;
 }
-
-//[domain("quad")]
-//[partitioning("integer")]
-//[outputtopology("triangle_cw")]
-//[outputcontrolpoints(NUM_CONTROL_POINTS)]
-//[patchconstantfunc("CalcHSPatchConstants")]
-//[maxtessfactor(64.f)]
-//HS_CONTROL_POINT_OUTPUT main( InputPatch<VS_OUTPUT, NUM_CONTROL_POINTS> ip, uint i : SV_OutputControlPointID, uint PatchID : SV_PrimitiveID )
-//{
-//	HS_CONTROL_POINT_OUTPUT Output;
-//	Output.pos = ip[i].pos;
-//	Output.posL = ip[i].posL;
-//	Output.posW = ip[i].posW;
-//	Output.texCoord = ip[i].texCoord;
-//	Output.normalL = ip[i].norm;
-//	Output.tan = ip[i].tangent;
-//	Output.biNorm = ip[i].biNorm;
-//	return Output;
-//}
-
 
 // Called once per control point // indicates a triangle patch (3 verts) [partitioning("fractional_odd")] // fractional avoids popping
 // vertex ordering for the output triangles
@@ -86,6 +72,5 @@ HS_CONTROL_POINT_OUTPUT main(InputPatch<VS_OUTPUT, 3> inputPatch, uint uCPID : S
 	Output.normalL = inputPatch[uCPID].norm;
 	Output.tan = inputPatch[uCPID].tangent;
 	Output.biNorm = inputPatch[uCPID].biNorm;
-
 	return Output;
 }

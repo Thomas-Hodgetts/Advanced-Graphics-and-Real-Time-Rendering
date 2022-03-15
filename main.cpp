@@ -302,12 +302,12 @@ bool InitD3D()
 	gm.CreateRootSignature(rootSignatureFlags, samples, 2, 5, 1, 4, L"Pipeline1");
 	gm.CompileVertexShader(L"Pipeline1", L"VertexShader.hlsl", "main");
 	gm.CompilePixelShader(L"Pipeline1", L"PixelShader.hlsl", "main");
-	//gm.CompileDomainShader(L"Pipeline1", L"DomainShader.hlsl", "main");
-	//gm.CompileHullShader(L"Pipeline1", L"HullShader.hlsl", "main");
+	gm.CompileDomainShader(L"Pipeline1", L"DomainShader.hlsl", "main");
+	gm.CompileHullShader(L"Pipeline1", L"HullShader.hlsl", "main");
 
-	gm.CreateRootSignature(rootSignatureFlags, samples, 2, 5, 1, 4, L"Pipeline2");
+	gm.CreateRootSignature(rootSignatureFlags, samples, 2, 10, 1, 9, L"Pipeline2");
 	gm.CompileVertexShader(L"Pipeline2", L"VertexShader.hlsl", "main");
-	gm.CompilePixelShader(L"Pipeline2", L"PixelShader.hlsl", "main");
+	gm.CompilePixelShader(L"Pipeline2", L"TerrainPixelShader.hlsl", "main");
 	gm.CompileDomainShader(L"Pipeline2", L"DomainShader.hlsl", "main");
 	gm.CompileHullShader(L"Pipeline2", L"HullShader.hlsl", "main");
 
@@ -589,7 +589,7 @@ bool InitD3D()
 	basicLight.DiffuseLight = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	basicLight.SpecularLight = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
 	basicLight.SpecularPower = 32.0f;
-	basicLight.LightVecW = XMFLOAT3(0.0f, 0.0f, -6);
+	basicLight.LightVecW = XMFLOAT3(0.0f, 7.0f, 0);
 
 	XMMATRIX scale = XMMatrixScaling(1,1,1);
 	XMMATRIX rotation = XMMatrixRotationX(0) * XMMatrixRotationY(0) * XMMatrixRotationZ(0);
@@ -597,7 +597,7 @@ bool InitD3D()
 
 	XMStoreFloat4x4(&m_LightMatrix, scale * rotation * translation);
 
-	m_Manager->CreateTerrain(200, 200, "terrain2.raw", 2, L"Terrain");
+	m_Manager->CreateTerrain(2000, 2000, "terrain2.raw", 2, L"Terrain");
 
 	Terrain* pTerrain = m_Manager->GetTerrain();
 
@@ -607,7 +607,10 @@ bool InitD3D()
 
 	m_GameManager.CreateConstantBuffer(pTerrain->GetIdentifier(), output.GetBufferSize(), 1024, sizeof(ConstantBufferPerObject), 1);
 
-	m_GameManager.CreateTextureHeap(filename, 4, pTerrain->GetIdentifier());
+	LPCWSTR filename2[9] = { L"Forest01.jpg" ,L"Forest02.jpg" ,L"Forest03.jpg" ,L"Rock01.jpg", L"Rock02.jpg" ,L"Rock03.jpg" ,L"Snow01.jpg" ,L"Snow02.jpg" ,L"Snow03.jpg" };
+	//LPCWSTR filename2[9] = { L"Forest01Small.jpg" ,L"Forest02Small.jpg" ,L"Forest03Small.jpg" ,L"Rocks01Small.jpg", L"Rocks02Small.jpg" ,L"Rocks03Small.jpg" ,L"Snow01Small.jpg" ,L"Snow02Small.jpg" ,L"Snow03Small.jpg" };
+
+	m_GameManager.CreateTextureHeap(filename2, 9, pTerrain->GetIdentifier());
 
 	m_OutputManager = output;
 
@@ -676,7 +679,7 @@ void Update()
 		cbPerObject.mode = 0;
 	}
 
-	cbPerObject.mode = 2;
+	cbPerObject.mode = 0;
 
 	cbPerObject.point = basicLight;
 	cbPerObject.Mat = shinyMaterial;
@@ -690,6 +693,9 @@ void Update()
 
 	int currentFrameIndex = m_OutputManager.GetCurrentFrameIndex();
 
+	cbPerObject.TessDistanceNear = 0.0f;
+	cbPerObject.TessDistanceFar = 15.0f;
+
 	m_GameManager.UpdateObjectConstantBuffer(cbPerObject, L"TestGeometry", currentFrameIndex,0);
 
 	wvpMat = XMLoadFloat4x4(&m_Manager->GetTerrain()->ReturnAnchor()) * viewMat * projMat; // create wvp matrix
@@ -699,6 +705,9 @@ void Update()
 	XMStoreFloat4x4(&cbPerObject.worldPos, XMLoadFloat4x4(&m_Manager->GetTerrain()->ReturnAnchor()));
 
 	XMStoreFloat3(&cbPerObject.EyePosW, m_Manager->ReturnCamera()->GetEye());
+
+	cbPerObject.TessDistanceNear = 0.0f;
+	cbPerObject.TessDistanceFar = 15.0f;
 
 	m_GameManager.UpdateObjectConstantBuffer(cbPerObject, L"Terrain", currentFrameIndex, 0);
 
@@ -715,8 +724,8 @@ void UpdatePipeline()
 
 	m_GameManager.ReopenAllocator(frameIndex, L"OutputManager", L"Pipeline1");
 
-	m_GameManager.Draw(m_OutputManager.GetCurrentFrame(), m_OutputManager.GetHeap()->GetCPUAddress(frameIndex), frameIndex,L"Pipeline2", L"OutputManager Depth Stencil", L"TestGeometry", L"TestGeometry", m_Manager, true, true, true);
-	//m_GameManager.Draw(m_OutputManager.GetCurrentFrame(), m_OutputManager.GetHeap()->GetCPUAddress(frameIndex), frameIndex,L"Pipeline1", L"OutputManager Depth Stencil", L"TestGeometry", L"TestGeometry", m_Manager, true, false, true);
+	//m_GameManager.Draw(m_OutputManager.GetCurrentFrame(), m_OutputManager.GetHeap()->GetCPUAddress(frameIndex), frameIndex,L"Pipeline1", L"OutputManager Depth Stencil", L"TestGeometry", L"TestGeometry", m_Manager, false, true, false);
+	m_GameManager.Draw(m_OutputManager.GetCurrentFrame(), m_OutputManager.GetHeap()->GetCPUAddress(frameIndex), frameIndex,L"Pipeline2", L"OutputManager Depth Stencil", L"Terrain", L"Terrain", m_Manager, true, false, true);
 }
 void Render()
 {

@@ -178,7 +178,7 @@ float4 main(DS_OUTPUT input) : SV_TARGET
 
 	LightingResult lr;
 
-	if (mode == 0)
+	if (input.distance > 5.0f)
 	{
 		texCoords = ParallaxMapping(input.texCoord, input.eyeVectorTS);
 
@@ -194,23 +194,15 @@ float4 main(DS_OUTPUT input) : SV_TARGET
 		}
 
 	}
-	if (mode == 1)
+	if (input.distance > 12.0f)
 	{
 		bumpMap = ProcessBumpMap(normalMap.Sample(s1, texCoords), input.TBN, 0);
 
 		lr = ComputeSimpleLighting(input.eyeVectorTS, bumpMap, input.lightVectorTS, Si, light, shadowFactor2);
 	}
-	if (mode == 2)
+	if (input.distance > 15.0f)
 	{
-		//lr = ComputeSimpleLighting(normalize(EyePosW - input.posW.xyz), input.normalW, LightVectorWorld, Si, light, shadowFactor2);
-	}
-	if (mode == 3)
-	{
-		input.ShadowPosH.xyz /= input.ShadowPosH.w;
-
-		shadowFactor2 = CalcShadowFactor(input.ShadowPosH);
-
-		//lr = ComputeSimpleLighting(normalize(EyePosW - Output.posW.xyz), input.norm, LightVectorWorld, Si, light, shadowFactor2);
+		lr = ComputeSimpleLighting(normalize(EyePosW - input.posW.xyz), normalize(input.normalW), normalize(light.LightVecW - input.posW.xyz), Si, light, shadowFactor2);
 	}
 
 

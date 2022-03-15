@@ -10,6 +10,16 @@ Terrain::~Terrain()
 	delete m_Anchor;
 }
 
+void Terrain::RandomInit(std::wstring name, float scale, RANDOM_MODE mode)
+{
+	m_TerrainData - new std::map<int, int>(m_Size, m_Size);
+	m_TerrainData[0][0] = rnd();
+	m_TerrainData[0][m_Size - 1] = rnd();
+	m_TerrainData[m_Size - 1][0] = rnd();
+	m_TerrainData[m_Size - 1][m_Size - 1] = rnd();
+
+}
+
 XMFLOAT4X4 Terrain::ReturnAnchor()
 {
 	XMFLOAT4X4 result;
@@ -21,6 +31,61 @@ XMFLOAT4X4 Terrain::ReturnAnchor()
 	XMStoreFloat4x4(&result, scale * rotation * translation);
 
 	return result;
+}
+
+
+void Terrain::Diamond(int sideLength, int xLength, int zLength, float scale)
+{
+	int halfSide = sideLength / 2;
+
+	for (int y = 0; y < m_Size / (sideLength - 1); y++)
+	{
+		for (int x = 0; x < m_Size / (sideLength - 1); x++)
+		{
+			int center_x = x * (sideLength - 1) + halfSide;
+			int center_y = y * (sideLength - 1) + halfSide;
+
+			int avg = (m_TerrainData[x * (sideLength - 1)][y * (sideLength - 1)] +
+				m_TerrainData[x * (sideLength - 1)][(y + 1) * (sideLength - 1)] +
+				m_TerrainData[(x + 1) * (sideLength - 1)][y * (sideLength - 1)] +
+				m_TerrainData[(x + 1) * (sideLength - 1)][(y + 1) * (sideLength - 1)]) / 4.0f;
+
+			m_TerrainData[center_x][center_y] = avg + rnd(-m_Range, m_Range);
+		}
+	}
+
+}
+
+void Terrain::Average(int x, int y, int sideLength, float scale)
+{
+	float counter = 0;
+	float accumulator = 0;
+
+	int halfSide = sideLength / 2;
+
+	if (x != 0)
+	{
+		counter += 1.0f;
+		accumulator += m_TerrainData[y][x - halfSide];
+	}
+	if (y != 0)
+	{
+		counter += 1.0f;
+		accumulator += m_TerrainData[y - halfSide][x];
+	}
+	if (x != m_Size - 1)
+	{
+		counter += 1.0f;
+		accumulator += m_TerrainData[y][x + halfSide];
+	}
+	if (y != m_Size - 1)
+	{
+		counter += 1.0f;
+		accumulator += m_TerrainData[y + halfSide][x];
+	}
+
+	m_TerrainData[y][x] = (accumulator / counter) + rnd(-scale, scale);
+
 }
 
 Terrain::Terrain(int x, int z, std::string MapLocale, float scale, std::wstring name)
@@ -94,13 +159,20 @@ Terrain::Terrain(int x, int z, std::string MapLocale, float scale, std::wstring 
 		UINT i0 = m_IndexStore[i * 3];
 		UINT i1 = m_IndexStore[i * 3 + 1];
 		UINT i2 = m_IndexStore[i * 3 + 2];
-		m_VertexStore[i0].Normal = { 0,1,0 };
-		m_VertexStore[i1].Normal = { 0,1,0 };
-		m_VertexStore[i2].Normal = { 0,1,0 };
+		XMFLOAT3 tangent, binormal, normal;
+		NormalCalculations::CalculateTangentBinormal2(m_VertexStore[i0], m_VertexStore[i1], m_VertexStore[i2], normal, tangent, binormal);
+
+		m_VertexStore[i0].Normal = normal;
+		m_VertexStore[i1].Normal = normal;
+		m_VertexStore[i2].Normal = normal;
+		m_VertexStore[i0].tangent = tangent;
+		m_VertexStore[i1].tangent = tangent;
+		m_VertexStore[i2].tangent = tangent;
+		m_VertexStore[i0].biTangent = binormal;
+		m_VertexStore[i1].biTangent = binormal;
+		m_VertexStore[i2].biTangent = binormal;
 	}
-
-
-	//LPCWSTR* TexLocale, int texCount,
+	
 
 	m_Geometry = new Geometry();
 }

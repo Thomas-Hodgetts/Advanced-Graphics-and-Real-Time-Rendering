@@ -22,6 +22,9 @@
     <FxCompile Include="HullShader.hlsl">
       <Filter>Shader\Terrain</Filter>
     </FxCompile>
+    <FxCompile Include="TerrainPixelShader.hlsl">
+      <Filter>Shader\Terrain</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
