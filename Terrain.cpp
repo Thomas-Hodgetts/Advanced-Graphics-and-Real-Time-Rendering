@@ -28,7 +28,7 @@ void Terrain::RandomInit(std::wstring name, float scale, RANDOM_MODE mode)
 	Clamp_map();
 	int tick = 0;
 
-	UINT k = 0.4;
+	UINT k = 0.9999;
 
 	///* Rows, left to right */
 	//for (x = 1; x < maxWidth; x++)
@@ -59,8 +59,6 @@ void Terrain::RandomInit(std::wstring name, float scale, RANDOM_MODE mode)
 		}
 	}
 
-	//for (x = maxWidth - 2; x < -1; x--)
-	//	for (z = 0; z < maxLength; z++)
 	for (size_t x = m_Size - 2; x < -1; --x)
 	{
 		for (size_t z = 0; z < m_Size; z++)
