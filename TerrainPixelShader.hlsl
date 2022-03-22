@@ -225,7 +225,7 @@ float4 main(DS_OUTPUT input) : SV_TARGET
 	}
 
 
-    //lr = ComputeSimpleLighting(normalize(EyePosW - input.posW.xyz), normalize(input.normalW), normalize(light.LightVecW - input.posW.xyz), Si, light);
+    lr = ComputeSimpleLighting(normalize(EyePosW - input.posW.xyz), normalize(input.normalW), normalize(light.LightVecW - input.posW.xyz), Si, light);
 
 	float3 ambient = (0, 0, 0);
 

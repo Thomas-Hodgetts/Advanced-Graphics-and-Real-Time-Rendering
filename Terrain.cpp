@@ -27,6 +27,66 @@ void Terrain::RandomInit(std::wstring name, float scale, RANDOM_MODE mode)
 	Fractal();
 	Clamp_map();
 	int tick = 0;
+
+	UINT k = 0.4;
+
+	///* Rows, left to right */
+	//for (x = 1; x < maxWidth; x++)
+	//	for (z = 0; z < maxLength; z++)
+	//		height[x, z] = height[x - 1, z] * (1 - k) +height[x, z] * k;
+
+	///* Rows, right to left*/
+	//for (x = maxWidth - 2; x < -1; x--)
+	//	for (z = 0; z < maxLength; z++)
+	//		height[x, z] = height[x + 1, z] * (1 - k) + height[x, z] * k;
+
+	///* Columns, bottom to top */
+	//for (x = 0; x < maxWidth; x++)
+	//	for (z = 1; z < maxLength; z++)
+	//		height[x, z] = height[x, z - 1] * (1 - k) + height[x, z] * k;
+
+	///* Columns, top to bottom */
+	//for (x = 0; x < maxWidth; x++)
+	//	for (z = maxLength; z < -1; z--)
+	//		height[x, z] = height[x, z + 1] * (1 - k) + height[x, z] * k;
+
+	for (size_t x = 1; x < m_Size; ++x)
+	{
+		for (size_t z = 0; z < m_Size; ++z)
+		{
+			m_TerrainData[x][z] = m_TerrainData[x - 1][z] * (1 - k) + m_TerrainData[x][z] * k;
+			//		height[x, z] = height[x - 1, z] * (1 - k) +height[x, z] * k;
+		}
+	}
+
+	//for (x = maxWidth - 2; x < -1; x--)
+	//	for (z = 0; z < maxLength; z++)
+	for (size_t x = m_Size - 2; x < -1; --x)
+	{
+		for (size_t z = 0; z < m_Size; z++)
+		{
+			m_TerrainData[x][z] = m_TerrainData[x +1][z] * (1 - k) + m_TerrainData[x][z] * k;
+			//		height[x, z] = height[x + 1, z] * (1 - k) + height[x, z] * k;
+		}
+	}
+	for (size_t x = 0; x < m_Size; ++x)
+	{
+		for (size_t z = 1; z < m_Size; ++z)
+		{
+			m_TerrainData[x][z] = m_TerrainData[x][z - 1] * (1 - k) + m_TerrainData[x][z] * k;
+			// height[x, z] = height[x, z - 1] * (1 - k) + height[x, z] * k;
+		}
+	}
+	for (size_t x = m_Size - 2; x < -1; --x)
+	{
+		for (size_t z = 0; z < m_Size; z++)
+		{
+			m_TerrainData[x][z] = m_TerrainData[x][z + 1] * (1 - k) + m_TerrainData[x][z] * k;
+			//height[x, z] = height[x, z + 1] * (1 - k) + height[x, z] * k;
+		}
+	}
+
+
 	m_VertexStore.resize(m_Size * m_Size);
 	for (UINT i = 0; i < m_Size; i++)
 	{
@@ -69,7 +129,7 @@ void Terrain::RandomInit(std::wstring name, float scale, RANDOM_MODE mode)
 	UINT faceCount = (m_Size - 1) * (m_Size - 1) * 2;
 
 	m_IndexStore.resize(faceCount * 3);
-	UINT k = 0;
+	k = 0;
 	for (UINT i = 0; i < m_Size - 1; i++)
 	{
 		for (UINT j = 0; j < m_Size - 1; j++)
