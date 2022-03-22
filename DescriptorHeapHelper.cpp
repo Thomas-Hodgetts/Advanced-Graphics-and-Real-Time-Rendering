@@ -17,6 +17,7 @@ DescriptorHeapHelper::DescriptorHeapHelper(D3D12_DESCRIPTOR_HEAP_DESC heapDesc, 
 
 DescriptorHeapHelper::~DescriptorHeapHelper()
 {
+	SAFE_RELEASE(m_DescriptorHeap);
 }
 
 void DescriptorHeapHelper::CPUOffset()

@@ -6,6 +6,7 @@
 #include "Structures.h"
 #include "Transform.h"
 #include "NormalCalculations.h"
+#include "NumberGenerator.h"
 #include <fstream>
 
 enum class RANDOM_MODE
@@ -53,7 +54,13 @@ private:
 
 	int rnd(int min = 0, int max = 255)
 	{
-		return min + (rand() % static_cast<int>(max - min + 1));
+		//return rnd2(min, max);
+		return min + ( rand() % static_cast<int>(max - min + 1));
+	}
+	int rnd2(int min = 0, int max = 255)
+	{
+		int result = NumberGenerator::GenerateRandomInteger(min, max);
+		return min + (result % static_cast<int>(max - min + 1));
 	}
 
 	Geometry* m_Geometry;

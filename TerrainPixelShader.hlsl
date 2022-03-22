@@ -157,8 +157,16 @@ LightingResult ComputeSimpleLighting(float3 toEye, float3 Norm, float3 LightVecW
 
 float4 main(DS_OUTPUT input) : SV_TARGET
 {
+	if (input.posW.y > 400)
+	{
+		discard;
+	}
 
-float3 lightLecNorm;
+	float grassHeight = 10;
+	float rockHeight = 25;
+	float snowHeight = 30;
+
+	float3 lightLecNorm;
 	float3 r;
 	float specularAmount;
 	float diffuseAmount;
@@ -169,38 +177,38 @@ float3 lightLecNorm;
 	float shadowFactor = 1;
 	LightingResult lr;
 
-	if (input.distance < 150.0f)
+	if (input.distance < 5.0f)
 	{
 		texCoords = ParallaxMapping(input.texCoord, input.eyeVectorTS, input.posW.y);
 		shadowFactor = parallaxSoftShadowMultiplier(input.lightVectorTS, texCoords, GroundTexture3.Sample(s1, texCoords).x);
 
-		if (input.posW.y > 5)
+		if (input.posW.y < grassHeight)
 		{
 			bumpMap = ProcessBumpMap(GroundTexture2.Sample(s1, texCoords), input.TBN, 0);
 		}
-		if (input.posW.y > 10)
+		if (input.posW.y < rockHeight)
 		{
 			bumpMap = ProcessBumpMap(RockTexture2.Sample(s1, texCoords), input.TBN, 0);
 		}
-		if (input.posW.y > 15)
+		if (input.posW.y < snowHeight)
 		{
 			bumpMap = ProcessBumpMap(SnowTexture2.Sample(s1, texCoords), input.TBN, 0);
 		}
 
 		lr = ComputeSimpleLighting(input.eyeVectorTS, bumpMap, input.lightVectorTS, Si, light);
-		if (texCoords.x > 1 || texCoords.x < 0 || texCoords.y > 1 || texCoords.y < 0)
-		{
-			discard;
-		}
+		//if (texCoords.x > 1 || texCoords.x < 0 || texCoords.y > 1 || texCoords.y < 0)
+		//{
+		//	discard;
+		//}
 	}
-	else if (input.distance < 320.0f)
+	else if (input.distance < 15.0f)
 	{
-		if (input.posW.y < 5)
+		if (input.posW.y < grassHeight)
 		{
 			bumpMap = ProcessBumpMap(GroundTexture2.Sample(s1, texCoords), input.TBN, 0);
 			lr = ComputeSimpleLighting(input.eyeVectorTS, bumpMap, input.lightVectorTS, Si, light);
 		}
-		else if (input.posW.y < 10)
+		else if (input.posW.y < rockHeight)
 		{
 			bumpMap = ProcessBumpMap(RockTexture2.Sample(s1, texCoords), input.TBN, 0);
 			lr = ComputeSimpleLighting(input.eyeVectorTS, bumpMap, input.lightVectorTS, Si, light);
@@ -213,9 +221,11 @@ float3 lightLecNorm;
 	}
 	else
 	{
-		lr = ComputeSimpleLighting(normalize(EyePosW - input.posW.xyz), normalize(float3(0,1,0)), normalize(light.LightVecW - input.posW.xyz), Si, light);
+		lr = ComputeSimpleLighting(normalize(EyePosW - input.posW.xyz), normalize(input.normalW), normalize(light.LightVecW - input.posW.xyz), Si, light);
 	}
 
+
+    //lr = ComputeSimpleLighting(normalize(EyePosW - input.posW.xyz), normalize(input.normalW), normalize(light.LightVecW - input.posW.xyz), Si, light);
 
 	float3 ambient = (0, 0, 0);
 
@@ -225,19 +235,19 @@ float3 lightLecNorm;
 	float4 finalCol = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
 
-	if (input.posW.y < 5)
+	if (input.posW.y < grassHeight)
 	{
 		finalCol.rgb = ((ambient + (lr.Diffuse) + lr.Specular) * shadowFactor) * GroundTexture1.Sample(s1, texCoords).rgb;
 		finalCol.a = Si.DiffuseMtrl.a;
 	}
-	else if (input.posW.y < 10)
+	else if (input.posW.y < rockHeight)
 	{
-		finalCol.rgb =  ((ambient + lr.Diffuse) + lr.Specular) * RockTexture1.Sample(s1, texCoords).rgb;
+		finalCol.rgb = ((ambient + (lr.Diffuse) + lr.Specular) * shadowFactor) * RockTexture1.Sample(s1, texCoords).rgb;
 		finalCol.a = Si.DiffuseMtrl.a;
 	}
 	else
 	{
-		finalCol.rgb = ((ambient + lr.Diffuse) + lr.Specular) * SnowTexture1.Sample(s1, texCoords).rgb;
+		finalCol.rgb = ((ambient + (lr.Diffuse) + lr.Specular) * shadowFactor) * SnowTexture1.Sample(s1, texCoords).rgb;
 		finalCol.a = Si.DiffuseMtrl.a;
 	}
 

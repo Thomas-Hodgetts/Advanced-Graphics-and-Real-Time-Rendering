@@ -96,18 +96,6 @@ float3 ISHTirradiance(float3 sharm[9], float3 n)
 
 VS_OUTPUT main(VS_INPUT input)
 {
-	//VS_OUTPUT output;
-	//output.posW = mul(input.pos, WorldPos);
-	//output.posL = input.pos;
-	//output.pos = mul(input.pos, wvpMat);
-	//output.texCoord = input.texCoord;
-	//output.norm = normalize(mul(input.normalL, WorldPos));
-	//output.biNorm = normalize(mul(input.biNorm, WorldPos));
-	//output.tangent = normalize(mul(input.tan, WorldPos));
-	//output.ShadowPosH = float4(0.f, 0.f, 0.f, 0.f);
-	//output.projTex = float4(0.f, 0.f, 0.f, 0.f);
-	//return output;
-
 	VS_OUTPUT output;
 
 	output.posW = float3(0.f, 0.f, 0.f);

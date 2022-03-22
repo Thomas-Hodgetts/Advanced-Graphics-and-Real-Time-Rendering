@@ -90,6 +90,9 @@
     <ClCompile Include="Terrain.cpp">
       <Filter>Terrain</Filter>
     </ClCompile>
+    <ClCompile Include="NumberGenerator.cpp">
+      <Filter>Terrain\Random Generator</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -160,6 +163,9 @@
     </ClInclude>
     <ClInclude Include="Terrain.h">
       <Filter>Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="NumberGenerator.h">
+      <Filter>Terrain\Random Generator</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -243,6 +249,9 @@
     </Filter>
     <Filter Include="Shader\Terrain">
       <UniqueIdentifier>{aaca3877-e5be-435f-8c27-0f67a1e42593}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Terrain\Random Generator">
+      <UniqueIdentifier>{f8229b0d-504a-47cb-815d-a9a13e440fe0}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

@@ -28,7 +28,7 @@ GraphicsManager::GraphicsManager(int width, int height) : m_Height(height), m_Wi
 
 	bool adapterFound = false; // set this to true when a good one was found
 
-	CD3DX12_RASTERIZER_DESC rastDesc(D3D12_FILL_MODE_WIREFRAME,
+	CD3DX12_RASTERIZER_DESC rastDesc(D3D12_FILL_MODE_SOLID,
 		D3D12_CULL_MODE_NONE, FALSE,
 		D3D12_DEFAULT_DEPTH_BIAS, D3D12_DEFAULT_DEPTH_BIAS_CLAMP,
 		D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS, TRUE, FALSE, TRUE,
@@ -138,10 +138,110 @@ GraphicsManager::GraphicsManager(int width, int height) : m_Height(height), m_Wi
 
 GraphicsManager::~GraphicsManager()
 {
+
+}
+
+void GraphicsManager::Destory()
+{
 	SAFE_RELEASE(m_Device);
 	SAFE_RELEASE(m_CommadQueue);
 
+	//https://stackoverflow.com/questions/52914597/range-based-for-loop-on-unordered-map-and-references
 
+	//ID3D12Resources
+	for (auto [l, r] : m_VertexMap)
+	{
+		SAFE_RELEASE(r);
+	}
+	for (auto [l, r] : m_IndexMap)
+	{
+		SAFE_RELEASE(r);
+	}
+	for (auto [l, r] : m_DepthBufferMap)
+	{
+		for (size_t i = 0; i < r.size(); i++)
+		{
+			SAFE_RELEASE(r[i]);
+		}
+	}
+	for (auto [l, r] : m_TextureMap)
+	{
+		SAFE_RELEASE(r);
+	}
+	for (auto [l, r] : m_TextureUploadHeapMap)
+	{
+		SAFE_RELEASE(r);
+	}
+	for (auto [l, r] : m_DepthStencilBufferMap)
+	{
+		SAFE_RELEASE(r);
+	}
+
+	//ID3DBlob
+
+	for (auto [l, r] : m_VertexBlobMap)
+	{
+		SAFE_RELEASE(r);
+	}
+	for (auto [l, r] : m_PixelBlobMap)
+	{
+		SAFE_RELEASE(r);
+	}
+	for (auto [l, r] : m_GeoBlobMap)
+	{
+		SAFE_RELEASE(r);
+	}
+	for (auto [l, r] : m_HullBlobMap)
+	{
+		SAFE_RELEASE(r);
+	}
+	for (auto [l, r] : m_DomBlobMap)
+	{
+		SAFE_RELEASE(r);
+	}
+
+	//other
+
+	for (auto [l, r] : m_RenderTargetHeaps)
+	{
+		delete r;
+	}
+
+	for (auto [l, r] : m_DepthStencilHeapDescription)
+	{
+		delete r;
+	}
+
+	for (auto [l, r] : m_ConstantBufferMap)
+	{
+		delete r;
+	}
+
+	for (auto [l, r] : m_GraphicsCommandListMap)
+	{
+		SAFE_RELEASE(r);
+	}
+
+	for (auto [l, r] : m_CommandListMap)
+	{
+		SAFE_RELEASE(r);
+	}
+
+
+	//Fence stuff
+
+	for (auto [l, r] : m_FenceMap)
+	{
+		for (size_t i = 0; i < r.size(); i++)
+		{
+			SAFE_RELEASE(r[i]);
+		}
+	}
+
+	for (auto [l, r] : m_RootSignatureMap)
+	{
+		SAFE_RELEASE(r);
+	}
 }
 
 void GraphicsManager::ExecuteCommands()

@@ -168,6 +168,7 @@
     <ClCompile Include="GraphicsManager.cpp" />
     <ClCompile Include="ImaginaryObject.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="NumberGenerator.cpp" />
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="OutputManager.cpp" />
     <ClCompile Include="ParticleModel.cpp" />
@@ -193,6 +194,7 @@
     <ClInclude Include="GraphicsManager.h" />
     <ClInclude Include="ImaginaryObject.h" />
     <ClInclude Include="NormalCalculations.h" />
+    <ClInclude Include="NumberGenerator.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="OutputManager.h" />
     <ClInclude Include="ParticleModel.h" />

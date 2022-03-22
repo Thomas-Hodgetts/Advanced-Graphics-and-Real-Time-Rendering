@@ -42,6 +42,8 @@ int WINAPI WinMain(HINSTANCE hInstance,    //Main windows function
 	// close the fence event
 	CloseHandle(fenceEvent);
 
+	m_GameManager.Destory();
+
 	// clean up everything
 	Cleanup();
 
@@ -262,8 +264,8 @@ bool InitD3D()
 													   // otherwise we would set the heap's flag to D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE
 	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
-	GraphicsManager gm(1920, 1080);
-	OutputManager output(&gm, swapChainDesc, rtvHeapDesc);
+	m_GameManager = GraphicsManager(1920, 1080);
+	OutputManager output(&m_GameManager, swapChainDesc, rtvHeapDesc);
 
 	D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
@@ -299,17 +301,17 @@ bool InitD3D()
 	D3D12_STATIC_SAMPLER_DESC samples[2]{ sampler , shadow };
 
 
-	gm.CreateRootSignature(rootSignatureFlags, samples, 2, 5, 1, 4, L"Pipeline1");
-	gm.CompileVertexShader(L"Pipeline1", L"VertexShader.hlsl", "main");
-	gm.CompilePixelShader(L"Pipeline1", L"PixelShader.hlsl", "main");
-	gm.CompileDomainShader(L"Pipeline1", L"DomainShader.hlsl", "main");
-	gm.CompileHullShader(L"Pipeline1", L"HullShader.hlsl", "main");
+	m_GameManager.CreateRootSignature(rootSignatureFlags, samples, 2, 5, 1, 4, L"Pipeline1");
+	m_GameManager.CompileVertexShader(L"Pipeline1", L"VertexShader.hlsl", "main");
+	m_GameManager.CompilePixelShader(L"Pipeline1", L"PixelShader.hlsl", "main");
+	m_GameManager.CompileDomainShader(L"Pipeline1", L"DomainShader.hlsl", "main");
+	m_GameManager.CompileHullShader(L"Pipeline1", L"HullShader.hlsl", "main");
 
-	gm.CreateRootSignature(rootSignatureFlags, samples, 2, 10, 1, 9, L"Pipeline2");
-	gm.CompileVertexShader(L"Pipeline2", L"VertexShader.hlsl", "main");
-	gm.CompilePixelShader(L"Pipeline2", L"TerrainPixelShader.hlsl", "main");
-	gm.CompileDomainShader(L"Pipeline2", L"DomainShader.hlsl", "main");
-	gm.CompileHullShader(L"Pipeline2", L"HullShader.hlsl", "main");
+	m_GameManager.CreateRootSignature(rootSignatureFlags, samples, 2, 10, 1, 9, L"Pipeline2");
+	m_GameManager.CompileVertexShader(L"Pipeline2", L"VertexShader.hlsl", "main");
+	m_GameManager.CompilePixelShader(L"Pipeline2", L"TerrainPixelShader.hlsl", "main");
+	m_GameManager.CompileDomainShader(L"Pipeline2", L"DomainShader.hlsl", "main");
+	m_GameManager.CompileHullShader(L"Pipeline2", L"HullShader.hlsl", "main");
 
 
 
@@ -329,12 +331,12 @@ bool InitD3D()
 	};
 
 
-	gm.AddFrameInputLayout(inputLayout, L"Pipeline1", 5);
-	gm.AddFrameInputLayout(inputLayout, L"Pipeline2", 5);
-	gm.AddFrameInputLayout(inputLayout2, L"OutputManagerInput2", 2);
+	m_GameManager.AddFrameInputLayout(inputLayout, L"Pipeline1", 5);
+	m_GameManager.AddFrameInputLayout(inputLayout, L"Pipeline2", 5);
+	m_GameManager.AddFrameInputLayout(inputLayout2, L"OutputManagerInput2", 2);
 
-	gm.CreatePipeline(L"Pipeline1");
-	gm.CreatePipeline(L"Pipeline2");
+	m_GameManager.CreatePipeline(L"Pipeline1");
+	m_GameManager.CreatePipeline(L"Pipeline2");
 
 
 	std::vector<Vertex> vertexList(36);
@@ -413,7 +415,7 @@ bool InitD3D()
 	indexList[34] = 34;
 	indexList[35] = 35;
 
-	gm.CreateGeomerty(vertexList.data(), vertexList.size(), indexList.data(), indexList.size(), L"TestGeometry");
+	m_GameManager.CreateGeomerty(vertexList.data(), vertexList.size(), indexList.data(), indexList.size(), L"TestGeometry");
 	m_Manager = new SystemManager();
 
 	// Create vertex buffer
@@ -529,16 +531,16 @@ bool InitD3D()
 	depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
 	depthOptimizedClearValue.DepthStencil.Stencil = 0;
 
-	bool test = gm.CreateStencilDepthView(L"OutputManager Depth Stencil", 1,&depthStencilDesc, &depthOptimizedClearValue);
+	bool test = m_GameManager.CreateStencilDepthView(L"OutputManager Depth Stencil", 1,&depthStencilDesc, &depthOptimizedClearValue);
 
 
-	gm.CreateConstantBuffer(L"TestGeometry", output.GetBufferSize() , 1024, sizeof(ConstantBufferPerObject), 4);
+	m_GameManager.CreateConstantBuffer(L"TestGeometry", output.GetBufferSize() , 1024, sizeof(ConstantBufferPerObject), 4);
 
 
 	LPCWSTR filename[4] = { L"color.jpg" ,L"normals.jpg" ,L"displacement.jpg" ,L"dx12.jpg" };
 	int objectCount = sizeof(filename) / sizeof(LPCWSTR);
 
-	gm.CreateTextureHeap(filename, objectCount, L"TestGeometry");
+	m_GameManager.CreateTextureHeap(filename, objectCount, L"TestGeometry");
 
 
 	// Fill out the Viewport
@@ -560,11 +562,9 @@ bool InitD3D()
 	XMStoreFloat4x4(&cameraProjMat, tmpMat);
 
 	// set starting camera state
-	cameraPosition = XMFLOAT4(0.0f, 2.0f, -6.0f, 0.0f);
+	cameraPosition = XMFLOAT4(0.0f, 9.0f, -6.0f, 0.0f);
 	cameraTarget = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
 	cameraUp = XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f);
-
-	m_GameManager = gm;
 
 	m_Manager = new SystemManager();
 	m_Manager->SetUpCamera(cameraPosition, cameraTarget, cameraUp, Width, Height, 0.1, 1000);
@@ -576,8 +576,8 @@ bool InitD3D()
 	COS.graphicsManager = &m_GameManager;
 	COS.transform = transform;
 	COS.objName = "Obj1";
-	COS.index = gm.GetIndexBufferView(L"TestGeometry");
-	COS.vertex = gm.GetVertexBufferView(L"TestGeometry");
+	COS.index = m_GameManager.GetIndexBufferView(L"TestGeometry");
+	COS.vertex = m_GameManager.GetVertexBufferView(L"TestGeometry");
 	m_Manager->BuildObject(COS);
 
 	shinyMaterial.AmbientMtrl = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
@@ -602,18 +602,18 @@ bool InitD3D()
 
 	Terrain* pTerrain = m_Manager->GetTerrain();
 
-	pTerrain->CreateAnchor(Vector3D(0.0f, 0.0f, 0.0f), Vector3D(0.0f, 0.0f, 0.0f), Vector3D(1.0f, 0.5f, 1.0f));
+	pTerrain->CreateAnchor(Vector3D(0.0f, -17.0f, 0.0f), Vector3D(0.0f, 0.0f, 0.0f), Vector3D(1.0f, 0.5f, 1.0f));
 
 	m_GameManager.CreateGeomerty(pTerrain->GetVertexStorage(), pTerrain->GetIndexStorage(), pTerrain->GetIdentifier(), pTerrain->GetGeometry());
 
 	m_GameManager.CreateConstantBuffer(pTerrain->GetIdentifier(), output.GetBufferSize(), 1024, sizeof(ConstantBufferPerObject), 1);
 
-	LPCWSTR filename2[9] = { L"Forest01.jpg" ,L"Forest02.jpg" ,L"Forest03.jpg" ,L"Rock01.jpg", L"Rock02.jpg" ,L"Rock03.jpg" ,L"Snow01.jpg" ,L"Snow02.jpg" ,L"Snow03.jpg" };
-	//LPCWSTR filename2[9] = { L"Forest01Small.jpg" ,L"Forest02Small.jpg" ,L"Forest03Small.jpg" ,L"Rocks01Small.jpg", L"Rocks02Small.jpg" ,L"Rocks03Small.jpg" ,L"Snow01Small.jpg" ,L"Snow02Small.jpg" ,L"Snow03Small.jpg" };
+	//LPCWSTR filename2[9] = { L"Forest01.jpg" ,L"Forest02.jpg" ,L"Forest03.jpg" ,L"Rock01.jpg", L"Rock02.jpg" ,L"Rock03.jpg" ,L"Snow01.jpg" ,L"Snow02.jpg" ,L"Snow03.jpg" };
+	LPCWSTR filename2[9] = { L"Forest01Small.jpg" ,L"Forest02Small.jpg" ,L"Forest03Small.jpg" ,L"Rocks01Small.jpg", L"Rocks02Small.jpg" ,L"Rocks03Small.jpg" ,L"Snow01Small.jpg" ,L"Snow02Small.jpg" ,L"Snow03Small.jpg" };
 
 	m_GameManager.CreateTextureHeap(filename2, 9, pTerrain->GetIdentifier());
 
-	m_OutputManager = output;
+   m_OutputManager = output;
 
 	m_GameManager.ForceCloseCommandList(L"OutputManager");
 
@@ -640,10 +640,10 @@ void Update()
 		m_Manager->ReturnCamera()->Strafe(0.005f);
 
 	if (GetAsyncKeyState(0x26) & 0x8000)
-		basicLight.LightVecW.z = basicLight.LightVecW.z + 0.0005f;
+		m_Manager->ReturnCamera()->Pitch(0.005f);
 
 	if (GetAsyncKeyState(0x28) & 0x8000)
-		basicLight.LightVecW.z = basicLight.LightVecW.z + -0.0005f;
+		m_Manager->ReturnCamera()->Pitch(-0.005f);
 
 	if (GetAsyncKeyState(0x25) & 0x8000)
 		basicLight.LightVecW.x = basicLight.LightVecW.x + -0.0005f;
@@ -708,9 +708,12 @@ void Update()
 	XMStoreFloat3(&cbPerObject.EyePosW, m_Manager->ReturnCamera()->GetEye());
 
 	cbPerObject.TessDistanceNear = 0.0f;
-	cbPerObject.TessDistanceFar = 15.0f;
+	cbPerObject.TessDistanceFar = 30.0f;
 
-	m_GameManager.UpdateObjectConstantBuffer(cbPerObject, L"Terrain", currentFrameIndex, 0);
+	//Removes the crash
+	cbPerObject.TessDistanceFar = 0.0f;
+
+	m_GameManager.UpdateObjectConstantBuffer(cbPerObject, m_Manager->GetTerrain()->GetIdentifier(), currentFrameIndex, 0);
 
 
 }
@@ -723,10 +726,11 @@ void UpdatePipeline()
 
 	m_GameManager.ResetAllocator(frameIndex, L"OutputManager");
 
+	//WHY DO I NOT HAVE TO RESET PIPELINE 2????????
 	m_GameManager.ReopenAllocator(frameIndex, L"OutputManager", L"Pipeline1");
 
-	//m_GameManager.Draw(m_OutputManager.GetCurrentFrame(), m_OutputManager.GetHeap()->GetCPUAddress(frameIndex), frameIndex,L"Pipeline1", L"OutputManager Depth Stencil", L"TestGeometry", L"TestGeometry", m_Manager, false, true, false);
-	m_GameManager.Draw(m_OutputManager.GetCurrentFrame(), m_OutputManager.GetHeap()->GetCPUAddress(frameIndex), frameIndex,L"Pipeline2", L"OutputManager Depth Stencil", L"Terrain", L"Terrain", m_Manager, true, false, true);
+	m_GameManager.Draw(m_OutputManager.GetCurrentFrame(), m_OutputManager.GetHeap()->GetCPUAddress(frameIndex), frameIndex,L"Pipeline1", L"OutputManager Depth Stencil", L"TestGeometry", L"TestGeometry", m_Manager, false, true, false);
+	m_GameManager.Draw(m_OutputManager.GetCurrentFrame(), m_OutputManager.GetHeap()->GetCPUAddress(frameIndex), frameIndex,L"Pipeline2", L"OutputManager Depth Stencil", m_Manager->GetTerrain()->GetIdentifier() , m_Manager->GetTerrain()->GetIdentifier(), m_Manager, true, false, true);
 }
 void Render()
 {
@@ -743,90 +747,10 @@ void Render()
 
 void Cleanup()
 {
-	// wait for the gpu to finish all frames
-	for (int i = 0; i < frameBufferCount; ++i)
-	{
-		frameIndex = i;
-		WaitForPreviousFrame();
-	}
-
-	// get swapchain out of full screen before exiting
-	BOOL fs = false;
-	if (swapChain->GetFullscreenState(&fs, NULL))
-		swapChain->SetFullscreenState(false, NULL);
-
-	SAFE_RELEASE(device);
-	SAFE_RELEASE(swapChain);
-	SAFE_RELEASE(commandQueue);
-	SAFE_RELEASE(rtvDescriptorHeap);
-	SAFE_RELEASE(commandList);
-
-	for (int i = 0; i < frameBufferCount; ++i)
-	{
-		SAFE_RELEASE(renderTargets[i]);
-		SAFE_RELEASE(commandAllocator[i]);
-		SAFE_RELEASE(fence[i]);
-	};
-
-	for (int i = 0; i < 5; ++i)
-	{
-		SAFE_RELEASE(textureBuffer[i]);
-	}
-
-	SAFE_RELEASE(pipelineStateObject);
-	SAFE_RELEASE(pipelineStateObject2);
-	SAFE_RELEASE(ShadowPipelineState);
-	SAFE_RELEASE(GeometryShaderPipeline);
-	SAFE_RELEASE(rootSignature);
-	SAFE_RELEASE(vertexBuffer);
-	SAFE_RELEASE(indexBuffer);
-	for (int i = 0; i < 4; ++i)
-	{
-		SAFE_RELEASE(textureBufferUploadHeap[i]);
-	};
-
-	for (size_t i = 0; i < m_BillboardVertex.size();i++)
-	{
-		SAFE_RELEASE(m_BillboardVertex[i]);
-		SAFE_RELEASE(m_BillboardIndex[i]);
-	}
-
-	SAFE_RELEASE(depthStencilBuffer);
-	SAFE_RELEASE(dsDescriptorHeap);
-	SAFE_RELEASE(depthStencilBuffer2);
-
-	for (int i = 0; i < frameBufferCount; ++i)
-	{
-		SAFE_RELEASE(constantBufferUploadHeaps[i]);
-	};
-
 }
 
 void WaitForPreviousFrame()
 {
-	HRESULT hr;
-
-	// swap the current rtv buffer index so we draw on the correct buffer
-	frameIndex = swapChain->GetCurrentBackBufferIndex();
-
-	// if the current fence value is still less than "fenceValue", then we know the GPU has not finished executing
-	// the command queue since it has not reached the "commandQueue->Signal(fence, fenceValue)" command
-	if (fence[frameIndex]->GetCompletedValue() < fenceValue[frameIndex])
-	{
-		// we have the fence create an event which is signaled once the fence's current value is "fenceValue"
-		hr = fence[frameIndex]->SetEventOnCompletion(fenceValue[frameIndex], fenceEvent);
-		if (FAILED(hr))
-		{
-			Running = false;
-		}
-
-		// We will wait until the fence has triggered the event that it's current value has reached "fenceValue". once it's value
-		// has reached "fenceValue", we know the command queue has finished executing
-		WaitForSingleObject(fenceEvent, INFINITE);
-	}
-
-	// increment fenceValue for next frame
-	fenceValue[frameIndex]++;
 }
 
 // get the dxgi format equivilent of a wic format

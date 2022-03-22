@@ -3,7 +3,7 @@
 #include "Structures.h"
 
 
-
+#define SAFE_RELEASE(p) { if ( (p) ) { (p)->Release(); (p) = 0; } }
 
 class DescriptorHeapHelper
 {

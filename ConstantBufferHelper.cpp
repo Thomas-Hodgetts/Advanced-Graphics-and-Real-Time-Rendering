@@ -9,6 +9,10 @@ ConstantBufferHelper::~ConstantBufferHelper()
 {
 	delete m_Buffer;
 	delete[] m_Address;
+	for (size_t i = 0; i < m_UploadHeap.size(); i++)
+	{
+		SAFE_RELEASE(m_UploadHeap[i]);
+	}
 }
 
 void ConstantBufferHelper::Init(ID3D12Device* device, int blockCount, int classSize, int objectCount, int frameCount)

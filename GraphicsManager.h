@@ -62,6 +62,8 @@ public:
 	GraphicsManager(int width, int height);
 	~GraphicsManager();
 
+	void Destory();
+
 	void ExecuteCommands();
 
 	void ForceCloseCommandList(std::wstring identifier);

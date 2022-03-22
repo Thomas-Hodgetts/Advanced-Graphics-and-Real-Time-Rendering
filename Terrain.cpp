@@ -12,6 +12,8 @@ Terrain::~Terrain()
 
 void Terrain::RandomInit(std::wstring name, float scale, RANDOM_MODE mode)
 {
+	m_Name = name;
+
 	m_TerrainData = new float*[m_Size];
 	for (size_t i = 0; i < m_Size; i++)
 	{
@@ -24,7 +26,85 @@ void Terrain::RandomInit(std::wstring name, float scale, RANDOM_MODE mode)
 
 	Fractal();
 	Clamp_map();
-	print_map();
+	int tick = 0;
+	m_VertexStore.resize(m_Size * m_Size);
+	for (UINT i = 0; i < m_Size; i++)
+	{
+		for (UINT j = 0; j < m_Size; j++)
+		{
+			Vertex s;
+			if (i % 2 == 0)
+			{
+				if (tick == 0)
+				{
+					s.texCoord = { 0, 0 };
+					++tick;
+				}
+				else
+				{
+					s.texCoord = { 1, 0 };
+					tick = 0;
+				}
+			}
+			else
+			{
+				if (tick == 0)
+				{
+					s.texCoord = { 0, 1 };
+					++tick;
+				}
+				else
+				{
+					s.texCoord = { 1, 1 };
+					tick = 0;
+				}
+			}
+			s.pos.SetX(i);
+			s.pos.SetY(m_TerrainData[i][j]);
+			s.pos.SetZ(j);
+			m_VertexStore[i * m_Size + j] = s;
+		}
+	}
+
+	UINT faceCount = (m_Size - 1) * (m_Size - 1) * 2;
+
+	m_IndexStore.resize(faceCount * 3);
+	UINT k = 0;
+	for (UINT i = 0; i < m_Size - 1; i++)
+	{
+		for (UINT j = 0; j < m_Size - 1; j++)
+		{
+			m_IndexStore[k] = i * m_Size + j;
+			m_IndexStore[k + 1] = i * m_Size + j + 1;
+			m_IndexStore[k + 2] = (i + 1) * m_Size + j;
+			m_IndexStore[k + 3] = (i + 1) * m_Size + j;
+			m_IndexStore[k + 4] = i * m_Size + j + 1;
+			m_IndexStore[k + 5] = (i + 1) * m_Size + j + 1;
+			k += 6;
+		}
+	}
+
+	for (UINT i = 0; i < faceCount; i++)
+	{
+		UINT i0 = m_IndexStore[i * 3];
+		UINT i1 = m_IndexStore[i * 3 + 1];
+		UINT i2 = m_IndexStore[i * 3 + 2];
+		XMFLOAT3 tangent, binormal, normal;
+		NormalCalculations::CalculateTangentBinormal2(m_VertexStore[i0], m_VertexStore[i1], m_VertexStore[i2], normal, tangent, binormal);
+
+		m_VertexStore[i0].Normal = normal;
+		m_VertexStore[i1].Normal = normal;
+		m_VertexStore[i2].Normal = normal;
+		m_VertexStore[i0].tangent = tangent;
+		m_VertexStore[i1].tangent = tangent;
+		m_VertexStore[i2].tangent = tangent;
+		m_VertexStore[i0].biTangent = binormal;
+		m_VertexStore[i1].biTangent = binormal;
+		m_VertexStore[i2].biTangent = binormal;
+	}
+
+
+	m_Geometry = new Geometry();
 }
 
 XMFLOAT4X4 Terrain::ReturnAnchor()
@@ -200,6 +280,8 @@ Terrain::Terrain(int x, int z, std::string MapLocale, float scale, std::wstring 
 	float du = 1.0f / (x - 1);
 	float dv = 1.0f / (z - 1);
 
+	int tick = 0;
+
 	m_VertexStore.resize(vertexCount);
 	for (UINT i = 0; i < z; i++)
 	{
@@ -208,7 +290,33 @@ Terrain::Terrain(int x, int z, std::string MapLocale, float scale, std::wstring 
 		{
 			float nX = -halfWidth + j * dx;
 			Vertex s;
-			s.texCoord = { float(i) / float(x), float(j) / float(z) };
+			if (i % 2 == 0)
+			{
+				if (tick == 0)
+				{
+					s.texCoord = { 0, 0};
+					++tick;
+				}
+				else
+				{
+					s.texCoord = { 1, 0 };
+					tick = 0;
+				}
+			}
+			else
+			{
+				if (tick == 0)
+				{
+					s.texCoord = { 0, 1 };
+					++tick;
+				}
+				else
+				{
+					s.texCoord = { 1, 1 };
+					tick = 0;
+				}
+			}
+			//s.texCoord = { float(i) / float(x), float(j) / float(z) };
 			s.pos.SetX(nX);
 			s.pos.SetY(out[i + j]);
 			s.pos.SetZ(nZ);
