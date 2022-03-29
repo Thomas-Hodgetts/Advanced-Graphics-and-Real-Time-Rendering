@@ -93,6 +93,8 @@
     <ClCompile Include="NumberGenerator.cpp">
       <Filter>Terrain\Random Generator</Filter>
     </ClCompile>
+    <ClCompile Include="Skeletal_Region.cpp" />
+    <ClCompile Include="Bone.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -167,6 +169,8 @@
     <ClInclude Include="NumberGenerator.h">
       <Filter>Terrain\Random Generator</Filter>
     </ClInclude>
+    <ClInclude Include="Skeletal_Region.h" />
+    <ClInclude Include="Bone.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Camera">

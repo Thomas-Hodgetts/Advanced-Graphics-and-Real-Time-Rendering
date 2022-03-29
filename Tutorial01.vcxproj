@@ -157,6 +157,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Apperance.cpp" />
+    <ClCompile Include="Bone.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="ConstantBufferHelper.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />
@@ -175,6 +176,7 @@
     <ClCompile Include="PhysicalObject.cpp" />
     <ClCompile Include="RigidBody.cpp" />
     <ClCompile Include="ShadowMaps.cpp" />
+    <ClCompile Include="Skeletal_Region.cpp" />
     <ClCompile Include="SystemManager.cpp" />
     <ClCompile Include="Terrain.cpp" />
     <ClCompile Include="Transform.cpp" />
@@ -183,6 +185,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Apperance.h" />
+    <ClInclude Include="Bone.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="ConstantBufferHelper.h" />
     <ClInclude Include="DDSTextureLoader.h" />
@@ -202,6 +205,7 @@
     <ClInclude Include="Quaternion.h" />
     <ClInclude Include="RigidBody.h" />
     <ClInclude Include="ShadowMaps.h" />
+    <ClInclude Include="Skeletal_Region.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Structures.h" />
     <ClInclude Include="SystemManager.h" />
