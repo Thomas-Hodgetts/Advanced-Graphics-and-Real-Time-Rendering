@@ -28,7 +28,7 @@ void Terrain::RandomInit(std::wstring name, float scale, RANDOM_MODE mode)
 	Clamp_map();
 	int tick = 0;
 
-	UINT k = 0.99;
+	UINT k = 0.9;
 
 	///* Rows, left to right */
 	//for (x = 1; x < maxWidth; x++)
@@ -67,26 +67,23 @@ void Terrain::RandomInit(std::wstring name, float scale, RANDOM_MODE mode)
 			//		height[x, z] = height[x + 1, z] * (1 - k) + height[x, z] * k;
 		}
 	}
-	for (size_t x = 0; x < m_Size; ++x)
-	{
-		for (size_t z = 1; z < m_Size; ++z)
-		{
-			m_TerrainData[x][z] = m_TerrainData[x][z - 1] * (1 - k) + m_TerrainData[x][z] * k;
-			// height[x, z] = height[x, z - 1] * (1 - k) + height[x, z] * k;
-		}
-	}
-	for (size_t x = 1; x < m_Size; ++x)
-	{
-		for (size_t z = m_Size; z < -1; --z)
-		{
-			m_TerrainData[x][z] = m_TerrainData[x][z + 1] * (1 - k) + m_TerrainData[x][z] * k;
-			//height[x, z] = height[x, z + 1] * (1 - k) + height[x, z] * k;
-			if (z == 1)
-			{
-				int b = 0;
-			}
-		}
-	}
+
+	//for (size_t x = 0; x < m_Size; ++x)
+	//{
+	//	for (size_t z = 1; z < m_Size; ++z)
+	//	{
+	//		m_TerrainData[x][z] = m_TerrainData[x][z - 1] * (1 - k) + m_TerrainData[x][z] * k;
+	//		// height[x, z] = height[x, z - 1] * (1 - k) + height[x, z] * k;
+	//	}
+	//}
+	//for (size_t x = 1; x < m_Size; ++x)
+	//{
+	//	for (size_t z = m_Size; z < -1; --z)
+	//	{
+	//		m_TerrainData[x][z] = m_TerrainData[x][z + 1] * (1 - k) + m_TerrainData[x][z] * k;
+	//		//height[x, z] = height[x, z + 1] * (1 - k) + height[x, z] * k;
+	//	}
+	//}
 
 
 	m_VertexStore.resize(m_Size * m_Size);

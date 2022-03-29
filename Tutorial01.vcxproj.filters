@@ -93,8 +93,12 @@
     <ClCompile Include="NumberGenerator.cpp">
       <Filter>Terrain\Random Generator</Filter>
     </ClCompile>
-    <ClCompile Include="Skeletal_Region.cpp" />
-    <ClCompile Include="Bone.cpp" />
+    <ClCompile Include="Skeletal_Region.cpp">
+      <Filter>Animation\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Bone.cpp">
+      <Filter>Animation\Components</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -169,8 +173,12 @@
     <ClInclude Include="NumberGenerator.h">
       <Filter>Terrain\Random Generator</Filter>
     </ClInclude>
-    <ClInclude Include="Skeletal_Region.h" />
-    <ClInclude Include="Bone.h" />
+    <ClInclude Include="Skeletal_Region.h">
+      <Filter>Animation\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Bone.h">
+      <Filter>Animation\Components</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Camera">
@@ -256,6 +264,12 @@
     </Filter>
     <Filter Include="Terrain\Random Generator">
       <UniqueIdentifier>{f8229b0d-504a-47cb-815d-a9a13e440fe0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Animation">
+      <UniqueIdentifier>{be875167-d6ac-4156-962d-8f91f9c9ccc8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Animation\Components">
+      <UniqueIdentifier>{dbc1a1ca-cc37-406a-8130-600ee9ca37b5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

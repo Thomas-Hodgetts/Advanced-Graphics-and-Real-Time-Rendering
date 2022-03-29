@@ -710,9 +710,6 @@ void Update()
 	cbPerObject.TessDistanceNear = 0.0f;
 	cbPerObject.TessDistanceFar = 30.0f;
 
-	//Removes the crash
-	cbPerObject.TessDistanceFar = 0.0f;
-
 	m_GameManager.UpdateObjectConstantBuffer(cbPerObject, m_Manager->GetTerrain()->GetIdentifier(), currentFrameIndex, 0);
 
 

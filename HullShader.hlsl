@@ -41,7 +41,7 @@ HS_CONSTANT_DATA_OUTPUT CalcHSPatchConstants(InputPatch<VS_OUTPUT, 3> ip, uint P
 	const float d1 = TessDistanceFar;
 
 	//mess aroound with the 64 num
-	float tess = 63.0f * saturate((d1 - d) / (d1 - d0)) + 1;
+	float tess = 8.0f * saturate((d1 - d) / (d1 - d0)) + 1;
 
 	Output.distance = d;
 

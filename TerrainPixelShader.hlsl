@@ -177,52 +177,52 @@ float4 main(DS_OUTPUT input) : SV_TARGET
 	float shadowFactor = 1;
 	LightingResult lr;
 
-	if (input.distance < 5.0f)
-	{
-		texCoords = ParallaxMapping(input.texCoord, input.eyeVectorTS, input.posW.y);
-		shadowFactor = parallaxSoftShadowMultiplier(input.lightVectorTS, texCoords, GroundTexture3.Sample(s1, texCoords).x);
+	//if (input.distance < 5.0f)
+	//{
+	//	texCoords = ParallaxMapping(input.texCoord, input.eyeVectorTS, input.posW.y);
+	//	shadowFactor = parallaxSoftShadowMultiplier(input.lightVectorTS, texCoords, GroundTexture3.Sample(s1, texCoords).x);
 
-		if (input.posW.y < grassHeight)
-		{
-			bumpMap = ProcessBumpMap(GroundTexture2.Sample(s1, texCoords), input.TBN, 0);
-		}
-		if (input.posW.y < rockHeight)
-		{
-			bumpMap = ProcessBumpMap(RockTexture2.Sample(s1, texCoords), input.TBN, 0);
-		}
-		if (input.posW.y < snowHeight)
-		{
-			bumpMap = ProcessBumpMap(SnowTexture2.Sample(s1, texCoords), input.TBN, 0);
-		}
+	//	if (input.posW.y < grassHeight)
+	//	{
+	//		bumpMap = ProcessBumpMap(GroundTexture2.Sample(s1, texCoords), input.TBN, 0);
+	//	}
+	//	if (input.posW.y < rockHeight)
+	//	{
+	//		bumpMap = ProcessBumpMap(RockTexture2.Sample(s1, texCoords), input.TBN, 0);
+	//	}
+	//	if (input.posW.y < snowHeight)
+	//	{
+	//		bumpMap = ProcessBumpMap(SnowTexture2.Sample(s1, texCoords), input.TBN, 0);
+	//	}
 
-		lr = ComputeSimpleLighting(input.eyeVectorTS, bumpMap, input.lightVectorTS, Si, light);
-		//if (texCoords.x > 1 || texCoords.x < 0 || texCoords.y > 1 || texCoords.y < 0)
-		//{
-		//	discard;
-		//}
-	}
-	else if (input.distance < 15.0f)
-	{
-		if (input.posW.y < grassHeight)
-		{
-			bumpMap = ProcessBumpMap(GroundTexture2.Sample(s1, texCoords), input.TBN, 0);
-			lr = ComputeSimpleLighting(input.eyeVectorTS, bumpMap, input.lightVectorTS, Si, light);
-		}
-		else if (input.posW.y < rockHeight)
-		{
-			bumpMap = ProcessBumpMap(RockTexture2.Sample(s1, texCoords), input.TBN, 0);
-			lr = ComputeSimpleLighting(input.eyeVectorTS, bumpMap, input.lightVectorTS, Si, light);
-		}
-		else
-		{
-			bumpMap = ProcessBumpMap(SnowTexture2.Sample(s1, texCoords), input.TBN, 0);
-			lr = ComputeSimpleLighting(input.eyeVectorTS, bumpMap, input.lightVectorTS, Si, light);
-		}
-	}
-	else
-	{
-		lr = ComputeSimpleLighting(normalize(EyePosW - input.posW.xyz), normalize(input.normalW), normalize(light.LightVecW - input.posW.xyz), Si, light);
-	}
+	//	lr = ComputeSimpleLighting(input.eyeVectorTS, bumpMap, input.lightVectorTS, Si, light);
+	//	//if (texCoords.x > 1 || texCoords.x < 0 || texCoords.y > 1 || texCoords.y < 0)
+	//	//{
+	//	//	discard;
+	//	//}
+	//}
+	//else if (input.distance < 15.0f)
+	//{
+	//	if (input.posW.y < grassHeight)
+	//	{
+	//		bumpMap = ProcessBumpMap(GroundTexture2.Sample(s1, texCoords), input.TBN, 0);
+	//		lr = ComputeSimpleLighting(input.eyeVectorTS, bumpMap, input.lightVectorTS, Si, light);
+	//	}
+	//	else if (input.posW.y < rockHeight)
+	//	{
+	//		bumpMap = ProcessBumpMap(RockTexture2.Sample(s1, texCoords), input.TBN, 0);
+	//		lr = ComputeSimpleLighting(input.eyeVectorTS, bumpMap, input.lightVectorTS, Si, light);
+	//	}
+	//	else
+	//	{
+	//		bumpMap = ProcessBumpMap(SnowTexture2.Sample(s1, texCoords), input.TBN, 0);
+	//		lr = ComputeSimpleLighting(input.eyeVectorTS, bumpMap, input.lightVectorTS, Si, light);
+	//	}
+	//}
+	//else
+	//{
+	//	lr = ComputeSimpleLighting(normalize(EyePosW - input.posW.xyz), normalize(input.normalW), normalize(light.LightVecW - input.posW.xyz), Si, light);
+	//}
 
 
     lr = ComputeSimpleLighting(normalize(EyePosW - input.posW.xyz), normalize(input.normalW), normalize(light.LightVecW - input.posW.xyz), Si, light);
