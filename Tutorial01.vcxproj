@@ -168,6 +168,7 @@
     <ClCompile Include="GameObjectClass.cpp" />
     <ClCompile Include="GraphicsManager.cpp" />
     <ClCompile Include="ImaginaryObject.cpp" />
+    <ClCompile Include="KeyFrame.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="NumberGenerator.cpp" />
     <ClCompile Include="Object.cpp" />
@@ -196,6 +197,7 @@
     <ClInclude Include="GameObjectClass.h" />
     <ClInclude Include="GraphicsManager.h" />
     <ClInclude Include="ImaginaryObject.h" />
+    <ClInclude Include="KeyFrame.h" />
     <ClInclude Include="NormalCalculations.h" />
     <ClInclude Include="NumberGenerator.h" />
     <ClInclude Include="Object.h" />

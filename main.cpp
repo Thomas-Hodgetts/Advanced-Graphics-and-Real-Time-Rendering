@@ -543,20 +543,6 @@ bool InitD3D()
 	m_GameManager.CreateTextureHeap(filename, objectCount, L"TestGeometry");
 
 
-	// Fill out the Viewport
-	viewport.TopLeftX = 0;
-	viewport.TopLeftY = 0;
-	viewport.Width = (float)Width;
-	viewport.Height = (float)Height;
-	viewport.MinDepth = 0.0f;
-	viewport.MaxDepth = 1.0f;
-
-	// Fill out a scissor rect
-	scissorRect.left = 0;
-	scissorRect.top = 0;
-	scissorRect.right = Width;
-	scissorRect.bottom = Height;
-
 	// build projection and view matrix
 	XMMATRIX tmpMat = XMMatrixPerspectiveFovLH(45.0f*(3.14f/180.0f), (float)Width / (float)Height, 0.1f, 1000.0f);
 	XMStoreFloat4x4(&cameraProjMat, tmpMat);
